@@ -72,6 +72,9 @@ public class QueuedAudioPlayer: AudioPlayer {
      */
     public override func load(item: AudioItem, playWhenReady: Bool) throws {
         try super.load(item: item, playWhenReady: playWhenReady)
+
+        self.volume = item.getVolume()
+
         queueManager.replaceCurrentItem(with: item)
     }
 
@@ -121,8 +124,6 @@ public class QueuedAudioPlayer: AudioPlayer {
     public func next() throws {
         event.playbackEnd.emit(data: .skippedToNext)
         let nextItem = try queueManager.next()
-
-        self.volume = volume
 
         try self.load(item: nextItem, playWhenReady: true)
     }
