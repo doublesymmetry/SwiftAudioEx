@@ -120,7 +120,7 @@ public class AudioPlayer: AVPlayerWrapperDelegate {
         set { _wrapper.rate = newValue }
     }
 
-    public var volumeMultiplier: Float = 0.5 {
+    public var volumeMultiplier: Float = 1 {
         didSet {
             guard let currentVolume = currentItem?.getVolume() else { return }
             self.volume = currentVolume * volumeMultiplier
