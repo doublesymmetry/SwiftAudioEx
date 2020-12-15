@@ -14,21 +14,21 @@ public enum SourceType {
 }
 
 public protocol AudioItem {
-    
+
     func getSourceUrl() -> String
     func getArtist() -> String?
     func getTitle() -> String?
     func getAlbumTitle() -> String?
     func getSourceType() -> SourceType
     func getArtwork(_ handler: @escaping (UIImage?) -> Void)
-    
+    func getVolume() -> Float?
 }
 
 /// Make your `AudioItem`-subclass conform to this protocol to control which AVAudioTimePitchAlgorithm is used for each item.
 public protocol TimePitching {
-    
+
     func getPitchAlgorithmType() -> AVAudioTimePitchAlgorithm
-    
+
 }
 
 /// Make your `AudioItem`-subclass conform to this protocol to control enable the ability to start an item at a specific time of playback.
@@ -42,44 +42,46 @@ public protocol AssetOptionsProviding {
 }
 
 public class DefaultAudioItem: AudioItem {
-    
+    public var audioVolume: Float?
+
     public var audioUrl: String
-    
+
     public var artist: String?
-    
+
     public var title: String?
-    
+
     public var albumTitle: String?
-    
+
     public var sourceType: SourceType
-    
+
     public var artwork: UIImage?
-    
-    public init(audioUrl: String, artist: String? = nil, title: String? = nil, albumTitle: String? = nil, sourceType: SourceType, artwork: UIImage? = nil) {
+
+    public init(audioUrl: String, artist: String? = nil, title: String? = nil, albumTitle: String? = nil, sourceType: SourceType, artwork: UIImage? = nil, audioVolume: Float? = nil) {
         self.audioUrl = audioUrl
         self.artist = artist
         self.title = title
         self.albumTitle = albumTitle
         self.sourceType = sourceType
         self.artwork = artwork
+        self.audioVolume = audioVolume
     }
-    
+
     public func getSourceUrl() -> String {
         return audioUrl
     }
-    
+
     public func getArtist() -> String? {
         return artist
     }
-    
+
     public func getTitle() -> String? {
         return title
     }
-    
+
     public func getAlbumTitle() -> String? {
         return albumTitle
     }
-    
+
     public func getSourceType() -> SourceType {
         return sourceType
     }
@@ -87,24 +89,27 @@ public class DefaultAudioItem: AudioItem {
     public func getArtwork(_ handler: @escaping (UIImage?) -> Void) {
         handler(artwork)
     }
-    
+
+    public func getVolume() -> Float? {
+        return audioVolume
+    }
 }
 
 /// An AudioItem that also conforms to the `TimePitching`-protocol
 public class DefaultAudioItemTimePitching: DefaultAudioItem, TimePitching {
-    
+
     public var pitchAlgorithmType: AVAudioTimePitchAlgorithm
-    
-    public override init(audioUrl: String, artist: String?, title: String?, albumTitle: String?, sourceType: SourceType, artwork: UIImage?) {
+
+    public override init(audioUrl: String, artist: String?, title: String?, albumTitle: String?, sourceType: SourceType, artwork: UIImage?, audioVolume: Float?) {
         self.pitchAlgorithmType = AVAudioTimePitchAlgorithm.lowQualityZeroLatency
         super.init(audioUrl: audioUrl, artist: artist, title: title, albumTitle: albumTitle, sourceType: sourceType, artwork: artwork)
     }
-    
+
     public init(audioUrl: String, artist: String?, title: String?, albumTitle: String?, sourceType: SourceType, artwork: UIImage?, audioTimePitchAlgorithm: AVAudioTimePitchAlgorithm) {
         self.pitchAlgorithmType = audioTimePitchAlgorithm
         super.init(audioUrl: audioUrl, artist: artist, title: title, albumTitle: albumTitle, sourceType: sourceType, artwork: artwork)
     }
-    
+
     public func getPitchAlgorithmType() -> AVAudioTimePitchAlgorithm {
         return pitchAlgorithmType
     }
@@ -112,42 +117,42 @@ public class DefaultAudioItemTimePitching: DefaultAudioItem, TimePitching {
 
 /// An AudioItem that also conforms to the `InitialTiming`-protocol
 public class DefaultAudioItemInitialTime: DefaultAudioItem, InitialTiming {
-    
+
     public var initialTime: TimeInterval
-    
-    public override init(audioUrl: String, artist: String?, title: String?, albumTitle: String?, sourceType: SourceType, artwork: UIImage?) {
+
+    public override init(audioUrl: String, artist: String?, title: String?, albumTitle: String?, sourceType: SourceType, artwork: UIImage?, audioVolume: Float?) {
         self.initialTime = 0.0
         super.init(audioUrl: audioUrl, artist: artist, title: title, albumTitle: albumTitle, sourceType: sourceType, artwork: artwork)
     }
-    
+
     public init(audioUrl: String, artist: String?, title: String?, albumTitle: String?, sourceType: SourceType, artwork: UIImage?, initialTime: TimeInterval) {
         self.initialTime = initialTime
         super.init(audioUrl: audioUrl, artist: artist, title: title, albumTitle: albumTitle, sourceType: sourceType, artwork: artwork)
     }
-    
+
     public func getInitialTime() -> TimeInterval {
         return initialTime
     }
-    
+
 }
 
 /// An AudioItem that also conforms to the `AssetOptionsProviding`-protocol
 public class DefaultAudioItemAssetOptionsProviding: DefaultAudioItem, AssetOptionsProviding {
-    
+
     public var options: [String: Any]
-    
-    public override init(audioUrl: String, artist: String?, title: String?, albumTitle: String?, sourceType: SourceType, artwork: UIImage?) {
+
+    public override init(audioUrl: String, artist: String?, title: String?, albumTitle: String?, sourceType: SourceType, artwork: UIImage?, audioVolume: Float?) {
         self.options = [:]
         super.init(audioUrl: audioUrl, artist: artist, title: title, albumTitle: albumTitle, sourceType: sourceType, artwork: artwork)
     }
-    
+
     public init(audioUrl: String, artist: String?, title: String?, albumTitle: String?, sourceType: SourceType, artwork: UIImage?, options: [String: Any]) {
         self.options = options
         super.init(audioUrl: audioUrl, artist: artist, title: title, albumTitle: albumTitle, sourceType: sourceType, artwork: artwork)
     }
-    
+
     public func getAssetOptions() -> [String: Any] {
         return options
     }
-    
+
 }
