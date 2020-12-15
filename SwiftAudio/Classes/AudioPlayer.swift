@@ -120,6 +120,13 @@ public class AudioPlayer: AVPlayerWrapperDelegate {
         set { _wrapper.rate = newValue }
     }
 
+    public var volumeMultiplier: Float = 0.5 {
+        didSet {
+            guard let currentVolume = currentItem?.getVolume() else { return }
+            self.volume = currentVolume * volumeMultiplier
+        }
+    }
+
     /**
      Set wether the player should loop when a song is finished.
      Default is `false`.
@@ -176,6 +183,8 @@ public class AudioPlayer: AVPlayerWrapperDelegate {
             self.loadNowPlayingMetaValues()
         }
         enableRemoteCommands(forItem: item)
+
+        self.volume = item.getVolume() * volumeMultiplier
     }
 
     /**

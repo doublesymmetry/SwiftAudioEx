@@ -64,7 +64,7 @@ public class QueuedAudioPlayer: AudioPlayer {
         return queueManager.nextItems
     }
 
-    public var volumeMultiplier: Float = 1 {
+    public override var volumeMultiplier: Float {
         didSet {
             guard let currentVolume = queueManager.current?.getVolume() else { return }
             self.volume = currentVolume * volumeMultiplier
@@ -79,8 +79,6 @@ public class QueuedAudioPlayer: AudioPlayer {
      */
     public override func load(item: AudioItem, playWhenReady: Bool) throws {
         try super.load(item: item, playWhenReady: playWhenReady)
-
-        self.volume = item.getVolume() * volumeMultiplier
 
         queueManager.replaceCurrentItem(with: item)
     }
