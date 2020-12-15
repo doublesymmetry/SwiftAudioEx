@@ -67,7 +67,6 @@ public class QueuedAudioPlayer: AudioPlayer {
     public var volumeMultiplier: Float = 1 {
         didSet {
             guard let currentVolume = queueManager.current?.getVolume() else { return }
-            print(currentVolume * volumeMultiplier)
             self.volume = currentVolume * volumeMultiplier
         }
     }
