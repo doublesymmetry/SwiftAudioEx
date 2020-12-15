@@ -21,7 +21,7 @@ public protocol AudioItem {
     func getAlbumTitle() -> String?
     func getSourceType() -> SourceType
     func getArtwork(_ handler: @escaping (UIImage?) -> Void)
-    func getVolume() -> Float?
+    func getVolume() -> Float
 }
 
 /// Make your `AudioItem`-subclass conform to this protocol to control which AVAudioTimePitchAlgorithm is used for each item.
@@ -42,7 +42,7 @@ public protocol AssetOptionsProviding {
 }
 
 public class DefaultAudioItem: AudioItem {
-    public var audioVolume: Float?
+    public var audioVolume: Float
 
     public var audioUrl: String
 
@@ -56,7 +56,7 @@ public class DefaultAudioItem: AudioItem {
 
     public var artwork: UIImage?
 
-    public init(audioUrl: String, artist: String? = nil, title: String? = nil, albumTitle: String? = nil, sourceType: SourceType, artwork: UIImage? = nil, audioVolume: Float? = nil) {
+    public init(audioUrl: String, artist: String? = nil, title: String? = nil, albumTitle: String? = nil, sourceType: SourceType, artwork: UIImage? = nil, audioVolume: Float = 1.0) {
         self.audioUrl = audioUrl
         self.artist = artist
         self.title = title
@@ -90,7 +90,7 @@ public class DefaultAudioItem: AudioItem {
         handler(artwork)
     }
 
-    public func getVolume() -> Float? {
+    public func getVolume() -> Float {
         return audioVolume
     }
 }

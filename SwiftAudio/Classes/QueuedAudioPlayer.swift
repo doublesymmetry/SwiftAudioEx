@@ -122,9 +122,7 @@ public class QueuedAudioPlayer: AudioPlayer {
         event.playbackEnd.emit(data: .skippedToNext)
         let nextItem = try queueManager.next()
 
-        if let volume = nextItem.getVolume() {
-            self.volume = volume
-        }
+        self.volume = volume
 
         try self.load(item: nextItem, playWhenReady: true)
     }
