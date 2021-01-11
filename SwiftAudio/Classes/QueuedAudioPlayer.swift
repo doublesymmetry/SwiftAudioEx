@@ -122,15 +122,22 @@ public class QueuedAudioPlayer: AudioPlayer {
     }
 
     /**
-     Step to the next item in the queue.
-
+     Step to the next item in the queue. If the queue has no next items, it starts again from the first item.
+     - parameter canRepeatSingleItem: if there is only one item in the queue, allow repeating it forever
      - throws: `APError`
      */
-    public func next() throws {
+    public func next(canRepeatSingleItem: Bool = false) throws {
         event.playbackEnd.emit(data: .skippedToNext)
-        let nextItem = try queueManager.next()
 
-        try self.load(item: nextItem, playWhenReady: true)
+        let nextItem: AudioItem?
+
+        do {
+            nextItem = try queueManager.next()
+        } catch {
+            nextItem = try queueManager.jump(to: 0, allowSameIndex: canRepeatSingleItem)
+        }
+
+        try self.load(item: nextItem!, playWhenReady: true)
     }
 
     /**
@@ -193,10 +200,10 @@ public class QueuedAudioPlayer: AudioPlayer {
     // MARK: - AVPlayerWrapperDelegate
 
     override func AVWrapperItemDidPlayToEndTime() {
-        super.AVWrapperItemDidPlayToEndTime()
         if automaticallyPlayNextSong {
-            try? self.next()
+            try? self.next(canRepeatSingleItem: true)
         }
-    }
 
+        super.AVWrapperItemDidPlayToEndTime()
+    }
 }
