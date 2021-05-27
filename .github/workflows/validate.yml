@@ -22,4 +22,4 @@ jobs:
         env:
           destination: ${{ matrix.destination }}
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v1.2.1
+        run: curl -s https://codecov.io/bash | bash
