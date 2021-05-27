@@ -18,6 +18,25 @@ iOS 10.0+
 
 ## Installation
 
+### Swift Package Manager
+[Swift Package Manager](https://swift.org/package-manager/) (SwiftPM) is a tool for managing the distribution of Swift code as well as C-family dependency. From Xcode 11, SwiftPM got natively integrated with Xcode.
+
+SwiftAudio supports SwiftPM from version 0.12.0. To use SwiftPM, you should use Xcode 11 to open your project. Click `File` -> `Swift Packages` -> `Add Package Dependency`, enter [SwiftAudio repo's URL](https://github.com/DoubleSymmetry/SwiftAudio.git). Or you can login Xcode with your GitHub account and just type `SwiftAudio` to search.
+
+After select the package, you can choose the dependency type (tagged version, branch or commit). Then Xcode will setup all the stuff for you.
+
+If you're a framework author and use SwiftAudio as a dependency, update your `Package.swift` file:
+
+```swift
+let package = Package(
+    // 0.12.0 ..< 1.0.0
+    dependencies: [
+        .package(url: "https://github.com/DoubleSymmetry/SwiftAudio.git", from: "0.12.0")
+    ],
+    // ...
+)
+```
+
 ### CocoaPods
 SwiftAudio is available through [CocoaPods](http://cocoapods.org). To install
 it, simply add the following line to your Podfile:
