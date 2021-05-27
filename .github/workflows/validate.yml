@@ -1,8 +1,7 @@
 name: validate
 on: [push]
 jobs:
-  run-tests:
-    name: Test
+  unit-tests:
     runs-on: [self-hosted, macOS, arm64e]
     defaults:
       run:
