@@ -2,7 +2,7 @@ import Quick
 import Nimble
 import AVFoundation
 
-@testable import SwiftAudio
+@testable import SwiftAudioEx
 
 
 class AVPlayerItemNotificationObserverTests: QuickSpec {

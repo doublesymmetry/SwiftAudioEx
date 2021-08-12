@@ -6,14 +6,14 @@ let package = Package(
     platforms: [.iOS(.v10)],
     products: [
         .library(
-            name: "SwiftAudio",
-            targets: ["SwiftAudio"]),
+            name: "SwiftAudioEx",
+            targets: ["SwiftAudioEx"]),
     ],
     dependencies: [],
     targets: [
         .target(
-            name: "SwiftAudio",
+            name: "SwiftAudioEx",
             dependencies: [],
-            path: "SwiftAudio/Classes")
+            path: "SwiftAudioEx/Classes")
     ]
 )

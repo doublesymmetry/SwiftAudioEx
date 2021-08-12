@@ -8,7 +8,7 @@
 
 import Foundation
 
-@testable import SwiftAudio
+@testable import SwiftAudioEx
 
 final class MockDispatchQueue: DispatchQueueType {
     func async(flags: DispatchWorkItemFlags, execute work: @escaping @convention(block) () -> Void) {

@@ -2,7 +2,7 @@ import Quick
 import Nimble
 import MediaPlayer
 
-@testable import SwiftAudio
+@testable import SwiftAudioEx
 
 /// Tests that the AudioPlayer is automatically updating the values it should update in the NowPlayingInfoController.
 class NowPlayingInfoTests: QuickSpec {

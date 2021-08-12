@@ -1,7 +1,7 @@
 import Quick
 import Nimble
 
-@testable import SwiftAudio
+@testable import SwiftAudioEx
 
 class QueuedAudioPlayerTests: QuickSpec {
     override func spec() {

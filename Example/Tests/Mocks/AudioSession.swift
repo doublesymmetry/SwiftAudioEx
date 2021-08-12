@@ -9,7 +9,7 @@
 import Foundation
 import AVFoundation
 
-@testable import SwiftAudio
+@testable import SwiftAudioEx
 
 
 class NonFailingAudioSession: AudioSession {

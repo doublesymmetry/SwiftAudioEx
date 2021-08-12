@@ -3,7 +3,7 @@ import Nimble
 import AVFoundation
 import XCTest
 
-@testable import SwiftAudio
+@testable import SwiftAudioEx
 
 class AudioPlayerTests: XCTestCase {
     
@@ -124,8 +124,8 @@ class AudioPlayerTests: XCTestCase {
     
     // MARK: - Rate
     
-    func test_AudioPlayer__rate__should_be_0() {
-        XCTAssert(audioPlayer.rate == 0.0)
+    func test_AudioPlayer__rate__should_be_1() {
+        XCTAssert(audioPlayer.rate == 1.0)
     }
     
     func test_AudioPlayer__rate__playing_source__should_be_1() {

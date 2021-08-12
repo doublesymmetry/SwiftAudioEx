@@ -2,7 +2,7 @@ import Quick
 import Nimble
 import MediaPlayer
 
-@testable import SwiftAudio
+@testable import SwiftAudioEx
 
 class AudioPlayerEventTests: QuickSpec {
     

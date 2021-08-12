@@ -7,7 +7,7 @@
 //
 
 import Foundation
-import SwiftAudio
+import SwiftAudioEx
 
 
 class AudioController {
