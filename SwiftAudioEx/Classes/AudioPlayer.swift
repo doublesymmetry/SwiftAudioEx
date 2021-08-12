@@ -115,9 +115,17 @@ public class AudioPlayer: AVPlayerWrapperDelegate {
         set { _wrapper.isMuted = newValue }
     }
 
+    private var _rate: Float = 1.0
     public var rate: Float {
-        get { return wrapper.rate }
-        set { _wrapper.rate = newValue }
+        get { return _rate }
+        set {
+            _rate = newValue
+
+            // Only set the rate on the wrapper if it is already playing.
+            if _wrapper.rate > 0 {
+                _wrapper.rate = newValue
+            }
+        }
     }
     
     // MARK: - Init
@@ -311,7 +319,11 @@ public class AudioPlayer: AVPlayerWrapperDelegate {
                 updateNowPlayingPlaybackValues()
             }
             setTimePitchingAlgorithmForCurrentItem()
-        case .playing, .paused:
+        case .playing:
+            // When a track starts playing, reset the rate to the stored rate
+            self.rate = _rate;
+            fallthrough
+        case .paused:
             if (automaticallyUpdateNowPlayingInfo) {
                 updateNowPlayingPlaybackValues()
             }
