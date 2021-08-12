@@ -11,9 +11,14 @@ import MediaPlayer
 /**
  An audio player that can keep track of a queue of AudioItems.
  */
-public class QueuedAudioPlayer: AudioPlayer {
+public class QueuedAudioPlayer: AudioPlayer, QueueManagerDelegate {
     
     let queueManager: QueueManager = QueueManager<AudioItem>()
+
+    public init() {
+        super.init()
+        queueManager.delegate = self
+    }
 
     /// The repeat mode for the queue player.
     public var repeatMode: RepeatMode = .off
@@ -34,6 +39,7 @@ public class QueuedAudioPlayer: AudioPlayer {
      */
     public override func stop() {
         super.stop()
+        self.event.queueIndex.emit(data: (currentIndex, nil))
     }
     
     override func reset() {
@@ -198,5 +204,17 @@ public class QueuedAudioPlayer: AudioPlayer {
                 } catch { /* TODO: handle possible errors from load */ }
             } catch { /* TODO: handle possible errors from load */ }
         }
+    }
+
+    // MARK: - QueueManagerDelegate
+
+    func onCurrentIndexChanged(oldIndex: Int, newIndex: Int) {
+        // if _currentItem is nil, then this was triggered by a reset. ignore.
+        if _currentItem == nil { return }
+        self.event.queueIndex.emit(data: (oldIndex, newIndex))
+    }
+
+    func onReceivedFirstItem() {
+        self.event.queueIndex.emit(data: (nil, 0))
     }
 }

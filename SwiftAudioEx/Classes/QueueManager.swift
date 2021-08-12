@@ -7,7 +7,7 @@
 
 import Foundation
 
-protocol QueueManagerDelegate: class {
+protocol QueueManagerDelegate: AnyObject {
     func onReceivedFirstItem()
     func onCurrentIndexChanged(oldIndex: Int, newIndex: Int)
 }
