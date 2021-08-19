@@ -22,6 +22,7 @@ public struct APError {
         case noPreviousItem
         case noNextItem
         case invalidIndex(index: Int, message: String)
+        case noNextWhenRepeatModeTrack
     }
     
 }

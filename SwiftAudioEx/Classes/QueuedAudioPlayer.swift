@@ -124,8 +124,19 @@ public class QueuedAudioPlayer: AudioPlayer, QueueManagerDelegate {
      */
     public func next() throws {
         event.playbackEnd.emit(data: .skippedToNext)
-        let nextItem = try queueManager.next()
-        try self.load(item: nextItem, playWhenReady: true)
+
+        do {
+            let nextItem = try queueManager.next()
+            try self.load(item: nextItem, playWhenReady: repeatMode != .track)
+        } catch APError.QueueError.noNextItem  {
+            if repeatMode == .queue {
+                try jumpToItem(atIndex: 0, playWhenReady: true)
+            } else {
+                throw APError.QueueError.noNextItem
+            }
+        } catch {
+            throw error
+        }
     }
     
     /**
@@ -134,7 +145,7 @@ public class QueuedAudioPlayer: AudioPlayer, QueueManagerDelegate {
     public func previous() throws {
         event.playbackEnd.emit(data: .skippedToPrevious)
         let previousItem = try queueManager.previous()
-        try self.load(item: previousItem, playWhenReady: true)
+        try self.load(item: previousItem, playWhenReady: repeatMode != .track)
     }
     
     /**
@@ -198,11 +209,9 @@ public class QueuedAudioPlayer: AudioPlayer, QueueManagerDelegate {
         case .queue:
             do {
                 try self.next()
-            } catch APError.QueueError.noNextItem {
-                do {
-                    try jumpToItem(atIndex: 0, playWhenReady: true)
-                } catch { /* TODO: handle possible errors from load */ }
-            } catch { /* TODO: handle possible errors from load */ }
+            } catch {
+                try? jumpToItem(atIndex: 0, playWhenReady: true)
+            }
         }
     }
 

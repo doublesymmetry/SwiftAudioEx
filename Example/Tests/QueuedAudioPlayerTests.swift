@@ -166,6 +166,146 @@ class QueuedAudioPlayerTests: QuickSpec {
                     
                 }
             }
+
+            describe("its repeat mode") {
+                context("when adding 2 items") {
+                    beforeEach {
+                        try? audioPlayer.add(items: [ShortSource.getAudioItem(), ShortSource.getAudioItem()])
+                    }
+
+                    context("then setting repeat mode off") {
+                        beforeEach {
+                            audioPlayer.repeatMode = .off
+                        }
+
+                        context("allow playback to end") {
+                            beforeEach {
+                                audioPlayer.seek(to: 0.0682)
+                            }
+
+                            it("should move to next item") {
+                                expect(audioPlayer.nextItems.count).toEventually(equal(0))
+                                expect(audioPlayer.currentIndex).toEventually(equal(1))
+                                expect(audioPlayer.playerState).toEventually(equal(AudioPlayerState.playing))
+                            }
+
+                            context("allow playback to end again") {
+                                beforeEach {
+                                    audioPlayer.seek(to: 0.0682)
+                                }
+
+                                it("should stop playback normally") {
+                                    expect(audioPlayer.nextItems.count).toEventually(equal(0))
+                                    expect(audioPlayer.currentIndex).toEventually(equal(1))
+                                    expect(audioPlayer.playerState).toEventually(equal(AudioPlayerState.paused))
+                                }
+                            }
+                        }
+
+                        context("then calling next()") {
+                            beforeEach {
+                                try? audioPlayer.next()
+                            }
+
+                            it("should move to next item") {
+                                expect(audioPlayer.nextItems.count).to(equal(0))
+                                expect(audioPlayer.currentIndex).to(equal(1))
+                                expect(audioPlayer.playerState).toEventually(equal(AudioPlayerState.playing))
+                            }
+
+                            context("then calling next() again") {
+                                it("should fail") {
+                                    expect(try audioPlayer.next()).to(throwError())
+                                }
+                            }
+                        }
+                    }
+
+                    context("then setting repeat mode track") {
+                        beforeEach {
+                            audioPlayer.repeatMode = .track
+                        }
+
+                        context("allow playback to end") {
+                            beforeEach {
+                                audioPlayer.seek(to: 0.0682)
+                            }
+
+                            it("should restart current item") {
+                                expect(audioPlayer.currentTime).toEventually(equal(0))
+                                expect(audioPlayer.nextItems.count).toEventually(equal(1))
+                                expect(audioPlayer.currentIndex).toEventually(equal(0))
+                                expect(audioPlayer.playerState).toEventually(equal(AudioPlayerState.playing))
+                            }
+                        }
+
+                        context("then calling next()") {
+                            beforeEach {
+                                try? audioPlayer.next()
+                            }
+
+                            it("should move to next item but should not play") {
+                                expect(audioPlayer.nextItems.count).to(equal(0))
+                                expect(audioPlayer.playerState).toEventually(equal(AudioPlayerState.ready))
+                            }
+                        }
+                    }
+
+                    context("then setting repeat mode queue") {
+                        beforeEach {
+                            audioPlayer.repeatMode = .queue
+                        }
+
+                        context("allow playback to end") {
+                            beforeEach {
+                                audioPlayer.seek(to: 0.0682)
+                            }
+
+                            it("should move to next item and should play") {
+                                expect(audioPlayer.nextItems.count).toEventually(equal(0))
+                                expect(audioPlayer.currentIndex).toEventually(equal(1))
+                                expect(audioPlayer.playerState).toEventually(equal(AudioPlayerState.playing))
+                            }
+
+                            context("allow playback to end again") {
+                                beforeEach {
+                                    audioPlayer.seek(to: 0.0682)
+                                }
+
+                                it("should move to first track and should play") {
+                                    expect(audioPlayer.nextItems.count).toEventually(equal(1))
+                                    expect(audioPlayer.currentIndex).toEventually(equal(0))
+                                    expect(audioPlayer.playerState).toEventually(equal(AudioPlayerState.playing))
+                                }
+                            }
+                        }
+
+                        context("then calling next()") {
+                            beforeEach {
+                                try? audioPlayer.next()
+                            }
+
+                            it("should move to next item and should play") {
+                                expect(audioPlayer.nextItems.count).to(equal(0))
+                                expect(audioPlayer.currentIndex).to(equal(1))
+                                expect(audioPlayer.playerState).toEventually(equal(AudioPlayerState.playing))
+                            }
+
+                            context("then calling next() again") {
+                                beforeEach {
+                                    try? audioPlayer.next()
+                                }
+
+                                it("should move to first track and should play") {
+                                    expect(audioPlayer.nextItems.count).to(equal(1))
+                                    expect(audioPlayer.currentIndex).to(equal(0))
+                                    expect(audioPlayer.playerState).toEventually(equal(AudioPlayerState.playing))
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 }

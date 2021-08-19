@@ -213,7 +213,7 @@ public class RemoteCommandController {
         }
         else if let error = error as? APError.QueueError {
             switch error {
-            case .noNextItem, .noPreviousItem, .invalidIndex(_, _):
+            case .noNextItem, .noPreviousItem, .invalidIndex(_, _), .noNextWhenRepeatModeTrack:
                 return MPRemoteCommandHandlerStatus.noSuchContent
             }
         }
