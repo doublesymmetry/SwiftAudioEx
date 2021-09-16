@@ -20,7 +20,7 @@ DESC
                         'Jørgen Henrichsen' => 'jh.henrichs@gmail.com', }
   s.source           = { :git => 'https://github.com/DoubleSymmetry/SwiftAudioEx.git', :tag => s.version.to_s }
 
-  s.ios.deployment_target = '10.0'
+  s.ios.deployment_target = '11.0'
   s.swift_version = '5.0'
   s.source_files = 'SwiftAudioEx/Classes/**/*'
 end

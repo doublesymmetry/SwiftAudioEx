@@ -3,7 +3,7 @@ import PackageDescription
 
 let package = Package(
     name: "SwiftAudio",
-    platforms: [.iOS(.v10)],
+    platforms: [.iOS(.v11)],
     products: [
         .library(
             name: "SwiftAudioEx",
