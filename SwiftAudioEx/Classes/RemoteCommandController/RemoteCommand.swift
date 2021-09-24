@@ -103,7 +103,7 @@ public struct FeedbackCommand: RemoteCommandProtocol {
     }
 }
 
-public enum RemoteCommand {
+public enum RemoteCommand: CustomStringConvertible {
 
     case play
     
@@ -128,6 +128,23 @@ public enum RemoteCommand {
     case dislike(isActive: Bool, localizedTitle: String, localizedShortTitle: String)
     
     case bookmark(isActive: Bool, localizedTitle: String, localizedShortTitle: String)
+
+    public var description: String {
+        switch self {
+        case .play: return "play"
+        case .pause: return "pause"
+        case .stop: return "stop"
+        case .togglePlayPause: return "togglePlayPause"
+        case .next: return "nextTrack"
+        case .previous: return "previousTrack"
+        case .changePlaybackPosition: return "changePlaybackPosition"
+        case .skipForward(_): return "skipForward"
+        case .skipBackward(_): return "skipBackward"
+        case .like(_, _, _): return "like"
+        case .dislike(_, _, _): return "dislike"
+        case .bookmark(_, _, _): return "bookmark"
+        }
+    }
     
     /**
      All values in an array for convenience.
