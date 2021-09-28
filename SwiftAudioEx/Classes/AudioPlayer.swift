@@ -240,6 +240,15 @@ public class AudioPlayer: AVPlayerWrapperDelegate {
             self.enableRemoteCommands(remoteCommands)
         }
     }
+
+    /**
+     Syncs the current remoteCommands with the iOS command center.
+     Can be used to update item states - e.g. like, dislike and bookmark.
+     */
+    @available(*, deprecated, message: "Directly set .remoteCommands instead")
+    public func syncRemoteCommandsWithCommandCenter() {
+        self.enableRemoteCommands(remoteCommands)
+    }
     
     // MARK: - NowPlayingInfo
     
