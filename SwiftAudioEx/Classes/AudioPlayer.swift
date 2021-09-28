@@ -42,7 +42,13 @@ public class AudioPlayer: AVPlayerWrapperDelegate {
     /**
      Default remote commands to use for each playing item
      */
-    public var remoteCommands: [RemoteCommand] = []
+    public var remoteCommands: [RemoteCommand] = [] {
+        didSet {
+            if let item = currentItem {
+                self.enableRemoteCommands(forItem: item)
+            }
+        }
+    }
     
     
     // MARK: - Getters from AVPlayerWrapper
@@ -233,14 +239,6 @@ public class AudioPlayer: AVPlayerWrapperDelegate {
         else {
             self.enableRemoteCommands(remoteCommands)
         }
-    }
-
-    /**
-     Syncs the current remoteCommands with the iOS command center.
-     Can be used to update item states - e.g. like, dislike and bookmark.
-     */
-    public func syncRemoteCommandsWithCommandCenter() {
-        self.enableRemoteCommands(remoteCommands)
     }
     
     // MARK: - NowPlayingInfo
