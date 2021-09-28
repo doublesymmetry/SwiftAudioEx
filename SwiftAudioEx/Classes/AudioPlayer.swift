@@ -273,8 +273,8 @@ public class AudioPlayer: AVPlayerWrapperDelegate {
      - Playback rate
      */
     public func updateNowPlayingPlaybackValues() {
-        updateNowPlayingDuration(duration)
         updateNowPlayingCurrentTime(currentTime)
+        updateNowPlayingDuration(duration)
         updateNowPlayingRate(rate)
     }
     
