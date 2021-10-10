@@ -185,6 +185,20 @@ public class AudioPlayer: AVPlayerWrapperDelegate {
         }
         enableRemoteCommands(forItem: item)
     }
+
+    /**
+     Preload item.
+     */
+    public func preload(item: AudioItem) {
+         self.wrapper.preload(item: item);
+     }
+
+    /**
+     cancel preload item.
+     */
+     public func cancelPreload(item: AudioItem) {
+         self.wrapper.cancelPreload(item: item);
+     }
     
     /**
      Toggle playback status.

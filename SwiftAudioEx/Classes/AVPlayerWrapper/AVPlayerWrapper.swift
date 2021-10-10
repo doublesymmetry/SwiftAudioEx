@@ -31,7 +31,9 @@ class AVPlayerWrapper: AVPlayerWrapperProtocol {
     let playerTimeObserver: AVPlayerTimeObserver
     let playerItemNotificationObserver: AVPlayerItemNotificationObserver
     let playerItemObserver: AVPlayerItemObserver
-    
+    let additionalAVPlayer: AVPlayer
+    public var preloadedAssets: [String: AVAsset]
+
     /**
      True if the last call to load(from:playWhenReady) had playWhenReady=true.
      */
@@ -58,6 +60,9 @@ class AVPlayerWrapper: AVPlayerWrapperProtocol {
         self.playerItemNotificationObserver = AVPlayerItemNotificationObserver()
         self.playerItemObserver = AVPlayerItemObserver()
         
+        self.additionalAVPlayer = AVPlayer();
+        self.preloadedAssets = [String: AVAsset]();
+
         self.playerObserver.delegate = self
         self.playerTimeObserver.delegate = self
         self.playerItemNotificationObserver.delegate = self
@@ -186,7 +191,13 @@ class AVPlayerWrapper: AVPlayerWrapperProtocol {
             recreateAVPlayer()
         }
         
-        self._pendingAsset = AVURLAsset(url: url, options: options)
+        if (self.preloadedAssets[url.absoluteString] != nil){
+             self._pendingAsset = self.preloadedAssets[url.absoluteString]
+             self.loadAssetIntoPlayer();
+             return
+        } else {
+            self._pendingAsset = AVURLAsset(url: url, options: options)
+        }
         
         if let pendingAsset = _pendingAsset {
             self._state = .loading
@@ -203,20 +214,7 @@ class AVPlayerWrapper: AVPlayerWrapperProtocol {
                     let isPendingAsset = (self._pendingAsset != nil && pendingAsset.isEqual(self._pendingAsset))
                     switch status {
                     case .loaded:
-                        if isPendingAsset {
-                            let currentItem = AVPlayerItem(asset: pendingAsset, automaticallyLoadedAssetKeys: [Constants.assetPlayableKey])
-                            currentItem.preferredForwardBufferDuration = self.bufferDuration
-                            self.avPlayer.replaceCurrentItem(with: currentItem)
-                            
-                            // Register for events
-                            self.playerTimeObserver.registerForBoundaryTimeEvents()
-                            self.playerObserver.startObserving()
-                            self.playerItemNotificationObserver.startObserving(item: currentItem)
-                            self.playerItemObserver.startObserving(item: currentItem)
-                            for format in pendingAsset.availableMetadataFormats {
-                                self.delegate?.AVWrapper(didReceiveMetadata: pendingAsset.metadata(forFormat: format))
-                            }
-                        }
+                        self.loadAssetIntoPlayer();
                         break
                         
                     case .failed:
@@ -234,6 +232,25 @@ class AVPlayerWrapper: AVPlayerWrapperProtocol {
                     }
                 }
             })
+        }
+    }
+
+    func loadAssetIntoPlayer() {
+        if let pendingAsset = _pendingAsset {
+
+            let isPendingAsset = (self._pendingAsset != nil && pendingAsset.isEqual(self._pendingAsset))
+
+            if isPendingAsset {
+                let currentItem = AVPlayerItem(asset: pendingAsset, automaticallyLoadedAssetKeys: [Constants.assetPlayableKey])
+                currentItem.preferredForwardBufferDuration = self.bufferDuration
+                self.avPlayer.replaceCurrentItem(with: currentItem)
+
+                // Register for events
+                self.playerTimeObserver.registerForBoundaryTimeEvents()
+                self.playerObserver.startObserving()
+                self.playerItemNotificationObserver.startObserving(item: currentItem)
+                self.playerItemObserver.startObserving(item: currentItem)
+            }
         }
     }
     
@@ -319,6 +336,42 @@ extension AVPlayerWrapper: AVPlayerObserverDelegate {
             break
         }
     }
+
+   func cancelPreload(item: AudioItem) {
+         let url = item.getSourceUrl();
+         self.preloadedAssets[url]?.cancelLoading();
+         self.preloadedAssets[url] = nil;
+     }
+
+    func preload(item: AudioItem) {
+        let urlString = item.getSourceUrl();
+        let url =  URL(string: urlString);
+
+        let asset = AVURLAsset(url:url!);
+        let keys = ["playable", "tracks", "duration"];
+
+        asset.loadValuesAsynchronously(forKeys: keys, completionHandler: {
+            var _: NSError? = nil
+
+            for key in keys {
+                let status = asset.statusOfValue(forKey: key, error: nil)
+                if status == AVKeyValueStatus.failed {
+                    return
+                }
+            }
+
+            if( self.preloadedAssets[urlString] == nil){
+                let playerItem = AVPlayerItem(asset: asset);
+                self.additionalAVPlayer.replaceCurrentItem(with: playerItem)
+
+                self.additionalAVPlayer.play();
+                self.additionalAVPlayer.pause();
+                DispatchQueue.main.async {
+                    self.preloadedAssets[urlString] = asset;
+                }
+            }
+        });
+     }
     
 }
 
