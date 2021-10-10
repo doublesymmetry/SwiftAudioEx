@@ -343,6 +343,15 @@ extension AVPlayerWrapper: AVPlayerObserverDelegate {
          self.preloadedAssets[url] = nil;
      }
 
+    func cancelAllPreloads() {
+        for asset in self.preloadedAssets {
+            if (self.preloadedAssets[asset.key] != nil){
+                self.preloadedAssets[asset.key]?.cancelLoading();
+                self.preloadedAssets[asset.key] = nil;
+            }
+        }
+    }
+
     func preload(item: AudioItem) {
         let urlString = item.getSourceUrl();
         let url =  URL(string: urlString);

@@ -190,16 +190,20 @@ public class AudioPlayer: AVPlayerWrapperDelegate {
      Preload item.
      */
     public func preload(item: AudioItem) {
-         self.wrapper.preload(item: item);
-     }
+        self.wrapper.preload(item: item);
+    }
 
     /**
      cancel preload item.
      */
-     public func cancelPreload(item: AudioItem) {
-         self.wrapper.cancelPreload(item: item);
-     }
-    
+    public func cancelPreload(item: AudioItem) {
+        self.wrapper.cancelPreload(item: item);
+    }
+
+    public func cancelAllPreloads() {
+        self.wrapper.cancelAllPreloads();
+    }
+
     /**
      Toggle playback status.
      */
