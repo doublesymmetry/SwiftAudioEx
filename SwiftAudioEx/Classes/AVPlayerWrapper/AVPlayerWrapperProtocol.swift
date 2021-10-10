@@ -9,7 +9,7 @@ import Foundation
 import AVFoundation
 
 
-protocol AVPlayerWrapperProtocol: class {
+protocol AVPlayerWrapperProtocol: AnyObject {
     
     var state: AVPlayerWrapperState { get }
     
@@ -53,7 +53,9 @@ protocol AVPlayerWrapperProtocol: class {
     
     func load(from url: URL, playWhenReady: Bool, initialTime: TimeInterval?, options: [String: Any]?)
 
-     func preload(item: AudioItem)
+    func preload(item: AudioItem)
 
-     func cancelPreload(item: AudioItem)
+    func cancelAllPreloads()
+
+    func cancelPreload(item: AudioItem)
 }
