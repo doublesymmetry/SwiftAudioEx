@@ -37,6 +37,9 @@ class AVPlayerWrapper: AVPlayerWrapperProtocol {
      */
     fileprivate var _playWhenReady: Bool = true
     fileprivate var _initialTime: TimeInterval?
+
+    /// True when the track was paused for the purpose of switching tracks
+    fileprivate var _pausedForLoad: Bool = false
     
     fileprivate var _state: AVPlayerWrapperState = AVPlayerWrapperState.idle {
         didSet {
@@ -100,7 +103,7 @@ class AVPlayerWrapper: AVPlayerWrapperProtocol {
             return seconds
         }
         else if let seconds = currentItem?.loadedTimeRanges.first?.timeRangeValue.duration.seconds,
-            !seconds.isNaN {
+                !seconds.isNaN {
             return seconds
         }
         return 0.0
@@ -236,7 +239,10 @@ class AVPlayerWrapper: AVPlayerWrapperProtocol {
     
     func load(from url: URL, playWhenReady: Bool, initialTime: TimeInterval? = nil, options: [String : Any]? = nil) {
         _initialTime = initialTime
+
+        _pausedForLoad = true
         self.pause()
+
         self.load(from: url, playWhenReady: playWhenReady, options: options)
     }
     
@@ -277,6 +283,7 @@ extension AVPlayerWrapper: AVPlayerObserverDelegate {
             if currentItem == nil {
                 _state = .idle
             }
+            else if _pausedForLoad == true {}
             else {
                 self._state = .paused
             }
@@ -293,6 +300,7 @@ extension AVPlayerWrapper: AVPlayerObserverDelegate {
         switch status {
         case .readyToPlay:
             self._state = .ready
+            self._pausedForLoad = false
             if _playWhenReady && (_initialTime ?? 0) == 0 {
                 self.play()
             }
