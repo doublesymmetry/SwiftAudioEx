@@ -356,7 +356,8 @@ extension AVPlayerWrapper: AVPlayerObserverDelegate {
         let urlString = item.getSourceUrl();
         let url =  URL(string: urlString);
 
-        let asset = AVURLAsset(url:url!);
+        let options = (item as? AssetOptionsProviding)?.getAssetOptions()
+        let asset = AVURLAsset(url:url!, options: options)
         let keys = ["playable", "tracks", "duration"];
 
         asset.loadValuesAsynchronously(forKeys: keys, completionHandler: {

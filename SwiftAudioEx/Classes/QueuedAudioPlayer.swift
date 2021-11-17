@@ -232,7 +232,7 @@ public class QueuedAudioPlayer: AudioPlayer, QueueManagerDelegate {
         self.event.queueIndex.emit(data: (nil, 0))
     }
 
-    func preloadNext() {
+    public func preloadNext() {
         let nextItems = queueManager.nextItems
 
         if nextItems.count > 0 {
