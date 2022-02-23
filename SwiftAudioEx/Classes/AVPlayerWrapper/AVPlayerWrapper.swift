@@ -165,16 +165,21 @@ class AVPlayerWrapper: AVPlayerWrapperProtocol {
     }
     
     func seek(to seconds: TimeInterval) {
-        avPlayer.seek(to: CMTimeMakeWithSeconds(seconds, preferredTimescale: 1000)) { (finished) in
-            if let _ = self._initialTime {
-                self._initialTime = nil
-                if self._playWhenReady {
-                    self.play()
-                }
-            }
-            self.delegate?.AVWrapper(seekTo: Int(seconds), didFinish: finished)
-        }
-    }
+       // if the player is loading then we need to defer seeking until it's ready.
+       if (self._state == AVPlayerWrapperState.loading) {
+         self._initialTime = seconds
+       } else {
+         avPlayer.seek(to: CMTimeMakeWithSeconds(seconds, preferredTimescale: 1000)) { (finished) in
+             if let _ = self._initialTime {
+                 self._initialTime = nil
+                 if self._playWhenReady {
+                     self.play()
+                 }
+             }
+             self.delegate?.AVWrapper(seekTo: Int(seconds), didFinish: finished)
+         }
+       }
+     }
     
     
     
