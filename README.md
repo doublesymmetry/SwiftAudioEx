@@ -14,7 +14,7 @@ To see the audio player in action, run the example project!
 To run the example project, clone the repo, and run `pod install` from the Example directory first.
 
 ## Requirements
-iOS 10.0+
+iOS 11.0+
 
 ## Installation
 
