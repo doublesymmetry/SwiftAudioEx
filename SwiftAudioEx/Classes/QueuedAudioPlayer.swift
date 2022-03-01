@@ -231,4 +231,12 @@ public class QueuedAudioPlayer: AudioPlayer, QueueManagerDelegate {
     func onReceivedFirstItem() {
         self.event.queueIndex.emit(data: (nil, 0))
     }
+
+    public func preloadNext() {
+        let nextItems = queueManager.nextItems
+
+        if nextItems.count > 0 {
+             self.preload(item: nextItems[0])
+        }
+    }
 }
