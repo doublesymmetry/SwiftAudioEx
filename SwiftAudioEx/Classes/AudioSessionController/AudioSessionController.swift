@@ -8,11 +8,14 @@
 import Foundation
 import AVFoundation
 
-
-public protocol AudioSessionControllerDelegate: class {
-    func handleInterruption(type: AVAudioSession.InterruptionType)
+public enum InterruptionType: Equatable {
+    case began
+    case ended(shouldResume: Bool)
 }
 
+public protocol AudioSessionControllerDelegate: AnyObject {
+    func handleInterruption(type: InterruptionType)
+}
 
 /**
  Simple controller for the `AVAudioSession`. If you need more advanced options, just use the `AVAudioSession` directly.
@@ -112,7 +115,19 @@ public class AudioSessionController {
                 return
         }
         
-        self.delegate?.handleInterruption(type: type)
+        switch type {
+        case .began:
+            self.delegate?.handleInterruption(type: .began)
+        case .ended:
+            guard let typeValue = userInfo[AVAudioSessionInterruptionOptionKey] as? UInt else {
+                self.delegate?.handleInterruption(type: .ended(shouldResume: false))
+                return
+            }
+            
+            let options = AVAudioSession.InterruptionOptions(rawValue: typeValue)
+            self.delegate?.handleInterruption(type: .ended(shouldResume: options.contains(.shouldResume)))
+        @unknown default: return
+        }
     }
     
 }

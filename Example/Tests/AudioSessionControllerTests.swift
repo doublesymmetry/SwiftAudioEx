@@ -52,11 +52,12 @@ class AudioSessionControllerTests: QuickSpec {
             }
             
             describe("its delegate") {
-                context("when a interruption arrives") {
+                context("when a ended interruption arrives") {
                     var delegate: AudioSessionControllerDelegateImplementation!
                     beforeEach {
                         let notification = Notification(name: AVAudioSession.interruptionNotification, object: nil, userInfo: [
-                            AVAudioSessionInterruptionTypeKey: UInt(0)
+                            AVAudioSessionInterruptionTypeKey: UInt(0),
+                            AVAudioSessionInterruptionOptionKey: UInt(1),
                             ])
                         delegate = AudioSessionControllerDelegateImplementation()
                         audioSessionController.delegate = delegate
@@ -64,7 +65,23 @@ class AudioSessionControllerTests: QuickSpec {
                     }
                     
                     it("should eventually be updated with the interruption type") {
-                        expect(delegate.interruptionType).toEventuallyNot(beNil())
+                        expect(delegate.interruptionType).toEventually(equal(InterruptionType.ended(shouldResume: true)))
+                    }
+                    
+                }
+                context("when a begin interruption arrives") {
+                    var delegate: AudioSessionControllerDelegateImplementation!
+                    beforeEach {
+                        let notification = Notification(name: AVAudioSession.interruptionNotification, object: nil, userInfo: [
+                            AVAudioSessionInterruptionTypeKey: UInt(1),
+                            ])
+                        delegate = AudioSessionControllerDelegateImplementation()
+                        audioSessionController.delegate = delegate
+                        audioSessionController.handleInterruption(notification: notification)
+                    }
+                    
+                    it("should eventually be updated with the interruption type") {
+                        expect(delegate.interruptionType).toEventually(equal(InterruptionType.began))
                     }
                     
                 }
@@ -91,10 +108,9 @@ class AudioSessionControllerTests: QuickSpec {
 }
 
 class AudioSessionControllerDelegateImplementation: AudioSessionControllerDelegate {
+    var interruptionType: InterruptionType? = nil
     
-    var interruptionType: AVAudioSession.InterruptionType? = nil
-    
-    func handleInterruption(type: AVAudioSession.InterruptionType) {
+    func handleInterruption(type: InterruptionType) {
         self.interruptionType = type
     }
 }
