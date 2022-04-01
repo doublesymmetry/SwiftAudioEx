@@ -9,9 +9,11 @@ import Foundation
 import AVFoundation
 
 
-protocol AVPlayerWrapperProtocol: class {
+protocol AVPlayerWrapperProtocol: AnyObject {
     
     var state: AVPlayerWrapperState { get }
+
+    var willPlayWhenReady: Bool { get }
     
     var currentItem: AVPlayerItem? { get }
     

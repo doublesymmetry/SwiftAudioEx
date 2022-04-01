@@ -123,14 +123,16 @@ public class QueuedAudioPlayer: AudioPlayer, QueueManagerDelegate {
      - throws: `APError`
      */
     public func next() throws {
+        let shouldPlayWhenReady = (playerState == .loading) ? willPlayWhenReady : [.buffering, .playing].contains(playerState)
+
         do {
             let nextItem = try queueManager.next()
             event.playbackEnd.emit(data: .skippedToNext)
-            try self.load(item: nextItem, playWhenReady: repeatMode != .track)
+            try self.load(item: nextItem, playWhenReady: shouldPlayWhenReady)
         } catch APError.QueueError.noNextItem  {
             if repeatMode == .queue {
                 event.playbackEnd.emit(data: .skippedToNext)
-                try jumpToItem(atIndex: 0, playWhenReady: true)
+                try jumpToItem(atIndex: 0, playWhenReady: shouldPlayWhenReady)
             } else {
                 throw APError.QueueError.noNextItem
             }
@@ -143,9 +145,11 @@ public class QueuedAudioPlayer: AudioPlayer, QueueManagerDelegate {
      Step to the previous item in the queue.
      */
     public func previous() throws {
+        let shouldPlayWhenReady = (playerState == .loading) ? willPlayWhenReady : [.buffering, .playing].contains(playerState)
+
         let previousItem = try queueManager.previous()
         event.playbackEnd.emit(data: .skippedToPrevious)
-        try self.load(item: previousItem, playWhenReady: repeatMode != .track)
+        try self.load(item: previousItem, playWhenReady: shouldPlayWhenReady)
     }
     
     /**
@@ -205,7 +209,7 @@ public class QueuedAudioPlayer: AudioPlayer, QueueManagerDelegate {
         case .off:
             do {
                 let nextItem = try queueManager.next()
-                try self.load(item: nextItem, playWhenReady: repeatMode != .track)
+                try self.load(item: nextItem, playWhenReady: true)
             } catch { /* playback finished */ }
         case .track:
             seek(to: 0)
@@ -213,7 +217,7 @@ public class QueuedAudioPlayer: AudioPlayer, QueueManagerDelegate {
         case .queue:
             do {
                 let nextItem = try queueManager.next()
-                try self.load(item: nextItem, playWhenReady: repeatMode != .track)
+                try self.load(item: nextItem, playWhenReady: true)
             } catch {
                 try? jumpToItem(atIndex: 0, playWhenReady: true)
             }

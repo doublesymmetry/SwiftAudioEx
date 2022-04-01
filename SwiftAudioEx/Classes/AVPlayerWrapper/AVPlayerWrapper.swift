@@ -89,6 +89,10 @@ class AVPlayerWrapper: AVPlayerWrapperProtocol {
         get { return avPlayer.automaticallyWaitsToMinimizeStalling }
         set { avPlayer.automaticallyWaitsToMinimizeStalling = newValue }
     }
+
+    var willPlayWhenReady: Bool {
+        return _playWhenReady
+    }
     
     var currentTime: TimeInterval {
         let seconds = avPlayer.currentTime().seconds

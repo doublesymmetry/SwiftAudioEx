@@ -52,6 +52,10 @@ public class AudioPlayer: AVPlayerWrapperDelegate {
     
     
     // MARK: - Getters from AVPlayerWrapper
+
+    internal var willPlayWhenReady: Bool {
+        return wrapper.willPlayWhenReady
+    }
     
     /**
      The elapsed playback time of the current item.
