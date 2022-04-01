@@ -222,10 +222,18 @@ class AVPlayerWrapper: AVPlayerWrapperProtocol {
                             self.playerObserver.startObserving()
                             self.playerItemNotificationObserver.startObserving(item: currentItem)
                             self.playerItemObserver.startObserving(item: currentItem)
-                            for format in pendingAsset.availableMetadataFormats {
-                                let timeRange = CMTimeRange(start: CMTime(seconds: 0, preferredTimescale: 1000), end: pendingAsset.duration)
-                                let group = AVTimedMetadataGroup(items: pendingAsset.metadata(forFormat: format), timeRange: timeRange)
-                                self.delegate?.AVWrapper(didReceiveMetadata: [group])
+
+                            if pendingAsset.availableChapterLocales.count > 0 {
+                                for locale in pendingAsset.availableChapterLocales {
+                                    let chapters = pendingAsset.chapterMetadataGroups(withTitleLocale: locale, containingItemsWithCommonKeys: nil)
+                                    self.delegate?.AVWrapper(didReceiveMetadata: chapters)
+                                }
+                            } else {
+                                for format in pendingAsset.availableMetadataFormats {
+                                    let timeRange = CMTimeRange(start: CMTime(seconds: 0, preferredTimescale: 1000), end: pendingAsset.duration)
+                                    let group = AVTimedMetadataGroup(items: pendingAsset.metadata(forFormat: format), timeRange: timeRange)
+                                    self.delegate?.AVWrapper(didReceiveMetadata: [group])
+                                }
                             }
                         }
                         break
