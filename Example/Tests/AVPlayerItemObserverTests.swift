@@ -47,9 +47,9 @@ class AVPlayerItemObserverTests: QuickSpec {
 }
 
 class AVPlayerItemObserverDelegateHolder: AVPlayerItemObserverDelegate {
-    var receivedMetadata: ((_ metadata: [AVMetadataItem]) -> Void)?
-
-    func item(didReceiveMetadata metadata: [AVMetadataItem]) {
+    var receivedMetadata: ((_ metadata: [AVTimedMetadataGroup]) -> Void)?
+    
+    func item(didReceiveMetadata metadata: [AVTimedMetadataGroup]) {
         receivedMetadata?(metadata)
     }
 

@@ -219,7 +219,9 @@ class AVPlayerWrapper: AVPlayerWrapperProtocol {
                             self.playerItemNotificationObserver.startObserving(item: currentItem)
                             self.playerItemObserver.startObserving(item: currentItem)
                             for format in pendingAsset.availableMetadataFormats {
-                                self.delegate?.AVWrapper(didReceiveMetadata: pendingAsset.metadata(forFormat: format))
+                                let timeRange = CMTimeRange(start: CMTime(seconds: 0, preferredTimescale: 1000), end: pendingAsset.duration)
+                                let group = AVTimedMetadataGroup(items: pendingAsset.metadata(forFormat: format), timeRange: timeRange)
+                                self.delegate?.AVWrapper(didReceiveMetadata: [group])
                             }
                         }
                         break
@@ -358,8 +360,8 @@ extension AVPlayerWrapper: AVPlayerItemObserverDelegate {
     func item(didUpdateDuration duration: Double) {
         self.delegate?.AVWrapper(didUpdateDuration: duration)
     }
-
-    func item(didReceiveMetadata metadata: [AVMetadataItem]) {
+    
+    func item(didReceiveMetadata metadata: [AVTimedMetadataGroup]) {
         self.delegate?.AVWrapper(didReceiveMetadata: metadata)
     }
     

@@ -16,7 +16,7 @@ extension AudioPlayer {
     public typealias FailEventData = (Error?)
     public typealias SeekEventData = (seconds: Int, didFinish: Bool)
     public typealias UpdateDurationEventData = (Double)
-    public typealias MetadataEventData = ([AVMetadataItem])
+    public typealias MetadataEventData = ([AVTimedMetadataGroup])
     public typealias DidRecreateAVPlayerEventData = ()
     public typealias QueueIndexEventData = (previousIndex: Int?, newIndex: Int?)
     
