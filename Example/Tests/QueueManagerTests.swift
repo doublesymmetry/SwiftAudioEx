@@ -70,6 +70,53 @@ class QueueManagerTests: QuickSpec {
                 }
                 
             }
+
+            describe("when adding at index") {
+                context("adding item at index 0 when queue is empty") {
+                    it("should add element successfully") {
+                        try manager.addItems([3], at: 0)
+                        expect(manager.current).to(equal(3))
+                    }
+                }
+
+                context("adding item at index") {
+                    beforeEach {
+                        manager.addItems([3, 1])
+                    }
+
+                    context("current [element count]") {
+                        it("should add element successfully") {
+                            try manager.addItems([5], at: manager.items.count)
+                            expect(manager.items.last).to(equal(5))
+                        }
+                    }
+
+                    context("before the [current index]") {
+                        it("should add element successfully") {
+                            try manager.addItems([5], at: 0)
+                            expect(manager.current).to(equal(3))
+                            expect(manager.currentIndex).to(equal(1))
+                        }
+                    }
+
+                    context("after the [current index]") {
+                        it("should add element successfully") {
+                            try manager.addItems([5], at: 1)
+                            expect(manager.current).to(equal(3))
+                            expect(manager.currentIndex).to(equal(0))
+                        }
+                    }
+
+                    context("at [current index]") {
+                        it("should add element successfully") {
+                            try manager.next()
+                            try manager.addItems([5], at: 1)
+                            expect(manager.current).to(equal(1))
+                            expect(manager.currentIndex).to(equal(2))
+                        }
+                    }
+                }
+            }
             
             context("when adding one item") {
                 

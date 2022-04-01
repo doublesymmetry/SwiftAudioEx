@@ -94,12 +94,13 @@ class QueueManager<T> {
      - parameter at: The index to insert the items at.
      */
     public func addItems(_ items: [T], at index: Int) throws {
-        guard index >= 0 && _items.count > index else {
-            throw APError.QueueError.invalidIndex(index: index, message: "Index for addition has to be positive and smaller than the count of current items (\(_items.count))")
+        guard index >= 0 && _items.count >= index else {
+            throw APError.QueueError.invalidIndex(index: index, message: "Index to insert at has to be non-negative and equal to or smaller than the number of items: (\(_items.count))")
         }
-        
+
         _items.insert(contentsOf: items, at: index)
-        if (_currentIndex >= index) { _currentIndex = _currentIndex + items.count }
+
+        if (_currentIndex >= index && _items.count != 1) { _currentIndex = _currentIndex + items.count }
     }
     
     /**
