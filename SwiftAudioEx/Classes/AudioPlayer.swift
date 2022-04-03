@@ -11,22 +11,15 @@ import MediaPlayer
 public typealias AudioPlayerState = AVPlayerWrapperState
 
 public class AudioPlayer: AVPlayerWrapperDelegate {
-    
-    private var _wrapper: AVPlayerWrapperProtocol
-    
+
     /// The wrapper around the underlying AVPlayer
-    var wrapper: AVPlayerWrapperProtocol {
-        return _wrapper
-    }
+    let wrapper: AVPlayerWrapperProtocol = AVPlayerWrapper()
     
     public let nowPlayingInfoController: NowPlayingInfoControllerProtocol
     public let remoteCommandController: RemoteCommandController
     public let event = EventHolder()
     
-    var _currentItem: AudioItem?
-    public var currentItem: AudioItem? {
-        return _currentItem
-    }
+    private(set) var currentItem: AudioItem?
     
     /**
      Set this to false to disable automatic updating of now playing info for control center and lock screen.
@@ -96,7 +89,7 @@ public class AudioPlayer: AVPlayerWrapperDelegate {
      */
     public var bufferDuration: TimeInterval {
         get { return wrapper.bufferDuration }
-        set { _wrapper.bufferDuration = newValue }
+        set { wrapper.bufferDuration = newValue }
     }
     
     /**
@@ -104,7 +97,7 @@ public class AudioPlayer: AVPlayerWrapperDelegate {
      */
     public var timeEventFrequency: TimeEventFrequency {
         get { return wrapper.timeEventFrequency }
-        set { _wrapper.timeEventFrequency = newValue }
+        set { wrapper.timeEventFrequency = newValue }
     }
     
     /**
@@ -112,17 +105,17 @@ public class AudioPlayer: AVPlayerWrapperDelegate {
      */
     public var automaticallyWaitsToMinimizeStalling: Bool {
         get { return wrapper.automaticallyWaitsToMinimizeStalling }
-        set { _wrapper.automaticallyWaitsToMinimizeStalling = newValue }
+        set { wrapper.automaticallyWaitsToMinimizeStalling = newValue }
     }
     
     public var volume: Float {
         get { return wrapper.volume }
-        set { _wrapper.volume = newValue }
+        set { wrapper.volume = newValue }
     }
     
     public var isMuted: Bool {
         get { return wrapper.isMuted }
-        set { _wrapper.isMuted = newValue }
+        set { wrapper.isMuted = newValue }
     }
 
     private var _rate: Float = 1.0
@@ -132,8 +125,8 @@ public class AudioPlayer: AVPlayerWrapperDelegate {
             _rate = newValue
 
             // Only set the rate on the wrapper if it is already playing.
-            if _wrapper.rate > 0 {
-                _wrapper.rate = newValue
+            if wrapper.rate > 0 {
+                wrapper.rate = newValue
             }
         }
     }
@@ -147,11 +140,10 @@ public class AudioPlayer: AVPlayerWrapperDelegate {
      */
     public init(nowPlayingInfoController: NowPlayingInfoControllerProtocol = NowPlayingInfoController(),
                 remoteCommandController: RemoteCommandController = RemoteCommandController()) {
-        _wrapper = AVPlayerWrapper()
         self.nowPlayingInfoController = nowPlayingInfoController
         self.remoteCommandController = remoteCommandController
         
-        _wrapper.delegate = self
+        wrapper.delegate = self
         self.remoteCommandController.audioPlayer = self
     }
     
@@ -182,7 +174,7 @@ public class AudioPlayer: AVPlayerWrapperDelegate {
                      initialTime: (item as? InitialTiming)?.getInitialTime(),
                      options:(item as? AssetOptionsProviding)?.getAssetOptions())
         
-        _currentItem = item
+        currentItem = item
         
         if (automaticallyUpdateNowPlayingInfo) {
             loadNowPlayingMetaValues()
@@ -317,7 +309,7 @@ public class AudioPlayer: AVPlayerWrapperDelegate {
     // MARK: - Private
     
     func reset() {
-        _currentItem = nil
+        currentItem = nil
     }
     
     private func setTimePitchingAlgorithmForCurrentItem() {
@@ -381,5 +373,4 @@ public class AudioPlayer: AVPlayerWrapperDelegate {
     func AVWrapperDidRecreateAVPlayer() {
         event.didRecreateAVPlayer.emit(data: ())
     }
-    
 }

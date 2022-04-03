@@ -228,7 +228,7 @@ public class QueuedAudioPlayer: AudioPlayer, QueueManagerDelegate {
 
     func onCurrentIndexChanged(oldIndex: Int, newIndex: Int) {
         // if _currentItem is nil, then this was triggered by a reset. ignore.
-        if _currentItem == nil { return }
+        if currentItem == nil { return }
         event.queueIndex.emit(data: (oldIndex, newIndex))
     }
 

@@ -44,7 +44,7 @@ class AVPlayerWrapper: AVPlayerWrapperProtocol {
     fileprivate var _state: AVPlayerWrapperState = AVPlayerWrapperState.idle {
         didSet {
             if oldValue != _state {
-                self.delegate?.AVWrapper(didChangeState: _state)
+                delegate?.AVWrapper(didChangeState: _state)
             }
         }
     }
