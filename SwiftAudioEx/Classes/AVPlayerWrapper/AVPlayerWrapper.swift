@@ -50,21 +50,21 @@ class AVPlayerWrapper: AVPlayerWrapperProtocol {
     }
     
     public init() {
-        self.avPlayer = AVPlayer()
-        self.playerObserver = AVPlayerObserver()
-        self.playerObserver.player = avPlayer
-        self.playerTimeObserver = AVPlayerTimeObserver(periodicObserverTimeInterval: timeEventFrequency.getTime())
-        self.playerTimeObserver.player = avPlayer
-        self.playerItemNotificationObserver = AVPlayerItemNotificationObserver()
-        self.playerItemObserver = AVPlayerItemObserver()
+        avPlayer = AVPlayer()
+        playerObserver = AVPlayerObserver()
+        playerObserver.player = avPlayer
+        playerTimeObserver = AVPlayerTimeObserver(periodicObserverTimeInterval: timeEventFrequency.getTime())
+        playerTimeObserver.player = avPlayer
+        playerItemNotificationObserver = AVPlayerItemNotificationObserver()
+        playerItemObserver = AVPlayerItemObserver()
         
-        self.playerObserver.delegate = self
-        self.playerTimeObserver.delegate = self
-        self.playerItemNotificationObserver.delegate = self
-        self.playerItemObserver.delegate = self
+        playerObserver.delegate = self
+        playerTimeObserver.delegate = self
+        playerItemNotificationObserver.delegate = self
+        playerItemObserver.delegate = self
 
         // disabled since we're not making use of video playback
-        self.avPlayer.allowsExternalPlayback = false;
+        avPlayer.allowsExternalPlayback = false;
         
         playerTimeObserver.registerForPeriodicTimeEvents()
     }
@@ -338,7 +338,6 @@ extension AVPlayerWrapper: AVPlayerObserverDelegate {
             break
         }
     }
-    
 }
 
 extension AVPlayerWrapper: AVPlayerTimeObserverDelegate {
@@ -370,11 +369,11 @@ extension AVPlayerWrapper: AVPlayerItemObserverDelegate {
     // MARK: - AVPlayerItemObserverDelegate
     
     func item(didUpdateDuration duration: Double) {
-        self.delegate?.AVWrapper(didUpdateDuration: duration)
+        delegate?.AVWrapper(didUpdateDuration: duration)
     }
     
     func item(didReceiveMetadata metadata: [AVTimedMetadataGroup]) {
-        self.delegate?.AVWrapper(didReceiveMetadata: metadata)
+        delegate?.AVWrapper(didReceiveMetadata: metadata)
     }
     
 }
