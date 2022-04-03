@@ -33,7 +33,7 @@ public class AudioSessionController {
      True if another app is currently playing audio.
      */
     public var isOtherAudioPlaying: Bool {
-        return audioSession.isOtherAudioPlaying
+        audioSession.isOtherAudioPlaying
     }
     
     /**
@@ -49,9 +49,7 @@ public class AudioSessionController {
      Set this to false to disable the behaviour.
      */
     public var isObservingForInterruptions: Bool {
-        get {
-            return _isObservingForInterruptions
-        }
+        get { _isObservingForInterruptions }
         set {
             if newValue == _isObservingForInterruptions {
                 return
@@ -117,15 +115,15 @@ public class AudioSessionController {
         
         switch type {
         case .began:
-            self.delegate?.handleInterruption(type: .began)
+            delegate?.handleInterruption(type: .began)
         case .ended:
             guard let typeValue = userInfo[AVAudioSessionInterruptionOptionKey] as? UInt else {
-                self.delegate?.handleInterruption(type: .ended(shouldResume: false))
+                delegate?.handleInterruption(type: .ended(shouldResume: false))
                 return
             }
             
             let options = AVAudioSession.InterruptionOptions(rawValue: typeValue)
-            self.delegate?.handleInterruption(type: .ended(shouldResume: options.contains(.shouldResume)))
+            delegate?.handleInterruption(type: .ended(shouldResume: options.contains(.shouldResume)))
         @unknown default: return
         }
     }

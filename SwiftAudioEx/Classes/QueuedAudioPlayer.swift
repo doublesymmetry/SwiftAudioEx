@@ -24,14 +24,14 @@ public class QueuedAudioPlayer: AudioPlayer, QueueManagerDelegate {
     public var repeatMode: RepeatMode = .off
     
     public override var currentItem: AudioItem? {
-        return queueManager.current
+        queueManager.current
     }
     
     /**
      The index of the current item.
      */
     public var currentIndex: Int {
-        return queueManager.currentIndex
+        queueManager.currentIndex
     }
     
      /**
@@ -51,21 +51,21 @@ public class QueuedAudioPlayer: AudioPlayer, QueueManagerDelegate {
      All items currently in the queue.
      */
     public var items: [AudioItem] {
-        return queueManager.items
+        queueManager.items
     }
     
     /**
      The previous items held by the queue.
      */
     public var previousItems: [AudioItem] {
-        return queueManager.previousItems
+        queueManager.previousItems
     }
     
     /**
      The upcoming items in the queue.
      */
     public var nextItems: [AudioItem] {
-        return queueManager.nextItems
+        queueManager.nextItems
     }
     
     /**

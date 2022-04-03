@@ -47,35 +47,35 @@ public class AudioPlayer: AVPlayerWrapperDelegate {
     // MARK: - Getters from AVPlayerWrapper
 
     internal var willPlayWhenReady: Bool {
-        return wrapper.willPlayWhenReady
+        wrapper.playWhenReady
     }
     
     /**
      The elapsed playback time of the current item.
      */
     public var currentTime: Double {
-        return wrapper.currentTime
+        wrapper.currentTime
     }
     
     /**
      The duration of the current AudioItem.
      */
     public var duration: Double {
-        return wrapper.duration
+        wrapper.duration
     }
     
     /**
      The bufferedPosition of the current AudioItem.
      */
     public var bufferedPosition: Double {
-        return wrapper.bufferedPosition
+        wrapper.bufferedPosition
     }
     
     /**
      The current state of the underlying `AudioPlayer`.
      */
     public var playerState: AudioPlayerState {
-        return wrapper.state
+        wrapper.state
     }
     
     // MARK: - Setters for AVPlayerWrapper
@@ -88,7 +88,7 @@ public class AudioPlayer: AVPlayerWrapperDelegate {
      - Important: This setting will have no effect if `automaticallyWaitsToMinimizeStalling` is set to `true` in the AVPlayer
      */
     public var bufferDuration: TimeInterval {
-        get { return wrapper.bufferDuration }
+        get { wrapper.bufferDuration }
         set { wrapper.bufferDuration = newValue }
     }
     
@@ -96,7 +96,7 @@ public class AudioPlayer: AVPlayerWrapperDelegate {
      Set this to decide how often the player should call the delegate with time progress events.
      */
     public var timeEventFrequency: TimeEventFrequency {
-        get { return wrapper.timeEventFrequency }
+        get { wrapper.timeEventFrequency }
         set { wrapper.timeEventFrequency = newValue }
     }
     
@@ -104,23 +104,23 @@ public class AudioPlayer: AVPlayerWrapperDelegate {
      Indicates whether the player should automatically delay playback in order to minimize stalling
      */
     public var automaticallyWaitsToMinimizeStalling: Bool {
-        get { return wrapper.automaticallyWaitsToMinimizeStalling }
+        get { wrapper.automaticallyWaitsToMinimizeStalling }
         set { wrapper.automaticallyWaitsToMinimizeStalling = newValue }
     }
     
     public var volume: Float {
-        get { return wrapper.volume }
+        get { wrapper.volume }
         set { wrapper.volume = newValue }
     }
     
     public var isMuted: Bool {
-        get { return wrapper.isMuted }
+        get { wrapper.isMuted }
         set { wrapper.isMuted = newValue }
     }
 
     private var _rate: Float = 1.0
     public var rate: Float {
-        get { return _rate }
+        get { _rate }
         set {
             _rate = newValue
 
@@ -298,9 +298,7 @@ public class AudioPlayer: AVPlayerWrapperDelegate {
     private func loadArtwork(forItem item: AudioItem) {
         item.getArtwork { (image) in
             if let image = image {
-                let artwork = MPMediaItemArtwork(boundsSize: image.size, requestHandler: { (size) -> UIImage in
-                    return image
-                })
+                let artwork = MPMediaItemArtwork(boundsSize: image.size, requestHandler: { _ in image })
                 self.nowPlayingInfoController.set(keyValue: MediaItemProperty.artwork(artwork))
             }
         }

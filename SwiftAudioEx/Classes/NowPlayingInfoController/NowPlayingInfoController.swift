@@ -11,31 +11,23 @@ import MediaPlayer
 public class NowPlayingInfoController: NowPlayingInfoControllerProtocol {
     private let concurrentInfoQueue: DispatchQueueType
 
-    private var _infoCenter: NowPlayingInfoCenter
-    private var _info: [String: Any] = [:]
-    
-    var infoCenter: NowPlayingInfoCenter {
-        return _infoCenter
-    }
-    
-    var info: [String: Any] {
-        return _info
-    }
+    private(set) var infoCenter: NowPlayingInfoCenter
+    private(set) var info: [String: Any] = [:]
     
     public required init() {
-        self.concurrentInfoQueue = DispatchQueue(label: "com.doublesymmetry.nowPlayingInfoQueue", attributes: .concurrent)
-        self._infoCenter = MPNowPlayingInfoCenter.default()
+        concurrentInfoQueue = DispatchQueue(label: "com.doublesymmetry.nowPlayingInfoQueue", attributes: .concurrent)
+        infoCenter = MPNowPlayingInfoCenter.default()
     }
 
     /// Used for testing purposes.
     public required init(dispatchQueue: DispatchQueueType, infoCenter: NowPlayingInfoCenter) {
-        self.concurrentInfoQueue = dispatchQueue
-        self._infoCenter = infoCenter
+        concurrentInfoQueue = dispatchQueue
+        self.infoCenter = infoCenter
     }
     
     public required init(infoCenter: NowPlayingInfoCenter) {
-        self.concurrentInfoQueue = DispatchQueue(label: "com.doublesymmetry.nowPlayingInfoQueue", attributes: .concurrent)
-        self._infoCenter = infoCenter
+        concurrentInfoQueue = DispatchQueue(label: "com.doublesymmetry.nowPlayingInfoQueue", attributes: .concurrent)
+        self.infoCenter = infoCenter
     }
     
     public func set(keyValues: [NowPlayingInfoKeyValue]) {
@@ -43,10 +35,10 @@ public class NowPlayingInfoController: NowPlayingInfoControllerProtocol {
             guard let self = self else { return }
 
             keyValues.forEach { (keyValue) in
-                self._info[keyValue.getKey()] = keyValue.getValue()
+                self.info[keyValue.getKey()] = keyValue.getValue()
             }
 
-            self._infoCenter.nowPlayingInfo = self._info
+            self.infoCenter.nowPlayingInfo = self.info
         }
     }
     
@@ -54,8 +46,8 @@ public class NowPlayingInfoController: NowPlayingInfoControllerProtocol {
         concurrentInfoQueue.async(flags: .barrier) { [weak self] in
             guard let self = self else { return }
 
-            self._info[keyValue.getKey()] = keyValue.getValue()
-            self._infoCenter.nowPlayingInfo = self._info
+            self.info[keyValue.getKey()] = keyValue.getValue()
+            self.infoCenter.nowPlayingInfo = self.info
         }
     }
     
@@ -63,8 +55,8 @@ public class NowPlayingInfoController: NowPlayingInfoControllerProtocol {
         concurrentInfoQueue.async(flags: .barrier) { [weak self] in
             guard let self = self else { return }
 
-            self._info = [:]
-            self._infoCenter.nowPlayingInfo = self._info
+            self.info = [:]
+            self.infoCenter.nowPlayingInfo = self.info
         }
     }
     

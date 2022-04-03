@@ -95,18 +95,18 @@ public class RemoteCommandController {
     
     // MARK: - Handlers
     
-    public lazy var handlePlayCommand: RemoteCommandHandler = self.handlePlayCommandDefault
-    public lazy var handlePauseCommand: RemoteCommandHandler = self.handlePauseCommandDefault
-    public lazy var handleStopCommand: RemoteCommandHandler = self.handleStopCommandDefault
-    public lazy var handleTogglePlayPauseCommand: RemoteCommandHandler = self.handleTogglePlayPauseCommandDefault
-    public lazy var handleSkipForwardCommand: RemoteCommandHandler  = self.handleSkipForwardCommandDefault
-    public lazy var handleSkipBackwardCommand: RemoteCommandHandler = self.handleSkipBackwardDefault
-    public lazy var handleChangePlaybackPositionCommand: RemoteCommandHandler  = self.handleChangePlaybackPositionCommandDefault
-    public lazy var handleNextTrackCommand: RemoteCommandHandler = self.handleNextTrackCommandDefault
-    public lazy var handlePreviousTrackCommand: RemoteCommandHandler = self.handlePreviousTrackCommandDefault
-    public lazy var handleLikeCommand: RemoteCommandHandler = self.handleLikeCommandDefault
-    public lazy var handleDislikeCommand: RemoteCommandHandler = self.handleDislikeCommandDefault
-    public lazy var handleBookmarkCommand: RemoteCommandHandler = self.handleBookmarkCommandDefault
+    public lazy var handlePlayCommand: RemoteCommandHandler = handlePlayCommandDefault
+    public lazy var handlePauseCommand: RemoteCommandHandler = handlePauseCommandDefault
+    public lazy var handleStopCommand: RemoteCommandHandler = handleStopCommandDefault
+    public lazy var handleTogglePlayPauseCommand: RemoteCommandHandler = handleTogglePlayPauseCommandDefault
+    public lazy var handleSkipForwardCommand: RemoteCommandHandler  = handleSkipForwardCommandDefault
+    public lazy var handleSkipBackwardCommand: RemoteCommandHandler = handleSkipBackwardDefault
+    public lazy var handleChangePlaybackPositionCommand: RemoteCommandHandler  = handleChangePlaybackPositionCommandDefault
+    public lazy var handleNextTrackCommand: RemoteCommandHandler = handleNextTrackCommandDefault
+    public lazy var handlePreviousTrackCommand: RemoteCommandHandler = handlePreviousTrackCommandDefault
+    public lazy var handleLikeCommand: RemoteCommandHandler = handleLikeCommandDefault
+    public lazy var handleDislikeCommand: RemoteCommandHandler = handleDislikeCommandDefault
+    public lazy var handleBookmarkCommand: RemoteCommandHandler = handleBookmarkCommandDefault
     
     private func handlePlayCommandDefault(event: MPRemoteCommandEvent) -> MPRemoteCommandHandlerStatus {
         if let audioPlayer = audioPlayer {
@@ -196,15 +196,15 @@ public class RemoteCommandController {
     }
     
     private func handleLikeCommandDefault(event: MPRemoteCommandEvent) -> MPRemoteCommandHandlerStatus {
-        return MPRemoteCommandHandlerStatus.success
+        MPRemoteCommandHandlerStatus.success
     }
     
     private func handleDislikeCommandDefault(event: MPRemoteCommandEvent) -> MPRemoteCommandHandlerStatus {
-        return MPRemoteCommandHandlerStatus.success
+        MPRemoteCommandHandlerStatus.success
     }
     
     private func handleBookmarkCommandDefault(event: MPRemoteCommandEvent) -> MPRemoteCommandHandlerStatus {
-        return MPRemoteCommandHandlerStatus.success
+        MPRemoteCommandHandlerStatus.success
     }
     
     private func getRemoteCommandHandlerStatus(forError error: Error) -> MPRemoteCommandHandlerStatus {

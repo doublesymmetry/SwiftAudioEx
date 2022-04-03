@@ -16,55 +16,47 @@ class QueueManager<T> {
 
     weak var delegate: QueueManagerDelegate? = nil
 
-    private var _items: [T] = [] {
+    /**
+     All items held by the queue.
+     */
+    private(set) var items: [T] = [] {
         didSet {
-            if oldValue.count == 0 && _items.count > 0 && _currentIndex == 0 {
+            if oldValue.count == 0 && items.count > 0 && currentIndex == 0 {
                 delegate?.onReceivedFirstItem()
             }
         }
     }
     
-    /**
-     All items held by the queue.
-     */
-    public var items: [T] {
-        return _items
-    }
-    
     public var nextItems: [T] {
-        guard _currentIndex + 1 < _items.count else {
+        guard currentIndex + 1 < items.count else {
             return []
         }
-        return Array(_items[_currentIndex + 1..<_items.count])
+        return Array(items[currentIndex + 1..<items.count])
     }
     
     public var previousItems: [T] {
-        if (_currentIndex == 0) {
+        if (currentIndex == 0) {
             return []
         }
-        return Array(_items[0..<_currentIndex])
+        return Array(items[0..<currentIndex])
     }
-    
-    private var _currentIndex: Int = 0 {
-        didSet {
-            delegate?.onCurrentIndexChanged(oldIndex: oldValue, newIndex: _currentIndex)
-        }
-    }
-    
+
     /**
      The index of the current item.
      Will be populated event though there is no current item (When the queue is empty).
      */
-    public var currentIndex: Int {
-        return _currentIndex
+    private(set) var currentIndex: Int = 0 {
+        didSet {
+            delegate?.onCurrentIndexChanged(oldIndex: oldValue, newIndex: currentIndex)
+        }
     }
     
     /**
      The current item for the queue.
      */
     public var current: T? {
-        if _items.count > _currentIndex {
-            return _items[_currentIndex]
+        if items.count > currentIndex {
+            return items[currentIndex]
         }
         return nil
     }
@@ -75,7 +67,7 @@ class QueueManager<T> {
      - parameter item: The `AudioItem` to be added.
      */
     public func addItem(_ item: T) {
-        _items.append(item)
+        items.append(item)
     }
     
     /**
@@ -84,7 +76,7 @@ class QueueManager<T> {
      - parameter items: The `AudioItem`s to be added.
      */
     public func addItems(_ items: [T]) {
-        _items.append(contentsOf: items)
+        self.items.append(contentsOf: items)
     }
     
     /**
@@ -94,13 +86,13 @@ class QueueManager<T> {
      - parameter at: The index to insert the items at.
      */
     public func addItems(_ items: [T], at index: Int) throws {
-        guard index >= 0 && _items.count >= index else {
-            throw APError.QueueError.invalidIndex(index: index, message: "Index to insert at has to be non-negative and equal to or smaller than the number of items: (\(_items.count))")
+        guard index >= 0 && self.items.count >= index else {
+            throw APError.QueueError.invalidIndex(index: index, message: "Index to insert at has to be non-negative and equal to or smaller than the number of items: (\(items.count))")
         }
 
-        _items.insert(contentsOf: items, at: index)
+        self.items.insert(contentsOf: items, at: index)
 
-        if (_currentIndex >= index && _items.count != 1) { _currentIndex = _currentIndex + items.count }
+        if (currentIndex >= index && self.items.count != 1) { currentIndex += items.count }
     }
     
     /**
@@ -112,12 +104,12 @@ class QueueManager<T> {
      */
     @discardableResult
     public func next() throws -> T {
-        let nextIndex = _currentIndex + 1
-        guard _items.count > nextIndex else {
+        let nextIndex = currentIndex + 1
+        guard items.count > nextIndex else {
             throw APError.QueueError.noNextItem
         }
-        _currentIndex = nextIndex
-        return _items[nextIndex]
+        currentIndex = nextIndex
+        return items[nextIndex]
     }
     
     /**
@@ -129,12 +121,12 @@ class QueueManager<T> {
      */
     @discardableResult
     public func previous() throws -> T {
-        let previousIndex = _currentIndex - 1
+        let previousIndex = currentIndex - 1
         guard previousIndex >= 0 else {
             throw APError.QueueError.noPreviousItem
         }
-        _currentIndex = previousIndex
-        return _items[previousIndex]
+        currentIndex = previousIndex
+        return items[previousIndex]
     }
     
     /**
@@ -151,12 +143,12 @@ class QueueManager<T> {
             throw APError.QueueError.invalidIndex(index: index, message: "Cannot jump to the current item")
         }
         
-        guard index >= 0 && _items.count > index else {
-            throw APError.QueueError.invalidIndex(index: index, message: "The jump index has to be positive and smaller thant the count of current items (\(_items.count))")
+        guard index >= 0 && items.count > index else {
+            throw APError.QueueError.invalidIndex(index: index, message: "The jump index has to be positive and smaller thant the count of current items (\(items.count))")
         }
 
-        _currentIndex = index
-        return _items[index]
+        currentIndex = index
+        return items[index]
     }
     
     /**
@@ -167,17 +159,16 @@ class QueueManager<T> {
      - throws: `APError.QueueError`
      */
     func moveItem(fromIndex: Int, toIndex: Int) throws {
-        
-        guard fromIndex != _currentIndex else {
+        guard fromIndex != currentIndex else {
             throw APError.QueueError.invalidIndex(index: fromIndex, message: "The fromIndex cannot be equal to the current index.")
         }
         
-        guard fromIndex >= 0 && fromIndex < _items.count else {
-            throw APError.QueueError.invalidIndex(index: fromIndex, message: "The fromIndex has to be positive and smaller than the count of current items (\(_items.count)).")
+        guard fromIndex >= 0 && fromIndex < items.count else {
+            throw APError.QueueError.invalidIndex(index: fromIndex, message: "The fromIndex has to be positive and smaller than the count of current items (\(items.count)).")
         }
         
-        guard toIndex >= 0 && toIndex < _items.count else {
-            throw APError.QueueError.invalidIndex(index: toIndex, message: "The toIndex has to be positive and smaller than the count of current items (\(_items.count)).")
+        guard toIndex >= 0 && toIndex < items.count else {
+            throw APError.QueueError.invalidIndex(index: toIndex, message: "The toIndex has to be positive and smaller than the count of current items (\(items.count)).")
         }
         
         let item = try removeItem(at: fromIndex)
@@ -193,19 +184,19 @@ class QueueManager<T> {
      */
     @discardableResult
     public func removeItem(at index: Int) throws -> T {
-        guard index != _currentIndex else {
+        guard index != currentIndex else {
             throw APError.QueueError.invalidIndex(index: index, message: "Cannot remove the current item!")
         }
         
-        guard index >= 0 && _items.count > index else {
-            throw APError.QueueError.invalidIndex(index: index, message: "Index for removal has to be positive and smaller than the count of current items (\(_items.count)).")
+        guard index >= 0 && items.count > index else {
+            throw APError.QueueError.invalidIndex(index: index, message: "Index for removal has to be positive and smaller than the count of current items (\(items.count)).")
         }
         
-        if index < _currentIndex {
-            _currentIndex = _currentIndex - 1
+        if index < currentIndex {
+            currentIndex -= 1
         }
 
-        return _items.remove(at: index)
+        return items.remove(at: index)
     }
     
     /**
@@ -215,10 +206,10 @@ class QueueManager<T> {
      */
     public func replaceCurrentItem(with item: T) {
         if current == nil  {
-            self.addItem(item)
+            addItem(item)
         }
-        
-        self._items[_currentIndex] = item
+
+        items[currentIndex] = item
     }
     
     /**
@@ -227,8 +218,8 @@ class QueueManager<T> {
      */
     public func removePreviousItems() {
         guard currentIndex > 0 else { return }
-        _items.removeSubrange(0..<_currentIndex)
-        _currentIndex = 0
+        items.removeSubrange(0..<currentIndex)
+        currentIndex = 0
     }
 
     /**
@@ -236,17 +227,17 @@ class QueueManager<T> {
      If no upcoming items exist, no action will be taken.
      */
     public func removeUpcomingItems() {
-        let nextIndex = _currentIndex + 1
-        guard nextIndex < _items.count else { return }
-        _items.removeSubrange(nextIndex..<_items.count)
+        let nextIndex = currentIndex + 1
+        guard nextIndex < items.count else { return }
+        items.removeSubrange(nextIndex..<items.count)
     }
     
     /**
      Removes all items for queue
      */
     public func clearQueue() {
-        _currentIndex = 0
-        _items.removeAll()
+        currentIndex = 0
+        items.removeAll()
     }
 
 }

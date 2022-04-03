@@ -10,13 +10,13 @@ import MediaPlayer
 
 extension AudioPlayer {
     
-    public typealias StateChangeEventData = (AudioPlayerState)
-    public typealias PlaybackEndEventData = (PlaybackEndedReason)
-    public typealias SecondElapseEventData = (TimeInterval)
-    public typealias FailEventData = (Error?)
+    public typealias StateChangeEventData = AudioPlayerState
+    public typealias PlaybackEndEventData = PlaybackEndedReason
+    public typealias SecondElapseEventData = TimeInterval
+    public typealias FailEventData = Error?
     public typealias SeekEventData = (seconds: Int, didFinish: Bool)
-    public typealias UpdateDurationEventData = (Double)
-    public typealias MetadataEventData = ([AVTimedMetadataGroup])
+    public typealias UpdateDurationEventData = Double
+    public typealias MetadataEventData = [AVTimedMetadataGroup]
     public typealias DidRecreateAVPlayerEventData = ()
     public typealias QueueIndexEventData = (previousIndex: Int?, newIndex: Int?)
     
@@ -133,9 +133,7 @@ extension AudioPlayer {
         func emit(data: EventData) {
             eventQueue.async {
                 self.invokersSemaphore.wait()
-                self.invokers = self.invokers.filter({ (invoker) -> Bool in
-                    return invoker.invoke(data)
-                })
+                self.invokers = self.invokers.filter { $0.invoke(data) }
                 self.invokersSemaphore.signal()
             }
         }
