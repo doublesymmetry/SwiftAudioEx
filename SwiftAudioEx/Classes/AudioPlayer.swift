@@ -30,7 +30,7 @@ public class AudioPlayer: AVPlayerWrapperDelegate {
      Controls the time pitch algorithm applied to each item loaded into the player.
      If the loaded `AudioItem` conforms to `TimePitcher`-protocol this will be overriden.
      */
-    public var audioTimePitchAlgorithm: AVAudioTimePitchAlgorithm = AVAudioTimePitchAlgorithm.lowQualityZeroLatency
+    public var audioTimePitchAlgorithm: AVAudioTimePitchAlgorithm = AVAudioTimePitchAlgorithm.timeDomain
     
     /**
      Default remote commands to use for each playing item
