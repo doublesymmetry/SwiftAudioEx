@@ -9,7 +9,7 @@
 import Foundation
 import AVFoundation
 
-protocol AVPlayerTimeObserverDelegate: class {
+protocol AVPlayerTimeObserverDelegate: AnyObject {
     func audioDidStart()
     func timeEvent(time: CMTime)
 }

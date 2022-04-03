@@ -8,8 +8,7 @@
 import Foundation
 import AVFoundation
 
-
-protocol AVPlayerItemNotificationObserverDelegate: class {
+protocol AVPlayerItemNotificationObserverDelegate: AnyObject {
     func itemDidPlayToEndTime()
 }
 
@@ -51,9 +50,9 @@ class AVPlayerItemNotificationObserver {
         guard let observingItem = observingItem, isObserving else {
             return
         }
-        self.notificationCenter.removeObserver(self, name: NSNotification.Name.AVPlayerItemDidPlayToEndTime, object: observingItem)
+        notificationCenter.removeObserver(self, name: NSNotification.Name.AVPlayerItemDidPlayToEndTime, object: observingItem)
         self.observingItem = nil
-        self.isObserving = false
+        isObserving = false
     }
     
     @objc private func itemDidPlayToEndTime() {

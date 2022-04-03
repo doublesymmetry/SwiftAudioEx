@@ -147,11 +147,11 @@ public class AudioPlayer: AVPlayerWrapperDelegate {
      */
     public init(nowPlayingInfoController: NowPlayingInfoControllerProtocol = NowPlayingInfoController(),
                 remoteCommandController: RemoteCommandController = RemoteCommandController()) {
-        self._wrapper = AVPlayerWrapper()
+        _wrapper = AVPlayerWrapper()
         self.nowPlayingInfoController = nowPlayingInfoController
         self.remoteCommandController = remoteCommandController
         
-        self._wrapper.delegate = self
+        _wrapper.delegate = self
         self.remoteCommandController.audioPlayer = self
     }
     
@@ -182,10 +182,10 @@ public class AudioPlayer: AVPlayerWrapperDelegate {
                      initialTime: (item as? InitialTiming)?.getInitialTime(),
                      options:(item as? AssetOptionsProviding)?.getAssetOptions())
         
-        self._currentItem = item
+        _currentItem = item
         
         if (automaticallyUpdateNowPlayingInfo) {
-            self.loadNowPlayingMetaValues()
+            loadNowPlayingMetaValues()
         }
         enableRemoteCommands(forItem: item)
     }
@@ -194,30 +194,30 @@ public class AudioPlayer: AVPlayerWrapperDelegate {
      Toggle playback status.
      */
     public func togglePlaying() {
-        self.wrapper.togglePlaying()
+        wrapper.togglePlaying()
     }
     
     /**
      Start playback
      */
     public func play() {
-        self.wrapper.play()
+        wrapper.play()
     }
     
     /**
      Pause playback
      */
     public func pause() {
-        self.wrapper.pause()
+        wrapper.pause()
     }
     
     /**
      Stop playback, resetting the player.
      */
     public func stop() {
-        self.reset()
-        self.wrapper.stop()
-        self.event.playbackEnd.emit(data: .playerStopped)
+        reset()
+        wrapper.stop()
+        event.playbackEnd.emit(data: .playerStopped)
     }
     
     /**
@@ -225,15 +225,15 @@ public class AudioPlayer: AVPlayerWrapperDelegate {
      */
     public func seek(to seconds: TimeInterval) {
         if automaticallyUpdateNowPlayingInfo {
-            self.updateNowPlayingCurrentTime(seconds)
+            updateNowPlayingCurrentTime(seconds)
         }
-        self.wrapper.seek(to: seconds)
+        wrapper.seek(to: seconds)
     }
     
     // MARK: - Remote Command Center
     
     func enableRemoteCommands(_ commands: [RemoteCommand]) {
-        self.remoteCommandController.enable(commands: commands)
+        remoteCommandController.enable(commands: commands)
     }
     
     func enableRemoteCommands(forItem item: AudioItem) {
@@ -317,7 +317,7 @@ public class AudioPlayer: AVPlayerWrapperDelegate {
     // MARK: - Private
     
     func reset() {
-        self._currentItem = nil
+        _currentItem = nil
     }
     
     private func setTimePitchingAlgorithmForCurrentItem() {
@@ -340,7 +340,7 @@ public class AudioPlayer: AVPlayerWrapperDelegate {
             setTimePitchingAlgorithmForCurrentItem()
         case .playing:
             // When a track starts playing, reset the rate to the stored rate
-            self.rate = _rate;
+            rate = _rate;
             fallthrough
         case .paused:
             if (automaticallyUpdateNowPlayingInfo) {
@@ -348,38 +348,38 @@ public class AudioPlayer: AVPlayerWrapperDelegate {
             }
         default: break
         }
-        self.event.stateChange.emit(data: state)
+        event.stateChange.emit(data: state)
     }
     
     func AVWrapper(secondsElapsed seconds: Double) {
-        self.event.secondElapse.emit(data: seconds)
+        event.secondElapse.emit(data: seconds)
     }
     
     func AVWrapper(failedWithError error: Error?) {
-        self.event.fail.emit(data: error)
+        event.fail.emit(data: error)
     }
     
     func AVWrapper(seekTo seconds: Int, didFinish: Bool) {
         if !didFinish && automaticallyUpdateNowPlayingInfo {
             updateNowPlayingCurrentTime(currentTime)
         }
-        self.event.seek.emit(data: (seconds, didFinish))
+        event.seek.emit(data: (seconds, didFinish))
     }
     
     func AVWrapper(didUpdateDuration duration: Double) {
-        self.event.updateDuration.emit(data: duration)
+        event.updateDuration.emit(data: duration)
     }
     
     func AVWrapper(didReceiveMetadata metadata: [AVTimedMetadataGroup]) {
-        self.event.receiveMetadata.emit(data: metadata)
+        event.receiveMetadata.emit(data: metadata)
     }
     
     func AVWrapperItemDidPlayToEndTime() {
-        self.event.playbackEnd.emit(data: .playedUntilEnd)
+        event.playbackEnd.emit(data: .playedUntilEnd)
     }
     
     func AVWrapperDidRecreateAVPlayer() {
-        self.event.didRecreateAVPlayer.emit(data: ())
+        event.didRecreateAVPlayer.emit(data: ())
     }
     
 }

@@ -90,7 +90,7 @@ extension AudioPlayer {
         
         init<Listener: AnyObject>(listener: Listener, closure: @escaping EventClosure<EventData>) {
             self.listener = listener
-            self.invoke = { [weak listener] (data: EventData) in
+            invoke = { [weak listener] (data: EventData) in
                 guard let _ = listener else {
                     return false
                 }

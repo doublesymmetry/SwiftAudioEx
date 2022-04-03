@@ -138,7 +138,7 @@ public class DefaultAudioItemAssetOptionsProviding: DefaultAudioItem, AssetOptio
     public var options: [String: Any]
     
     public override init(audioUrl: String, artist: String?, title: String?, albumTitle: String?, sourceType: SourceType, artwork: UIImage?) {
-        self.options = [:]
+        options = [:]
         super.init(audioUrl: audioUrl, artist: artist, title: title, albumTitle: albumTitle, sourceType: sourceType, artwork: artwork)
     }
     

@@ -39,7 +39,7 @@ public class QueuedAudioPlayer: AudioPlayer, QueueManagerDelegate {
      */
     public override func stop() {
         super.stop()
-        self.event.queueIndex.emit(data: (currentIndex, nil))
+        event.queueIndex.emit(data: (currentIndex, nil))
     }
     
     override func reset() {
@@ -89,7 +89,7 @@ public class QueuedAudioPlayer: AudioPlayer, QueueManagerDelegate {
     public func add(item: AudioItem, playWhenReady: Bool = true) throws {
         if currentItem == nil {
             queueManager.addItem(item)
-            try self.load(item: item, playWhenReady: playWhenReady)
+            try load(item: item, playWhenReady: playWhenReady)
         }
         else {
             queueManager.addItem(item)
@@ -106,7 +106,7 @@ public class QueuedAudioPlayer: AudioPlayer, QueueManagerDelegate {
     public func add(items: [AudioItem], playWhenReady: Bool = true) throws {
         if currentItem == nil {
             queueManager.addItems(items)
-            try self.load(item: currentItem!, playWhenReady: playWhenReady)
+            try load(item: currentItem!, playWhenReady: playWhenReady)
         }
         else {
             queueManager.addItems(items)
@@ -128,7 +128,7 @@ public class QueuedAudioPlayer: AudioPlayer, QueueManagerDelegate {
         do {
             let nextItem = try queueManager.next()
             event.playbackEnd.emit(data: .skippedToNext)
-            try self.load(item: nextItem, playWhenReady: shouldPlayWhenReady)
+            try load(item: nextItem, playWhenReady: shouldPlayWhenReady)
         } catch APError.QueueError.noNextItem  {
             if repeatMode == .queue {
                 event.playbackEnd.emit(data: .skippedToNext)
@@ -149,7 +149,7 @@ public class QueuedAudioPlayer: AudioPlayer, QueueManagerDelegate {
 
         let previousItem = try queueManager.previous()
         event.playbackEnd.emit(data: .skippedToPrevious)
-        try self.load(item: previousItem, playWhenReady: shouldPlayWhenReady)
+        try load(item: previousItem, playWhenReady: shouldPlayWhenReady)
     }
     
     /**
@@ -172,7 +172,7 @@ public class QueuedAudioPlayer: AudioPlayer, QueueManagerDelegate {
     public func jumpToItem(atIndex index: Int, playWhenReady: Bool = true) throws {
         let item = try queueManager.jump(to: index)
         event.playbackEnd.emit(data: .jumpedToIndex)
-        try self.load(item: item, playWhenReady: playWhenReady)
+        try load(item: item, playWhenReady: playWhenReady)
     }
     
     /**
@@ -209,7 +209,7 @@ public class QueuedAudioPlayer: AudioPlayer, QueueManagerDelegate {
         case .off:
             do {
                 let nextItem = try queueManager.next()
-                try self.load(item: nextItem, playWhenReady: true)
+                try load(item: nextItem, playWhenReady: true)
             } catch { /* playback finished */ }
         case .track:
             seek(to: 0)
@@ -217,7 +217,7 @@ public class QueuedAudioPlayer: AudioPlayer, QueueManagerDelegate {
         case .queue:
             do {
                 let nextItem = try queueManager.next()
-                try self.load(item: nextItem, playWhenReady: true)
+                try load(item: nextItem, playWhenReady: true)
             } catch {
                 try? jumpToItem(atIndex: 0, playWhenReady: true)
             }
@@ -229,10 +229,10 @@ public class QueuedAudioPlayer: AudioPlayer, QueueManagerDelegate {
     func onCurrentIndexChanged(oldIndex: Int, newIndex: Int) {
         // if _currentItem is nil, then this was triggered by a reset. ignore.
         if _currentItem == nil { return }
-        self.event.queueIndex.emit(data: (oldIndex, newIndex))
+        event.queueIndex.emit(data: (oldIndex, newIndex))
     }
 
     func onReceivedFirstItem() {
-        self.event.queueIndex.emit(data: (nil, 0))
+        event.queueIndex.emit(data: (nil, 0))
     }
 }
