@@ -170,9 +170,15 @@ public class QueuedAudioPlayer: AudioPlayer, QueueManagerDelegate {
      - throws: `APError`
      */
     public func jumpToItem(atIndex index: Int, playWhenReady: Bool = true) throws {
-        let item = try queueManager.jump(to: index)
-        event.playbackEnd.emit(data: .jumpedToIndex)
-        try load(item: item, playWhenReady: playWhenReady)
+        if (index == currentIndex) {
+            seek(to: 0)
+            playWhenReady ? play() : pause()
+            onCurrentIndexChanged(oldIndex: index, newIndex: index)
+        } else {
+            let item = try queueManager.jump(to: index)
+            event.playbackEnd.emit(data: .jumpedToIndex)
+            try load(item: item, playWhenReady: playWhenReady)
+        }
     }
     
     /**
@@ -210,10 +216,11 @@ public class QueuedAudioPlayer: AudioPlayer, QueueManagerDelegate {
             do {
                 let nextItem = try queueManager.next()
                 try load(item: nextItem, playWhenReady: true)
-            } catch { /* playback finished */ }
+            } catch {
+                event.queueIndex.emit(data: (currentIndex, nil))
+            }
         case .track:
-            seek(to: 0)
-            play()
+            try? jumpToItem(atIndex: currentIndex, playWhenReady: true)
         case .queue:
             do {
                 let nextItem = try queueManager.next()
