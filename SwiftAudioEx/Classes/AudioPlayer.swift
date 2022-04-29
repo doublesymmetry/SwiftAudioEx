@@ -300,6 +300,8 @@ public class AudioPlayer: AVPlayerWrapperDelegate {
             if let image = image {
                 let artwork = MPMediaItemArtwork(boundsSize: image.size, requestHandler: { _ in image })
                 self.nowPlayingInfoController.set(keyValue: MediaItemProperty.artwork(artwork))
+            } else {
+                self.nowPlayingInfoController.set(keyValue: MediaItemProperty.artwork(nil))
             }
         }
     }
