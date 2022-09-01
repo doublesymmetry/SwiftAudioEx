@@ -307,7 +307,7 @@ class QueuedAudioPlayerTests: QuickSpec {
                                     expect(audioPlayer.nextItems.count).toEventually(equal(0))
                                     expect(audioPlayer.currentIndex).toEventually(equal(1))
                                     expect(audioPlayer.playerState).toEventually(equal(AudioPlayerState.paused))
-                                    expect(eventListener.eventResult).toEventually(equal((1, nil)))
+                                    expect(eventListener.eventResult).toEventually(equal((0, 1)))
                                 }
                             }
                         }
@@ -351,7 +351,6 @@ class QueuedAudioPlayerTests: QuickSpec {
                                 expect(audioPlayer.nextItems.count).toEventually(equal(1))
                                 expect(audioPlayer.currentIndex).toEventually(equal(0))
                                 expect(audioPlayer.playerState).toEventually(equal(AudioPlayerState.playing))
-                                expect(eventListener.eventResult).toEventually(equal((0, 0)))
                             }
                         }
 
@@ -458,7 +457,6 @@ class QueuedAudioPlayerTests: QuickSpec {
 
                                 expect(audioPlayer.nextItems.count).toEventually(equal(0))
                                 expect(audioPlayer.playerState).toEventually(equal(AudioPlayerState.paused))
-                                expect(eventListener.eventResult).toEventually(equal((0, nil)))
                             }
                         }
 
@@ -487,7 +485,8 @@ class QueuedAudioPlayerTests: QuickSpec {
                                 expect(audioPlayer.currentTime).toEventually(equal(0))
                                 expect(audioPlayer.currentIndex).toEventually(equal(0))
                                 expect(audioPlayer.playerState).toEventually(equal(AudioPlayerState.playing))
-                                expect(eventListener.eventResult).toEventually(equal((0, 0)))
+                                // Because no queueIndex event was emitted, these stay at -1 / -1
+                                expect(eventListener.eventResult).toEventually(equal((-1, -1)))
                             }
                         }
 
@@ -499,7 +498,6 @@ class QueuedAudioPlayerTests: QuickSpec {
                                 expect(audioPlayer.currentTime).toEventually(equal(0))
                                 expect(audioPlayer.currentIndex).toEventually(equal(0))
                                 expect(audioPlayer.playerState).toEventually(equal(AudioPlayerState.playing))
-                                expect(eventListener.eventResult).toEventually(equal((0, 0)))
                             }
                         }
                     }
@@ -521,7 +519,8 @@ class QueuedAudioPlayerTests: QuickSpec {
                                 expect(audioPlayer.currentTime).toEventually(equal(0))
                                 expect(audioPlayer.currentIndex).toEventually(equal(0))
                                 expect(audioPlayer.playerState).toEventually(equal(AudioPlayerState.playing))
-                                expect(eventListener.eventResult).toEventually(equal((0, 0)))
+                                // Because no queueIndex event was emitted, these stay at -1 / -1
+                                expect(eventListener.eventResult).toEventually(equal((-1, -1)))
                             }
                         }
 
@@ -536,7 +535,8 @@ class QueuedAudioPlayerTests: QuickSpec {
                                 expect(audioPlayer.currentTime).toEventually(equal(0))
                                 expect(audioPlayer.currentIndex).toEventually(equal(0))
                                 expect(audioPlayer.playerState).toEventually(equal(AudioPlayerState.playing))
-                                expect(eventListener.eventResult).toEventually(equal((0, 0)))
+                                // Because no queueIndex event was emitted, these stay at -1 / -1
+                                expect(eventListener.eventResult).toEventually(equal((-1, -1)))
                             }
                         }
                     }
