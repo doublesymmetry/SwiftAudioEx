@@ -1,0 +1,13 @@
+use_frameworks!
+
+target 'SwiftAudio_Example' do
+ pod 'SwiftAudioEx', :path => '../'
+
+  target 'SwiftAudio_Tests' do
+    inherit! :search_paths
+
+    pod 'Quick', '~> 2.0.0'
+    pod 'Nimble' , '~> 8.0.0'
+
+  end
+end
