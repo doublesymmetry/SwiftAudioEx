@@ -150,16 +150,30 @@ class QueueManagerTests: QuickSpec {
                     }
                     
                 }
-                
-                context("then calling previous") {
-                    var previousItem: Int?
+
+                context("then calling next(wrap: true)") {
+                    
+                    var nextIndex: Int?
                     
                     beforeEach {
-                        previousItem = try? manager.previous()
+                        nextIndex = try! manager.next(wrap: true)
                     }
                     
-                    it("should not return") {
-                        expect(previousItem).to(beNil())
+                    it("should wrap to itself") {
+                        expect(nextIndex).to(equal(0))
+                    }
+
+                }
+                
+                context("then calling previous(wrap: true") {
+                    var previousIndex: Int?
+                    
+                    beforeEach {
+                        previousIndex = try? manager.previous(wrap: true)
+                    }
+                    
+                    it("should wrap to itself") {
+                        expect(previousIndex).to(equal(0))
                     }
                 }
                 
@@ -203,18 +217,59 @@ class QueueManagerTests: QuickSpec {
                     it("should have previous items") {
                         expect(manager.previousItems).toNot(beNil())
                     }
-                    
+                                        
                     context("then calling previous") {
-                        var previousItem: Int?
+                        var index: Int?
                         beforeEach {
-                            previousItem = try? manager.previous()
+                            index = try? manager.previous()
                         }
                         it("should return the first item") {
-                            expect(previousItem).toNot(beNil())
-                            expect(previousItem).to(equal(self.dummyItems.first))
+                            expect(index).to(equal(0))
                         }
                         it("should have the previous current item") {
                             expect(manager.current).to(equal(self.dummyItems.first))
+                        }
+                        context("then calling previous at the start of the queue") {
+                            var index: Int?
+                            beforeEach {
+                                index = try? manager.previous()
+                            }
+                            it("should return nil because an error was thrown") {
+                                expect(index).to(beNil())
+                            }
+                        }
+                        context("then calling previous(wrap: true)") {
+                            var index: Int?
+                            beforeEach {
+                                index = try? manager.previous(wrap: true)
+                            }
+                            it("should return the last item") {
+                                expect(index).to(equal(manager.items.count - 1))
+                                expect(manager.currentIndex).to(equal(manager.items.count - 1))
+                                expect(manager.current).to(equal(self.dummyItems.last))
+                            }
+
+                            context("then calling next again at the end of the queue") {
+                                var index: Int?
+                                beforeEach {
+                                    index = try? manager.next()
+                                }
+                                it("should return nil because an error was thrown") {
+                                    expect(index).to(beNil())
+                                }
+                            }
+
+                            context("then calling next(wrap: true)") {
+                                var index: Int?
+                                beforeEach {
+                                    index = try? manager.next(wrap: true)
+                                }
+                                it("should return the first item") {
+                                    expect(index).to(equal(0))
+                                    expect(manager.currentIndex).to(equal(0))
+                                    expect(manager.current).to(equal(self.dummyItems.first))
+                                }
+                            }
                         }
                     }
                     
