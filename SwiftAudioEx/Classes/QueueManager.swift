@@ -95,8 +95,13 @@ class QueueManager<T> {
         if (currentIndex >= index && self.items.count != 1) { currentIndex += items.count }
     }
 
-    private func skip(direction: Int, wrap: Bool) throws -> T {
-        var index = currentIndex + direction
+    internal enum SkipDirection : Int {
+        case next = 1
+        case previous = -1
+    }
+    
+    private func skip(direction: SkipDirection, wrap: Bool) throws -> T {
+        var index = currentIndex + direction.rawValue
         if (wrap) {
             index = (items.count + index) % items.count;
         }
@@ -119,7 +124,7 @@ class QueueManager<T> {
      */
     @discardableResult
     public func next(wrap: Bool = false) throws -> T {
-        return try skip(direction: 1, wrap: wrap);
+        return try skip(direction: SkipDirection.next, wrap: wrap);
     }
 
     /**
@@ -131,7 +136,7 @@ class QueueManager<T> {
      */
     @discardableResult
     public func previous(wrap: Bool = false) throws -> T {
-        return try skip(direction: -1, wrap: wrap);
+        return try skip(direction: SkipDirection.previous, wrap: wrap);
     }
 
     /**
