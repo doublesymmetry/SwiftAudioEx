@@ -13,7 +13,7 @@ protocol AVPlayerWrapperProtocol: AnyObject {
 
     var state: AVPlayerWrapperState { get }
 
-    var playWhenReady: Bool { get }
+    var playWhenReady: Bool { get set }
     
     var currentItem: AVPlayerItem? { get }
     
@@ -54,4 +54,6 @@ protocol AVPlayerWrapperProtocol: AnyObject {
     func load(from url: URL, playWhenReady: Bool, options: [String: Any]?)
     
     func load(from url: URL, playWhenReady: Bool, initialTime: TimeInterval?, options: [String: Any]?)
+
+    func reset()
 }

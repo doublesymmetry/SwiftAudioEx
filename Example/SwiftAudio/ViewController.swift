@@ -48,7 +48,7 @@ class ViewController: UIViewController {
         if lastLoadFailed, let item = controller.player.currentItem {
             lastLoadFailed = false
             errorLabel.isHidden = true
-            try? controller.player.load(item: item, playWhenReady: true)
+            controller.player.load(item: item, playWhenReady: true)
         }
         else {
             controller.player.togglePlaying()
@@ -95,7 +95,7 @@ class ViewController: UIViewController {
     }
     
     func setPlayButtonState(forAudioPlayerState state: AudioPlayerState) {
-        playButton.setTitle(state == .playing ? "Pause" : "Play", for: .normal)
+        playButton.setTitle(state == .paused ? "Play" : "Pause", for: .normal)
     }
     
     func setErrorMessage(_ message: String) {

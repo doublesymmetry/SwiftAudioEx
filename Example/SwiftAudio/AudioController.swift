@@ -36,7 +36,8 @@ class AudioController {
             .changePlaybackPosition
         ]
         try? audioSessionController.set(category: .playback)
-        try? player.add(items: sources, playWhenReady: false)
+        player.repeatMode = .queue
+        try? player.add(items: sources)
     }
     
 }

@@ -1,7 +1,9 @@
 import Quick
 import Nimble
+import Foundation
 
 @testable import SwiftAudioEx
+import AVFoundation
 
 extension QueuedAudioPlayer {
     class SeekEventListener {
@@ -34,10 +36,12 @@ class QueuedAudioPlayerTests: QuickSpec {
                 }
                 
                 context("when adding one item") {
+                    var shortItem: AudioItem!
                     var item: AudioItem!
                     beforeEach {
-                        item = ShortSource.getAudioItem()
-                        try? audioPlayer.add(item: item, playWhenReady: false)
+                        shortItem = ShortSource.getAudioItem()
+                        item = Source.getAudioItem()
+                        try? audioPlayer.add(item: shortItem)
                     }
                     it("should not be nil") {
                         expect(audioPlayer.currentItem).toNot(beNil())
@@ -45,11 +49,48 @@ class QueuedAudioPlayerTests: QuickSpec {
                     
                     context("then loading a new item") {
                         beforeEach {
-                            try? audioPlayer.load(item: Source.getAudioItem(), playWhenReady: false)
+                            audioPlayer.load(item: item)
                         }
                         
                         it("should have replaced the item") {
-                            expect(audioPlayer.currentItem?.getSourceUrl()).toNot(equal(item.getSourceUrl()))
+                            expect(
+                                audioPlayer.currentItem?.getSourceUrl()
+                            ).to(
+                                equal(item.getSourceUrl())
+                            )
+                        }
+                    }
+
+                    context("then removing it again") {
+                        beforeEach {
+                            audioPlayer.repeatMode = RepeatMode.track;
+                            audioPlayer.play();
+                            audioPlayer.seek(to: 0.6);
+                            try? audioPlayer.removeItem(at: audioPlayer.currentIndex);
+                        }
+                        
+                        it("should have made the currentItem nil") {
+                            expect(audioPlayer.currentItem).to(beNil())
+                        }
+
+                        it("should make the player be idle") {
+                            expect(audioPlayer.playerState).to(equal(AudioPlayerState.idle))
+                        }
+
+                        context("then loading a new item") {
+                            beforeEach {
+                                audioPlayer.load(item: Source.getAudioItem())
+                            }
+                            
+                            it("should have set the item") {
+                                expect(audioPlayer.currentItem?.getSourceUrl()).toNot(equal(shortItem.getSourceUrl()))
+                            }
+                            it("should have started loading") {
+                                expect(audioPlayer.playerState).toEventually(equal(AudioPlayerState.loading))
+                            }
+                            it("should have started playing") {
+                                expect(audioPlayer.playerState).toEventually(equal(AudioPlayerState.playing))
+                            }
                         }
                     }
                 }
@@ -264,15 +305,20 @@ class QueuedAudioPlayerTests: QuickSpec {
                 }
             }
 
-            class TestEventListener {
-                var eventResult: (Int?, Int?) = (-1, -1)
-                func handleEvent(previousIndex: Int?, nextIndex: Int?) { eventResult = (previousIndex, nextIndex) }
+            class CurrentItemEventListener {
+                var lastIndex: Int? = nil
+                var lastItem: AudioItem? = nil
+                func handleEvent(item: AudioItem?, index: Int?) {
+                    lastIndex = index
+                    lastItem = item
+                }
             }
 
             describe("its repeat mode") {
                 context("when adding 2 items") {
                     beforeEach {
-                        try? audioPlayer.add(items: [ShortSource.getAudioItem(), ShortSource.getAudioItem()], playWhenReady: true)
+                        audioPlayer.play()
+                        try? audioPlayer.add(items: [ShortSource.getAudioItem(), ShortSource.getAudioItem()])
                     }
 
                     context("then setting repeat mode off") {
@@ -286,13 +332,14 @@ class QueuedAudioPlayerTests: QuickSpec {
                             }
 
                             it("should move to next item") {
-                                let eventListener = TestEventListener()
-                                audioPlayer.event.queueIndex.addListener(eventListener, eventListener.handleEvent)
+                                let eventListener = CurrentItemEventListener()
+
+                                audioPlayer.event.currentItem.addListener(eventListener, eventListener.handleEvent)
 
                                 expect(audioPlayer.nextItems.count).toEventually(equal(0))
                                 expect(audioPlayer.currentIndex).toEventually(equal(1))
                                 expect(audioPlayer.playerState).toEventually(equal(AudioPlayerState.playing))
-                                expect(eventListener.eventResult).toEventually(equal((0, 1)))
+                                expect(eventListener.lastIndex).toEventually(equal(1))
                             }
 
                             context("allow playback to end again") {
@@ -301,27 +348,27 @@ class QueuedAudioPlayerTests: QuickSpec {
                                 }
 
                                 it("should stop playback normally") {
-                                    let eventListener = TestEventListener()
-                                    audioPlayer.event.queueIndex.addListener(eventListener, eventListener.handleEvent)
+                                    let eventListener = CurrentItemEventListener()
+                                    audioPlayer.event.currentItem.addListener(eventListener, eventListener.handleEvent)
 
                                     expect(audioPlayer.nextItems.count).toEventually(equal(0))
                                     expect(audioPlayer.currentIndex).toEventually(equal(1))
                                     expect(audioPlayer.playerState).toEventually(equal(AudioPlayerState.paused))
-                                    expect(eventListener.eventResult).toEventually(equal((0, 1)))
+                                    expect(eventListener.lastIndex).toEventually(equal(1))
                                 }
                             }
                         }
 
                         context("then calling next()") {
                             it("should move to next item") {
-                                let eventListener = TestEventListener()
-                                audioPlayer.event.queueIndex.addListener(eventListener, eventListener.handleEvent)
+                                let eventListener = CurrentItemEventListener()
+                                audioPlayer.event.currentItem.addListener(eventListener, eventListener.handleEvent)
 
                                 try? audioPlayer.next()
                                 expect(audioPlayer.nextItems.count).toEventually(equal(0))
                                 expect(audioPlayer.currentIndex).toEventually(equal(1))
                                 expect(audioPlayer.playerState).toEventually(equal(AudioPlayerState.playing))
-                                expect(eventListener.eventResult).toEventually(equal((0, 1)))
+                                expect(eventListener.lastIndex).toEventually(equal(1))
                             }
 
                             context("then calling next() again") {
@@ -344,8 +391,8 @@ class QueuedAudioPlayerTests: QuickSpec {
                             }
 
                             it("should restart current item") {
-                                let eventListener = TestEventListener()
-                                audioPlayer.event.queueIndex.addListener(eventListener, eventListener.handleEvent)
+                                let eventListener = CurrentItemEventListener()
+                                audioPlayer.event.currentItem.addListener(eventListener, eventListener.handleEvent)
 
                                 expect(audioPlayer.currentTime).toEventually(equal(0))
                                 expect(audioPlayer.nextItems.count).toEventually(equal(1))
@@ -356,13 +403,13 @@ class QueuedAudioPlayerTests: QuickSpec {
 
                         context("then calling next()") {
                             it("should move to next item and should play") {
-                                let eventListener = TestEventListener()
-                                audioPlayer.event.queueIndex.addListener(eventListener, eventListener.handleEvent)
+                                let eventListener = CurrentItemEventListener()
+                                audioPlayer.event.currentItem.addListener(eventListener, eventListener.handleEvent)
 
                                 try? audioPlayer.next()
                                 expect(audioPlayer.nextItems.count).to(equal(0))
                                 expect(audioPlayer.playerState).toEventually(equal(AudioPlayerState.playing))
-                                expect(eventListener.eventResult).toEventually(equal((0, 1)))
+                                expect(eventListener.lastIndex).toEventually(equal(1))
                             }
                         }
                     }
@@ -378,13 +425,13 @@ class QueuedAudioPlayerTests: QuickSpec {
                             }
 
                             it("should move to next item and should play") {
-                                let eventListener = TestEventListener()
-                                audioPlayer.event.queueIndex.addListener(eventListener, eventListener.handleEvent)
+                                let eventListener = CurrentItemEventListener()
+                                audioPlayer.event.currentItem.addListener(eventListener, eventListener.handleEvent)
 
                                 expect(audioPlayer.nextItems.count).toEventually(equal(0))
                                 expect(audioPlayer.currentIndex).toEventually(equal(1))
                                 expect(audioPlayer.playerState).toEventually(equal(AudioPlayerState.playing))
-                                expect(eventListener.eventResult).toEventually(equal((0, 1)))
+                                expect(eventListener.lastIndex).toEventually(equal(1))
                             }
 
                             context("allow playback to end again") {
@@ -393,27 +440,27 @@ class QueuedAudioPlayerTests: QuickSpec {
                                 }
 
                                 it("should move to first track and should play") {
-                                    let eventListener = TestEventListener()
-                                    audioPlayer.event.queueIndex.addListener(eventListener, eventListener.handleEvent)
+                                    let eventListener = CurrentItemEventListener()
+                                    audioPlayer.event.currentItem.addListener(eventListener, eventListener.handleEvent)
 
                                     expect(audioPlayer.nextItems.count).toEventually(equal(1))
                                     expect(audioPlayer.currentIndex).toEventually(equal(0))
                                     expect(audioPlayer.playerState).toEventually(equal(AudioPlayerState.playing))
-                                    expect(eventListener.eventResult).toEventually(equal((1, 0)))
+                                    expect(eventListener.lastIndex).toEventually(equal(1))
                                 }
                             }
                         }
 
                         context("then calling next()") {
                             it("should move to next item and should play") {
-                                let eventListener = TestEventListener()
-                                audioPlayer.event.queueIndex.addListener(eventListener, eventListener.handleEvent)
+                                let eventListener = CurrentItemEventListener()
+                                audioPlayer.event.currentItem.addListener(eventListener, eventListener.handleEvent)
 
                                 try? audioPlayer.next()
                                 expect(audioPlayer.nextItems.count).to(equal(0))
                                 expect(audioPlayer.currentIndex).to(equal(1))
                                 expect(audioPlayer.playerState).toEventually(equal(AudioPlayerState.playing))
-                                expect(eventListener.eventResult).toEventually(equal((0, 1)))
+                                expect(eventListener.lastIndex).toEventually(equal(1))
                             }
 
                             context("then calling next() again") {
@@ -422,14 +469,14 @@ class QueuedAudioPlayerTests: QuickSpec {
                                 }
 
                                 it("should move to first track and should play") {
-                                    let eventListener = TestEventListener()
-                                    audioPlayer.event.queueIndex.addListener(eventListener, eventListener.handleEvent)
+                                    let eventListener = CurrentItemEventListener()
+                                    audioPlayer.event.currentItem.addListener(eventListener, eventListener.handleEvent)
 
                                     try? audioPlayer.next()
                                     expect(audioPlayer.nextItems.count).to(equal(1))
                                     expect(audioPlayer.currentIndex).to(equal(0))
                                     expect(audioPlayer.playerState).toEventually(equal(AudioPlayerState.playing))
-                                    expect(eventListener.eventResult).toEventually(equal((1, 0)))
+                                    expect(eventListener.lastIndex).toEventually(equal(0))
                                 }
                             }
                         }
@@ -452,8 +499,8 @@ class QueuedAudioPlayerTests: QuickSpec {
                             }
 
                             it("should stop playback normally") {
-                                let eventListener = TestEventListener()
-                                audioPlayer.event.queueIndex.addListener(eventListener, eventListener.handleEvent)
+                                let eventListener = CurrentItemEventListener()
+                                audioPlayer.event.currentItem.addListener(eventListener, eventListener.handleEvent)
 
                                 expect(audioPlayer.nextItems.count).toEventually(equal(0))
                                 expect(audioPlayer.playerState).toEventually(equal(AudioPlayerState.paused))
@@ -479,21 +526,20 @@ class QueuedAudioPlayerTests: QuickSpec {
                             }
 
                             it("should restart current item") {
-                                let eventListener = TestEventListener()
-                                audioPlayer.event.queueIndex.addListener(eventListener, eventListener.handleEvent)
+                                let eventListener = CurrentItemEventListener()
+                                audioPlayer.event.currentItem.addListener(eventListener, eventListener.handleEvent)
 
                                 expect(audioPlayer.currentTime).toEventually(equal(0))
                                 expect(audioPlayer.currentIndex).toEventually(equal(0))
                                 expect(audioPlayer.playerState).toEventually(equal(AudioPlayerState.playing))
-                                // Because no queueIndex event was emitted, these stay at -1 / -1
-                                expect(eventListener.eventResult).toEventually(equal((-1, -1)))
+                                expect(eventListener.lastIndex).toEventually(beNil())
                             }
                         }
 
                         context("then calling next()") {
                             it("should restart current item") {
-                                let eventListener = TestEventListener()
-                                audioPlayer.event.queueIndex.addListener(eventListener, eventListener.handleEvent)
+                                let eventListener = CurrentItemEventListener()
+                                audioPlayer.event.currentItem.addListener(eventListener, eventListener.handleEvent)
 
                                 expect(audioPlayer.currentTime).toEventually(equal(0))
                                 expect(audioPlayer.currentIndex).toEventually(equal(0))
@@ -513,21 +559,20 @@ class QueuedAudioPlayerTests: QuickSpec {
                             }
 
                             it("should restart current item") {
-                                let eventListener = TestEventListener()
-                                audioPlayer.event.queueIndex.addListener(eventListener, eventListener.handleEvent)
+                                let eventListener = CurrentItemEventListener()
+                                audioPlayer.event.currentItem.addListener(eventListener, eventListener.handleEvent)
 
                                 expect(audioPlayer.currentTime).toEventually(equal(0))
                                 expect(audioPlayer.currentIndex).toEventually(equal(0))
                                 expect(audioPlayer.playerState).toEventually(equal(AudioPlayerState.playing))
-                                // Because no queueIndex event was emitted, these stay at -1 / -1
-                                expect(eventListener.eventResult).toEventually(equal((-1, -1)))
+                                expect(eventListener.lastIndex).toEventually(equal(0))
                             }
                         }
 
                         context("then calling next()") {
                             it("should restart current item") {
-                                let eventListener = TestEventListener()
-                                audioPlayer.event.queueIndex.addListener(eventListener, eventListener.handleEvent)
+                                let eventListener = CurrentItemEventListener()
+                                audioPlayer.event.currentItem.addListener(eventListener, eventListener.handleEvent)
 
                                 // workaround: seek not to beggining, for 0 expecations to correctly fail if necessary.
                                 audioPlayer.seekWithExpectation(to: 0.05)
@@ -535,8 +580,7 @@ class QueuedAudioPlayerTests: QuickSpec {
                                 expect(audioPlayer.currentTime).toEventually(equal(0))
                                 expect(audioPlayer.currentIndex).toEventually(equal(0))
                                 expect(audioPlayer.playerState).toEventually(equal(AudioPlayerState.playing))
-                                // Because no queueIndex event was emitted, these stay at -1 / -1
-                                expect(eventListener.eventResult).toEventually(equal((-1, -1)))
+                                expect(eventListener.lastIndex).toEventually(equal(0))
                             }
                         }
                     }

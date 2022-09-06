@@ -19,7 +19,6 @@ public enum PlaybackEndedReason: String {
 }
 
 class AVPlayerWrapper: AVPlayerWrapperProtocol {
-    
     struct Constants {
         static let assetPlayableKey = "playable"
     }
@@ -65,9 +64,9 @@ class AVPlayerWrapper: AVPlayerWrapperProtocol {
     }
 
     /**
-     True if the last call to load(from:playWhenReady) had playWhenReady=true.
+     Whether AVPlayer should start playing automatically when the item is ready.
      */
-    fileprivate(set) var playWhenReady: Bool = true
+    public var playWhenReady: Bool = true
     
     var currentItem: AVPlayerItem? {
         avPlayer.currentItem
@@ -153,7 +152,7 @@ class AVPlayerWrapper: AVPlayerWrapperProtocol {
     
     func stop() {
         pause()
-        reset(soft: false)
+        reset()
     }
     
     func seek(to seconds: TimeInterval) {
@@ -176,15 +175,14 @@ class AVPlayerWrapper: AVPlayerWrapperProtocol {
     
     
     func load(from url: URL, playWhenReady: Bool, options: [String: Any]? = nil) {
-        reset(soft: true)
+        reset()
         self.playWhenReady = playWhenReady
-
+        
         if currentItem?.status == .failed {
             recreateAVPlayer()
         }
 
         pendingAsset = AVURLAsset(url: url, options: options)
-        
         if let pendingAsset = pendingAsset {
             state = .loading
             pendingAsset.loadValuesAsynchronously(forKeys: [Constants.assetPlayableKey], completionHandler: { [weak self] in
@@ -252,7 +250,7 @@ class AVPlayerWrapper: AVPlayerWrapperProtocol {
     
     // MARK: - Util
     
-    private func reset(soft: Bool) {
+    func reset() {
         playerItemObserver.stopObservingCurrentItem()
         playerTimeObserver.unregisterForBoundaryTimeEvents()
         playerItemNotificationObserver.stopObservingCurrentItem()
@@ -260,9 +258,8 @@ class AVPlayerWrapper: AVPlayerWrapperProtocol {
         pendingAsset?.cancelLoading()
         pendingAsset = nil
         
-        if !soft {
-            avPlayer.replaceCurrentItem(with: nil)
-        }
+        avPlayer.replaceCurrentItem(with: nil)
+        state = .idle
     }
     
     /// Will recreate the AVPlayer instance. Used when the current one fails.

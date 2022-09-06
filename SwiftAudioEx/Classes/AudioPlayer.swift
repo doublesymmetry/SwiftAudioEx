@@ -46,8 +46,13 @@ public class AudioPlayer: AVPlayerWrapperDelegate {
 
     // MARK: - Getters from AVPlayerWrapper
 
-    internal var willPlayWhenReady: Bool {
-        wrapper.playWhenReady
+    public var playWhenReady: Bool {
+        get {
+            return wrapper.playWhenReady
+        }
+        set {
+            wrapper.playWhenReady = newValue
+        }
     }
 
     /**
@@ -170,7 +175,7 @@ public class AudioPlayer: AVPlayerWrapperDelegate {
         }
 
         wrapper.load(from: url,
-                     playWhenReady: playWhenReady ?? willPlayWhenReady,
+                     playWhenReady: playWhenReady ?? self.playWhenReady,
                      initialTime: (item as? InitialTiming)?.getInitialTime(),
                      options:(item as? AssetOptionsProviding)?.getAssetOptions())
 
