@@ -64,6 +64,30 @@ class AVPlayerWrapper: AVPlayerWrapperProtocol {
         }
     }
 
+    fileprivate(set) var lastPlayerTimeControlStatus: AVPlayer.TimeControlStatus = AVPlayer.TimeControlStatus.paused {
+        didSet {
+            if oldValue != lastPlayerTimeControlStatus {
+                switch lastPlayerTimeControlStatus {
+                    case .paused:
+                        if pendingAsset == nil {
+                            state = .idle
+                        }
+                        else if currentItem != nil && pausedForLoad != true {
+                            state = .paused
+                        }
+                    case .waitingToPlayAtSpecifiedRate:
+                        if pendingAsset != nil {
+                            state = .buffering
+                        }
+                    case .playing:
+                        state = .playing
+                    @unknown default:
+                        break
+                }
+            }
+        }
+    }
+
     /**
      True if the last call to load(from:playWhenReady) had playWhenReady=true.
      */
@@ -282,21 +306,7 @@ extension AVPlayerWrapper: AVPlayerObserverDelegate {
     // MARK: - AVPlayerObserverDelegate
     
     func player(didChangeTimeControlStatus status: AVPlayer.TimeControlStatus) {
-        switch status {
-        case .paused:
-            if currentItem == nil {
-                state = .idle
-            }
-            else if pausedForLoad != true {
-                state = .paused
-            }
-        case .waitingToPlayAtSpecifiedRate:
-            state = .buffering
-        case .playing:
-            state = .playing
-        @unknown default:
-            break
-        }
+        lastPlayerTimeControlStatus = status;
     }
     
     func player(statusDidChange status: AVPlayer.Status) {
