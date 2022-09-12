@@ -1,5 +1,12 @@
 name: validate
-on: [push]
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   unit-tests:
     runs-on: macos-latest
