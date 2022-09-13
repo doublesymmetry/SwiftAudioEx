@@ -19,8 +19,6 @@ public struct APError {
     }
 
     enum QueueError: Error {
-        case noPreviousItem
-        case noNextItem
         case noCurrentItem
         case invalidIndex(index: Int, message: String)
         case empty

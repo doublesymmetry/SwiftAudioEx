@@ -56,11 +56,11 @@ class ViewController: UIViewController {
     }
     
     @IBAction func previous(_ sender: Any) {
-        try? controller.player.previous()
+        controller.player.previous()
     }
     
     @IBAction func next(_ sender: Any) {
-        try? controller.player.next()
+        controller.player.next()
     }
     
     @IBAction func startScrubbing(_ sender: UISlider) {

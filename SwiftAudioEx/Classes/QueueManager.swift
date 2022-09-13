@@ -118,48 +118,37 @@ class QueueManager<T> {
         case previous = -1
     }
 
-    private func skip(direction: SkipDirection, wrap: Bool) throws -> T {
-        try throwIfQueueEmpty();
-        if (currentIndex == -1) {
-            throw APError.QueueError.noCurrentItem
+    private func skip(direction: SkipDirection, wrap: Bool) -> T? {
+        if (items.count > 0) {
+            var index = currentIndex + direction.rawValue
+            if (wrap) {
+                index = (items.count + index) % items.count;
+            }
+            currentIndex = max(0, min(items.count - 1, index))
+            updateCurrentItem()
         }
-        var index = currentIndex + direction.rawValue
-        if (wrap) {
-            index = (items.count + index) % items.count;
-        }
-        guard items.count > index else {
-            throw APError.QueueError.noNextItem
-        }
-        guard index >= 0 else {
-            throw APError.QueueError.noPreviousItem
-        }
-        currentIndex = index
-        updateCurrentItem()
-        return current!
+        return current
     }
 
     /**
-     Get the next item in the queue, if there are any.
-     Will update the current item.
-
-     - throws: `APError.QueueError`
-     - returns: The next item.
+     Makes the next item in the queue active, or the last item when already at the end of the queue. When wrap is true and at the end of the queue, the first track in the queue is made active.
+     - parameter wrap: Whether to wrap to the start of the queue
+     - returns: The next (or current) item.
      */
     @discardableResult
-    public func next(wrap: Bool = false) throws -> T {
-        return try skip(direction: SkipDirection.next, wrap: wrap);
+    public func next(wrap: Bool = false) -> T? {
+        return skip(direction: SkipDirection.next, wrap: wrap);
     }
 
     /**
-     Get the previous item in the queue, if there are any.
-     Will update the current item.
+     Makes the previous item in the queue active, or the first item when already at the start of the queue. When wrap is true and at the start of the queue, the last track in the queue is made active.
 
-     - throws: `APError.QueueError`
+     - parameter wrap: Whether to wrap to the end of the queue
      - returns: The previous item.
      */
     @discardableResult
-    public func previous(wrap: Bool = false) throws -> T {
-        return try skip(direction: SkipDirection.previous, wrap: wrap);
+    public func previous(wrap: Bool = false) -> T? {
+        return skip(direction: SkipDirection.previous, wrap: wrap);
     }
 
     /**

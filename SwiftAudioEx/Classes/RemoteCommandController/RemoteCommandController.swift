@@ -171,26 +171,16 @@ public class RemoteCommandController {
     
     private func handleNextTrackCommandDefault(event: MPRemoteCommandEvent) -> MPRemoteCommandHandlerStatus {
         if let player = audioPlayer as? QueuedAudioPlayer {
-            do {
-                try player.next()
-                return MPRemoteCommandHandlerStatus.success
-            }
-            catch let error {
-                return getRemoteCommandHandlerStatus(forError: error)
-            }
+            player.next()
+            return MPRemoteCommandHandlerStatus.success
         }
         return MPRemoteCommandHandlerStatus.commandFailed
     }
     
     private func handlePreviousTrackCommandDefault(event: MPRemoteCommandEvent) -> MPRemoteCommandHandlerStatus {
         if let player = audioPlayer as? QueuedAudioPlayer {
-            do {
-                try player.previous()
-                return MPRemoteCommandHandlerStatus.success
-            }
-            catch let error {
-                return getRemoteCommandHandlerStatus(forError: error)
-            }
+            player.previous()
+            return MPRemoteCommandHandlerStatus.success
         }
         return MPRemoteCommandHandlerStatus.commandFailed
     }
@@ -216,7 +206,7 @@ public class RemoteCommandController {
         }
         else if let error = error as? APError.QueueError {
             switch error {
-            case .empty, .noNextItem, .noPreviousItem, .noCurrentItem, .invalidIndex(_, _):
+            case .empty, .noCurrentItem, .invalidIndex(_, _):
                 return MPRemoteCommandHandlerStatus.noSuchContent
             }
         }

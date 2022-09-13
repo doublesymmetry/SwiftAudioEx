@@ -102,17 +102,17 @@ public class QueuedAudioPlayer: AudioPlayer, QueueManagerDelegate {
 
      - throws: `APError`
      */
-    public func next() throws {
+    public func next() {
         event.playbackEnd.emit(data: .skippedToNext)
-        _ = try queue.next(wrap: repeatMode == .queue)
+        _ = queue.next(wrap: repeatMode == .queue)
     }
 
     /**
      Step to the previous item in the queue.
      */
-    public func previous() throws {
+    public func previous() {
         event.playbackEnd.emit(data: .skippedToPrevious)
-        _ = try queue.previous(wrap: repeatMode == .queue)
+        _ = queue.previous(wrap: repeatMode == .queue)
     }
 
     /**
@@ -175,8 +175,11 @@ public class QueuedAudioPlayer: AudioPlayer, QueueManagerDelegate {
         if (repeatMode == .track) {
             seek(to: 0);
             play()
-        } else {
-            _ = try? queue.next(wrap: repeatMode == .queue)
+        } else if (repeatMode == .queue) {
+            _ = queue.next(wrap: true)
+        // Avoid looping the last item when not in queue repeat mode:
+        } else if (currentIndex != items.count - 1) {
+            _ = queue.next(wrap: false)
         }
     }
 
