@@ -58,9 +58,17 @@ class QueueManager<T> {
         }
     }
 
-    private func throwIfIndexInvalid(index: Int, name: String = "index") throws {
-        guard index >= 0 && items.count > index else {
-            throw APError.QueueError.invalidIndex(index: index, message: "\(name.prefix(1).uppercased() + name.dropFirst())) has to be positive and smaller than the count of current items (\(items.count))")
+    private func throwIfIndexInvalid(
+        index: Int,
+        name: String = "index",
+        min: Int? = nil,
+        max: Int? = nil
+    ) throws {
+        guard index >= (min ?? 0) && (max ?? items.count) > index else {
+            throw APError.QueueError.invalidIndex(
+                index: index,
+                message: "\(name.prefix(1).uppercased() + name.dropFirst())) has to be positive and smaller than the count of current items (\(items.count))"
+            )
         }
     }
 
@@ -176,16 +184,16 @@ class QueueManager<T> {
      Move an item in the queue.
 
      - parameter fromIndex: The index of the item to be moved.
-     - parameter toIndex: The index to move the item to.
+     - parameter toIndex: The index to move the item to. If the index is larger than the size of the queue, the item is moved to the end of the queue instead.
      - throws: `APError.QueueError`
      */
     func moveItem(fromIndex: Int, toIndex: Int) throws {
         try throwIfQueueEmpty();
         try throwIfIndexInvalid(index: fromIndex, name: "fromIndex")
-        try throwIfIndexInvalid(index: toIndex, name: "toIndex")
+        try throwIfIndexInvalid(index: toIndex, name: "toIndex", max: Int.max)
 
         let item = items.remove(at: fromIndex)
-        self.items.insert(item, at: toIndex);
+        self.items.insert(item, at: min(items.count, toIndex));
         if (fromIndex == currentIndex) {
             currentIndex = toIndex;
         }

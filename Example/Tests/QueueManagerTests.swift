@@ -607,18 +607,26 @@ class QueueManagerTests: QuickSpec {
                         }
                     }
                     
-                    context("moving to a too large index") {
+                    fcontext("moving to a too large index") {
                         var error: Error?
                         beforeEach {
                             do {
-                                try queue.moveItem(fromIndex: queue.currentIndex + 1, toIndex: queue.items.count)
+                                try queue.moveItem(fromIndex: 0, toIndex: queue.items.count)
                             }
                             catch let err { error = err }
                         }
                         
-                        it("should throw an error") {
-                            expect(error).toNot(beNil())
+                        it("should not throw an error") {
+                            expect(error).to(beNil())
                         }
+
+                        it("should have moved the first item to the end of the queue") {
+                            expect(queue.items.last).to(equal(0))
+                        }
+                        it("the first item in the queue should be what was previously the second item") {
+                            expect(queue.items.first).to(equal(1))
+                        }
+
                     }
                     
                     context("then moving 2nd to 4th") {
