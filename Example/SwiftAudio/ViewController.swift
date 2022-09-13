@@ -51,7 +51,7 @@ class ViewController: UIViewController {
             controller.player.load(item: item, playWhenReady: true)
         }
         else {
-            controller.player.togglePlaying()
+            controller.player.stop()
         }
     }
     

@@ -213,7 +213,6 @@ public class AudioPlayer: AVPlayerWrapperDelegate {
      */
     public func stop() {
         reset()
-        wrapper.stop()
         event.playbackEnd.emit(data: .playerStopped)
     }
 
@@ -315,6 +314,7 @@ public class AudioPlayer: AVPlayerWrapperDelegate {
 
     func reset() {
         currentItem = nil
+        wrapper.reset()
     }
 
     private func setTimePitchingAlgorithmForCurrentItem() {

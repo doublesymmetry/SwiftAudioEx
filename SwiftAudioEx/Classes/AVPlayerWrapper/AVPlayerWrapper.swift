@@ -175,7 +175,6 @@ class AVPlayerWrapper: AVPlayerWrapperProtocol {
     }
     
     func stop() {
-        pause()
         reset()
     }
     
