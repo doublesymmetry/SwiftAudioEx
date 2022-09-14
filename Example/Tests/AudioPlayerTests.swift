@@ -126,6 +126,19 @@ class AudioPlayerTests: XCTestCase {
         }
     }
     
+    func test_AudioPlayer__state__play_source__should_emit_fail_event_on_load_failure() {
+        var didReceiveError = false;
+        listener.onReceivedFail = { error in
+            didReceiveError = true;
+        }
+        let nonExistingUrl = "https://\(String.random(length: 100)).com/\(String.random(length: 100)).mp3";
+        let item = DefaultAudioItem(audioUrl: nonExistingUrl, artist: "Artist", title: "Title", albumTitle: "AlbumTitle", sourceType: .stream);
+        try? audioPlayer.load(item: item, playWhenReady: true)
+        eventually {
+            XCTAssertEqual(didReceiveError, true)
+        }
+    }
+    
     func test_AudioPlayer__state__play_source__should_emit_events_in_reliable_order_also_after_loading_after_reset() {
         var events = [audioPlayer.playerState.rawValue == "idle" ? "idle" : "not_idle"]
         listener.stateUpdate = { state in
@@ -279,6 +292,7 @@ class AudioPlayerEventListener {
     var stateUpdate: ((_ state: AudioPlayerState) -> Void)?
     var secondsElapse: ((_ seconds: TimeInterval) -> Void)?
     var seekCompletion: (() -> Void)?
+    var onReceivedFail: ((_ error: Error?) -> Void)?
     
     weak var audioPlayer: AudioPlayer?
     
@@ -286,6 +300,7 @@ class AudioPlayerEventListener {
         audioPlayer.event.stateChange.addListener(self, handleDidUpdateState)
         audioPlayer.event.seek.addListener(self, handleSeek)
         audioPlayer.event.secondElapse.addListener(self, handleSecondsElapse)
+        audioPlayer.event.fail.addListener(self, handleFail)
     }
     
     deinit {
@@ -304,6 +319,10 @@ class AudioPlayerEventListener {
     
     func handleSecondsElapse(data: AudioPlayer.SecondElapseEventData) {
         self.secondsElapse?(data)
+    }
+
+    func handleFail(error: Error?) {
+        self.onReceivedFail?(error)
     }
     
 }
@@ -345,5 +364,19 @@ extension XCTestExpectation {
         DispatchQueue.main.asyncAfter(deadline: .now() + time) {
             self.fulfill()
         }
+    }
+}
+
+extension String {
+
+    static func random(length: Int = 20) -> String {
+        let base = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+        var randomString: String = ""
+
+        for _ in 0..<length {
+            let randomValue = arc4random_uniform(UInt32(base.count))
+            randomString += "\(base[base.index(base.startIndex, offsetBy: Int(randomValue))])"
+        }
+        return randomString
     }
 }
