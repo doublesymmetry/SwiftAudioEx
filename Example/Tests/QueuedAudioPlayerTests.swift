@@ -12,11 +12,11 @@ extension QueuedAudioPlayer {
     }
 
     func seekWithExpectation(to time: Double) {
-        let eventListener = SeekEventListener()
-        event.seek.addListener(eventListener, eventListener.handleEvent)
+        let seekEventListener = SeekEventListener()
+        event.seek.addListener(seekEventListener, seekEventListener.handleEvent)
 
         seek(to: time)
-        expect(eventListener.eventResult).toEventually(equal((0, true)))
+        expect(seekEventListener.eventResult).toEventually(equal((time, true)))
     }
 }
 
@@ -34,12 +34,12 @@ class QueuedAudioPlayerTests: QuickSpec {
                 }
 
                 context("when adding one item") {
-                    var shortItem: AudioItem!
+                    var fiveSecondItem: AudioItem!
                     var item: AudioItem!
                     beforeEach {
-                        shortItem = ShortSource.getAudioItem()
+                        fiveSecondItem = FiveSecondSource.getAudioItem()
                         item = Source.getAudioItem()
-                        try? audioPlayer.add(item: shortItem)
+                        try? audioPlayer.add(item: fiveSecondItem)
                     }
                     it("should not be nil") {
                         expect(audioPlayer.currentItem).toNot(beNil())
@@ -63,7 +63,7 @@ class QueuedAudioPlayerTests: QuickSpec {
                         beforeEach {
                             audioPlayer.repeatMode = RepeatMode.track;
                             audioPlayer.play();
-                            audioPlayer.seek(to: 0.6);
+                            audioPlayer.seek(to: 4);
                             try? audioPlayer.removeItem(at: audioPlayer.currentIndex);
                         }
                         
@@ -81,7 +81,7 @@ class QueuedAudioPlayerTests: QuickSpec {
                             }
                             
                             it("should have set the item") {
-                                expect(audioPlayer.currentItem?.getSourceUrl()).toNot(equal(shortItem.getSourceUrl()))
+                                expect(audioPlayer.currentItem?.getSourceUrl()).toNot(equal(fiveSecondItem.getSourceUrl()))
                             }
                             it("should have started loading") {
                                 expect(audioPlayer.playerState).toEventually(equal(AudioPlayerState.loading))
@@ -95,7 +95,7 @@ class QueuedAudioPlayerTests: QuickSpec {
 
                 context("when adding multiple items") {
                     beforeEach {
-                        try? audioPlayer.add(items: [ShortSource.getAudioItem(), ShortSource.getAudioItem()], playWhenReady: false)
+                        try? audioPlayer.add(items: [FiveSecondSource.getAudioItem(), FiveSecondSource.getAudioItem()], playWhenReady: false)
                     }
                     it("should not be nil") {
                         expect(audioPlayer.currentItem).toNot(beNil())
@@ -182,7 +182,7 @@ class QueuedAudioPlayerTests: QuickSpec {
 
                 context("when adding 2 items") {
                     beforeEach {
-                        try? audioPlayer.add(items: [ShortSource.getAudioItem(), ShortSource.getAudioItem()])
+                        try? audioPlayer.add(items: [FiveSecondSource.getAudioItem(), FiveSecondSource.getAudioItem()])
                     }
 
                     it("should be empty") {
@@ -224,7 +224,7 @@ class QueuedAudioPlayerTests: QuickSpec {
             describe("onNext") {
                 context("player was playing") {
                     beforeEach {
-                        try? audioPlayer.add(items: [ShortSource.getAudioItem(), ShortSource.getAudioItem()])
+                        try? audioPlayer.add(items: [FiveSecondSource.getAudioItem(), FiveSecondSource.getAudioItem()])
                     }
 
                     context("then calling next()") {
@@ -241,7 +241,7 @@ class QueuedAudioPlayerTests: QuickSpec {
                 }
                 context("player was paused") {
                     beforeEach {
-                        try? audioPlayer.add(items: [ShortSource.getAudioItem(), ShortSource.getAudioItem()])
+                        try? audioPlayer.add(items: [FiveSecondSource.getAudioItem(), FiveSecondSource.getAudioItem()])
                         audioPlayer.pause()
 
                     }
@@ -263,7 +263,7 @@ class QueuedAudioPlayerTests: QuickSpec {
             describe("onPrevious") {
                 context("player was playing") {
                     beforeEach {
-                        try? audioPlayer.add(items: [ShortSource.getAudioItem(), ShortSource.getAudioItem()], playWhenReady: true)
+                        try? audioPlayer.add(items: [FiveSecondSource.getAudioItem(), FiveSecondSource.getAudioItem()], playWhenReady: true)
                         audioPlayer.next()
                     }
 
@@ -282,7 +282,7 @@ class QueuedAudioPlayerTests: QuickSpec {
                 }
                 context("player was paused") {
                     beforeEach {
-                        try? audioPlayer.add(items: [ShortSource.getAudioItem(), ShortSource.getAudioItem()])
+                        try? audioPlayer.add(items: [FiveSecondSource.getAudioItem(), FiveSecondSource.getAudioItem()])
                         audioPlayer.next()
                         audioPlayer.pause()
 
@@ -316,7 +316,7 @@ class QueuedAudioPlayerTests: QuickSpec {
                 context("when adding 2 items") {
                     beforeEach {
                         audioPlayer.play()
-                        try? audioPlayer.add(items: [ShortSource.getAudioItem(), ShortSource.getAudioItem()])
+                        try? audioPlayer.add(items: [FiveSecondSource.getAudioItem(), FiveSecondSource.getAudioItem()])
                     }
 
                     context("then setting repeat mode off") {
@@ -326,23 +326,23 @@ class QueuedAudioPlayerTests: QuickSpec {
 
                         context("allow playback to end normally") {
                             beforeEach {
-                                audioPlayer.seekWithExpectation(to: 0.0682)
+                                audioPlayer.seekWithExpectation(to: 4.95)
                             }
 
                             it("should move to next item") {
-                                let eventListener = CurrentItemEventListener()
+                                let currentItemEventListener = CurrentItemEventListener()
 
-                                audioPlayer.event.currentItem.addListener(eventListener, eventListener.handleEvent)
+                                audioPlayer.event.currentItem.addListener(currentItemEventListener, currentItemEventListener.handleEvent)
 
                                 expect(audioPlayer.nextItems.count).toEventually(equal(0))
                                 expect(audioPlayer.currentIndex).toEventually(equal(1))
                                 expect(audioPlayer.playerState).toEventually(equal(AudioPlayerState.playing))
-                                expect(eventListener.lastIndex).toEventually(equal(1))
+                                expect(currentItemEventListener.lastIndex).toEventually(equal(1))
                             }
 
                             context("allow playback to end again") {
                                 beforeEach {
-                                    audioPlayer.seekWithExpectation(to: 0.0682)
+                                    audioPlayer.seekWithExpectation(to: 4.95)
                                 }
 
                                 it("should stop playback normally") {
@@ -351,6 +351,7 @@ class QueuedAudioPlayerTests: QuickSpec {
 
                                     expect(audioPlayer.nextItems.count).toEventually(equal(0))
                                     expect(audioPlayer.currentIndex).toEventually(equal(1))
+                                    audioPlayer.seekWithExpectation(to: 4.95)
                                     expect(audioPlayer.playerState).toEventually(equal(AudioPlayerState.paused))
                                     expect(eventListener.lastIndex).toEventually(equal(1))
                                 }
@@ -386,7 +387,7 @@ class QueuedAudioPlayerTests: QuickSpec {
 
                         context("allow playback to end") {
                             beforeEach {
-                                audioPlayer.seekWithExpectation(to: 0.0682)
+                                audioPlayer.seekWithExpectation(to: 4.95)
                             }
 
                             it("should restart current item") {
@@ -420,7 +421,7 @@ class QueuedAudioPlayerTests: QuickSpec {
 
                         context("allow playback to end") {
                             beforeEach {
-                                audioPlayer.seekWithExpectation(to: 0.0682)
+                                audioPlayer.seekWithExpectation(to: 4.95)
                             }
 
                             it("should move to next item and should play") {
@@ -435,7 +436,7 @@ class QueuedAudioPlayerTests: QuickSpec {
 
                             context("allow playback to end again") {
                                 beforeEach {
-                                    audioPlayer.seekWithExpectation(to: 0.0682)
+                                    audioPlayer.seekWithExpectation(to: 4.95)
                                 }
 
                                 it("should move to first track and should play") {
@@ -484,7 +485,7 @@ class QueuedAudioPlayerTests: QuickSpec {
 
                 context("when adding 1 items") {
                     beforeEach {
-                        try? audioPlayer.add(item: ShortSource.getAudioItem(), playWhenReady: true)
+                        try? audioPlayer.add(item: FiveSecondSource.getAudioItem(), playWhenReady: true)
                     }
 
                     context("then setting repeat mode off") {
@@ -494,7 +495,7 @@ class QueuedAudioPlayerTests: QuickSpec {
 
                         context("allow playback to end normally") {
                             beforeEach {
-                                audioPlayer.seekWithExpectation(to: 0.0682)
+                                audioPlayer.seekWithExpectation(to: 4.95)
                             }
 
                             it("should stop playback normally") {
@@ -521,7 +522,7 @@ class QueuedAudioPlayerTests: QuickSpec {
 
                         context("allow playback to end") {
                             beforeEach {
-                                audioPlayer.seekWithExpectation(to: 0.0682)
+                                audioPlayer.seekWithExpectation(to: 4.95)
                             }
 
                             it("should restart current item") {
@@ -554,7 +555,7 @@ class QueuedAudioPlayerTests: QuickSpec {
 
                         context("allow playback to end") {
                             beforeEach {
-                                audioPlayer.seekWithExpectation(to: 0.0682)
+                                audioPlayer.seekWithExpectation(to: 4.95)
                             }
 
                             it("should restart current item") {
