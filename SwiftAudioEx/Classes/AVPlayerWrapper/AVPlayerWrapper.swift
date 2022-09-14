@@ -33,9 +33,6 @@ class AVPlayerWrapper: AVPlayerWrapperProtocol {
 
     fileprivate var initialTime: TimeInterval?
     fileprivate var pendingAsset: AVAsset? = nil
-
-    /// True when the track was paused for the purpose of switching tracks
-    fileprivate var pausedForLoad: Bool = false
     
     public init() {
         playerTimeObserver = AVPlayerTimeObserver(periodicObserverTimeInterval: timeEventFrequency.getTime())
@@ -71,7 +68,7 @@ class AVPlayerWrapper: AVPlayerWrapperProtocol {
                         if pendingAsset == nil {
                             state = .idle
                         }
-                        else if currentItem != nil && pausedForLoad != true {
+                        else if currentItem != nil {
                             state = .paused
                         }
                     case .waitingToPlayAtSpecifiedRate:
@@ -262,10 +259,6 @@ class AVPlayerWrapper: AVPlayerWrapperProtocol {
     
     func load(from url: URL, playWhenReady: Bool, initialTime: TimeInterval? = nil, options: [String : Any]? = nil) {
         self.initialTime = initialTime
-
-        pausedForLoad = true
-        pause()
-
         self.load(from: url, playWhenReady: playWhenReady, options: options)
     }
     
@@ -307,7 +300,6 @@ extension AVPlayerWrapper: AVPlayerObserverDelegate {
         switch status {
         case .readyToPlay:
             state = .ready
-            pausedForLoad = false
             if playWhenReady && (initialTime ?? 0) == 0 {
                 play()
             }
