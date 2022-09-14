@@ -9,13 +9,15 @@ import Foundation
 import MediaPlayer
 
 public class NowPlayingInfoController: NowPlayingInfoControllerProtocol {
-    private let concurrentInfoQueue: DispatchQueueType
+    private var concurrentInfoQueue: DispatchQueueType = DispatchQueue(
+        label: "com.doublesymmetry.nowPlayingInfoQueue",
+        attributes: .concurrent
+    )
 
     private(set) var infoCenter: NowPlayingInfoCenter
     private(set) var info: [String: Any] = [:]
     
     public required init() {
-        concurrentInfoQueue = DispatchQueue(label: "com.doublesymmetry.nowPlayingInfoQueue", attributes: .concurrent)
         infoCenter = MPNowPlayingInfoCenter.default()
     }
 
@@ -25,29 +27,34 @@ public class NowPlayingInfoController: NowPlayingInfoControllerProtocol {
         self.infoCenter = infoCenter
     }
     
-    public required init(infoCenter: NowPlayingInfoCenter) {
-        concurrentInfoQueue = DispatchQueue(label: "com.doublesymmetry.nowPlayingInfoQueue", attributes: .concurrent)
+    public required init(infoCenter: NowPlayingInfoCenter = MPNowPlayingInfoCenter.default()) {
         self.infoCenter = infoCenter
     }
     
     public func set(keyValues: [NowPlayingInfoKeyValue]) {
-        concurrentInfoQueue.async(flags: .barrier) { [weak self] in
-            guard let self = self else { return }
+        keyValues.forEach {
+            (keyValue) in info[keyValue.getKey()] = keyValue.getValue()
+        }
+        update()
+    }
 
-            keyValues.forEach { (keyValue) in
-                self.info[keyValue.getKey()] = keyValue.getValue()
-            }
-
-            self.infoCenter.nowPlayingInfo = self.info
+    public func setWithoutUpdate(keyValues: [NowPlayingInfoKeyValue]) {
+        keyValues.forEach {
+            (keyValue) in info[keyValue.getKey()] = keyValue.getValue()
         }
     }
     
     public func set(keyValue: NowPlayingInfoKeyValue) {
+        self.info[keyValue.getKey()] = keyValue.getValue()
+        update()
+    }
+   
+    private func update() {
+        // Make a copy to avoid `EXC_BAD_ACCESS`
+        let info = self.info
         concurrentInfoQueue.async(flags: .barrier) { [weak self] in
             guard let self = self else { return }
-
-            self.info[keyValue.getKey()] = keyValue.getValue()
-            self.infoCenter.nowPlayingInfo = self.info
+            self.infoCenter.nowPlayingInfo = info
         }
     }
     

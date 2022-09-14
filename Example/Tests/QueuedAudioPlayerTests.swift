@@ -7,8 +7,8 @@ import AVFoundation
 
 extension QueuedAudioPlayer {
     class SeekEventListener {
-        var eventResult: (Int, Bool) = (-1, false)
-        func handleEvent(seconds: Int, didFinish: Bool) { eventResult = (seconds, didFinish) }
+        var eventResult: (Double, Bool) = (-1, false)
+        func handleEvent(seconds: Double, didFinish: Bool) { eventResult = (seconds, didFinish) }
     }
 
     func seekWithExpectation(to time: Double) {

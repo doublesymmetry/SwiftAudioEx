@@ -19,6 +19,8 @@ public protocol NowPlayingInfoControllerProtocol {
     
     func set(keyValues: [NowPlayingInfoKeyValue])
     
+    func setWithoutUpdate(keyValues: [NowPlayingInfoKeyValue])
+    
     func clear()
     
 }

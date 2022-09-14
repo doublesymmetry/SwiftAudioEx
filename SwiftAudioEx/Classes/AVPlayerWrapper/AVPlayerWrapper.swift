@@ -187,7 +187,7 @@ class AVPlayerWrapper: AVPlayerWrapperProtocol {
                      self.play()
                  }
              }
-             self.delegate?.AVWrapper(seekTo: Int(seconds), didFinish: finished)
+             self.delegate?.AVWrapper(seekTo: Double(seconds), didFinish: finished)
          }
        }
      }
@@ -195,13 +195,13 @@ class AVPlayerWrapper: AVPlayerWrapperProtocol {
     
     
     func load(from url: URL, playWhenReady: Bool, options: [String: Any]? = nil) {
-        reset()
-        self.playWhenReady = playWhenReady
-        
         if currentItem?.status == .failed {
             recreateAVPlayer()
+        } else {
+            reset()
         }
-
+        self.playWhenReady = playWhenReady
+        
         pendingAsset = AVURLAsset(url: url, options: options)
         if let pendingAsset = pendingAsset {
             state = .loading
@@ -298,24 +298,25 @@ extension AVPlayerWrapper: AVPlayerObserverDelegate {
     
     func player(statusDidChange status: AVPlayer.Status) {
         switch status {
-        case .readyToPlay:
-            state = .ready
-            if playWhenReady && (initialTime ?? 0) == 0 {
-                play()
-            }
-            else if let initialTime = initialTime {
-                seek(to: initialTime)
-            }
-            break
-            
-        case .failed:
-            delegate?.AVWrapper(failedWithError: avPlayer.error)
-            break
-            
-        case .unknown:
-            break
-        @unknown default:
-            break
+            case .readyToPlay:
+                state = .ready
+                if playWhenReady && (initialTime ?? 0) == 0 {
+                    play()
+                }
+                else if let initialTime = initialTime {
+                    seek(to: initialTime)
+                }
+                break
+                
+            case .failed:
+                delegate?.AVWrapper(failedWithError: avPlayer.error)
+                break
+                
+            case .unknown:
+                break
+
+            @unknown default:
+                break
         }
     }
 }

@@ -215,7 +215,7 @@ class AVPlayerWrapperDelegateHolder: AVPlayerWrapperDelegate {
     
     var stateUpdate: ((_ state: AVPlayerWrapperState) -> Void)?
     var didUpdateDuration: ((_ duration: Double) -> Void)?
-    var didSeekTo: ((_ seconds: Int) -> Void)?
+    var didSeekTo: ((_ seconds: Double) -> Void)?
     var itemDidComplete: (() -> Void)?
     
     func AVWrapper(didChangeState state: AVPlayerWrapperState) {
@@ -230,7 +230,7 @@ class AVPlayerWrapperDelegateHolder: AVPlayerWrapperDelegate {
         
     }
     
-    func AVWrapper(seekTo seconds: Int, didFinish: Bool) {
+    func AVWrapper(seekTo seconds: Double, didFinish: Bool) {
          didSeekTo?(seconds)
     }
     

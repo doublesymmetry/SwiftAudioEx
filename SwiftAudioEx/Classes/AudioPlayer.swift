@@ -129,7 +129,9 @@ public class AudioPlayer: AVPlayerWrapperDelegate {
         set {
             _rate = newValue
 
-            // Only set the rate on the wrapper if it is already playing.
+            // Only update the rate of the wrapper if it is already playing,
+            // (otherwise it will be set later when the state changes to playing
+            // in the didChangeState delegate):
             if wrapper.rate > 0 {
                 wrapper.rate = newValue
             }
@@ -174,17 +176,27 @@ public class AudioPlayer: AVPlayerWrapperDelegate {
             url = URL(fileURLWithPath: item.getSourceUrl())
         }
 
-        wrapper.load(from: url,
-                     playWhenReady: playWhenReady ?? self.playWhenReady,
-                     initialTime: (item as? InitialTiming)?.getInitialTime(),
-                     options:(item as? AssetOptionsProviding)?.getAssetOptions())
-
         currentItem = item
 
         if (automaticallyUpdateNowPlayingInfo) {
+            // Reset playback values without updating, because that will happen in
+            // the loadNowPlayingMetaValues call straight after:
+            nowPlayingInfoController.setWithoutUpdate(keyValues: [
+                MediaItemProperty.duration(nil),
+                NowPlayingInfoProperty.playbackRate(nil),
+                NowPlayingInfoProperty.elapsedPlaybackTime(nil)
+            ])
             loadNowPlayingMetaValues()
         }
+        
         enableRemoteCommands(forItem: item)
+        
+        wrapper.load(
+            from: url,
+            playWhenReady: playWhenReady ?? self.playWhenReady,
+            initialTime: (item as? InitialTiming)?.getInitialTime(),
+            options:(item as? AssetOptionsProviding)?.getAssetOptions()
+        )
     }
 
     /**
@@ -220,9 +232,6 @@ public class AudioPlayer: AVPlayerWrapperDelegate {
      Seek to a specific time in the item.
      */
     public func seek(to seconds: TimeInterval) {
-        if automaticallyUpdateNowPlayingInfo {
-            updateNowPlayingCurrentTime(seconds)
-        }
         wrapper.seek(to: seconds)
     }
 
@@ -269,7 +278,6 @@ public class AudioPlayer: AVPlayerWrapperDelegate {
             MediaItemProperty.title(item.getTitle()),
             MediaItemProperty.albumTitle(item.getAlbumTitle()),
         ])
-
         loadArtwork(forItem: item)
     }
 
@@ -282,21 +290,17 @@ public class AudioPlayer: AVPlayerWrapperDelegate {
      - Playback rate
      */
     public func updateNowPlayingPlaybackValues() {
-        updateNowPlayingCurrentTime(currentTime)
-        updateNowPlayingDuration(duration)
-        updateNowPlayingRate(rate)
+        nowPlayingInfoController.set(keyValues: [
+            MediaItemProperty.duration(wrapper.duration),
+            NowPlayingInfoProperty.playbackRate(Double(wrapper.rate)),
+            NowPlayingInfoProperty.elapsedPlaybackTime(wrapper.currentTime)
+        ])
     }
 
-    private func updateNowPlayingDuration(_ duration: Double) {
-        nowPlayingInfoController.set(keyValue: MediaItemProperty.duration(duration))
-    }
-
-    private func updateNowPlayingRate(_ rate: Float) {
-        nowPlayingInfoController.set(keyValue: NowPlayingInfoProperty.playbackRate(Double(rate)))
-    }
-
-    private func updateNowPlayingCurrentTime(_ currentTime: Double) {
-        nowPlayingInfoController.set(keyValue: NowPlayingInfoProperty.elapsedPlaybackTime(currentTime))
+    private func setNowPlayingCurrentTime(seconds: Double) {
+        nowPlayingInfoController.set(
+            keyValue: NowPlayingInfoProperty.elapsedPlaybackTime(seconds)
+        )
     }
 
     private func loadArtwork(forItem item: AudioItem) {
@@ -330,20 +334,21 @@ public class AudioPlayer: AVPlayerWrapperDelegate {
 
     func AVWrapper(didChangeState state: AVPlayerWrapperState) {
         switch state {
-        case .ready, .loading:
-            if (automaticallyUpdateNowPlayingInfo) {
-                updateNowPlayingPlaybackValues()
-            }
-            setTimePitchingAlgorithmForCurrentItem()
-        case .playing:
-            // When a track starts playing, reset the rate to the stored rate
-            rate = _rate;
-            fallthrough
-        case .paused:
-            if (automaticallyUpdateNowPlayingInfo) {
-                updateNowPlayingPlaybackValues()
-            }
-        default: break
+            case .ready, .loading:
+                setTimePitchingAlgorithmForCurrentItem()
+            case .playing:
+                // When a track starts playing,
+                // reset the rate to the stored rate
+                wrapper.rate = rate
+            default: break
+        }
+
+        switch state {
+            case .ready, .loading, .playing, .paused:
+                if (automaticallyUpdateNowPlayingInfo) {
+                    updateNowPlayingPlaybackValues()
+                }
+            default: break
         }
         event.stateChange.emit(data: state)
     }
@@ -356,9 +361,9 @@ public class AudioPlayer: AVPlayerWrapperDelegate {
         event.fail.emit(data: error)
     }
 
-    func AVWrapper(seekTo seconds: Int, didFinish: Bool) {
-        if !didFinish && automaticallyUpdateNowPlayingInfo {
-            updateNowPlayingCurrentTime(currentTime)
+    func AVWrapper(seekTo seconds: Double, didFinish: Bool) {
+        if automaticallyUpdateNowPlayingInfo {
+            setNowPlayingCurrentTime(seconds: Double(seconds))
         }
         event.seek.emit(data: (seconds, didFinish))
     }
