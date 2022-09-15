@@ -8,11 +8,11 @@ class QueueManagerTests: QuickSpec {
     
     let dummyItem = 0
     
-    let dummyItems: [Int] = [0, 1, 2, 3, 4, 5, 6]
+    let items: [Int] = [0, 1, 2]
     
     override func spec() {
         
-        describe("A QueueManager") {
+        fdescribe("A QueueManager") {
             
             var queue: QueueManager<Int>!
             
@@ -67,7 +67,7 @@ class QueueManagerTests: QuickSpec {
                 
                 context("when multiple items are added and the last is jumped to") {
                     beforeEach {
-                        queue.add(self.dummyItems)
+                        queue.add(self.items)
                         try! queue.jump(to: queue.items.count - 1)
                     }
                     
@@ -209,11 +209,11 @@ class QueueManagerTests: QuickSpec {
             context("when adding multiple items") {
                 
                 beforeEach {
-                    queue.add([0, 1, 2, 3, 4, 5, 6])
+                    queue.add(self.items)
                 }
                 
                 it("should have items in the queue") {
-                    expect(queue.items.count).to(equal(7))
+                    expect(queue.items.count).to(equal(self.items.count))
                 }
                 
                 it("the current item should be nil") {
@@ -236,11 +236,11 @@ class QueueManagerTests: QuickSpec {
                         
                         it("should return the next item") {
                             expect(nextItem).toNot(beNil())
-                            expect(nextItem).to(equal(self.dummyItems[1]))
+                            expect(nextItem).to(equal(self.items[1]))
                         }
                         
                         it("should have next current item") {
-                            expect(queue.current).to(equal(self.dummyItems[1]))
+                            expect(queue.current).to(equal(self.items[1]))
                         }
                         
                         it("should have previous items") {
@@ -256,7 +256,7 @@ class QueueManagerTests: QuickSpec {
                                 expect(index).to(equal(0))
                             }
                             it("should have the previous current item") {
-                                expect(queue.current).to(equal(self.dummyItems.first))
+                                expect(queue.current).to(equal(self.items.first))
                             }
                             context("then calling previous at the start of the queue") {
                                 var index: Int?
@@ -275,7 +275,7 @@ class QueueManagerTests: QuickSpec {
                                 it("should return the last item") {
                                     expect(index).to(equal(queue.items.count - 1))
                                     expect(queue.currentIndex).to(equal(queue.items.count - 1))
-                                    expect(queue.current).to(equal(self.dummyItems.last))
+                                    expect(queue.current).to(equal(self.items.last))
                                 }
 
                                 context("then calling next again at the end of the queue") {
@@ -284,7 +284,7 @@ class QueueManagerTests: QuickSpec {
                                         index = queue.next()
                                     }
                                     it("should noop and return the last item") {
-                                        expect(index).to(equal(6))
+                                        expect(index).to(equal(self.items.count - 1))
                                     }
                                 }
 
@@ -296,7 +296,7 @@ class QueueManagerTests: QuickSpec {
                                     it("should return the first item") {
                                         expect(index).to(equal(0))
                                         expect(queue.currentIndex).to(equal(0))
-                                        expect(queue.current).to(equal(self.dummyItems.first))
+                                        expect(queue.current).to(equal(self.items.first))
                                     }
                                 }
                             }
@@ -371,19 +371,19 @@ class QueueManagerTests: QuickSpec {
                         
                         it("should have one less item") {
                             expect(removed).toNot(beNil())
-                            expect(queue.items.count).to(equal(self.dummyItems.count - 1))
+                            expect(queue.items.count).to(equal(self.items.count - 1))
                         }
                     }
                     
                     context("then removing the last item") {
                         var removed: Int?
                         beforeEach {
-                            removed = try? queue.removeItem(at: self.dummyItems.count - 1)
+                            removed = try? queue.removeItem(at: self.items.count - 1)
                         }
                         
                         it("should have one less item") {
                             expect(removed).toNot(beNil())
-                            expect(queue.items.count).to(equal(self.dummyItems.count - 1))
+                            expect(queue.items.count).to(equal(self.items.count - 1))
                         }
                     }
                     
@@ -392,11 +392,11 @@ class QueueManagerTests: QuickSpec {
                         beforeEach {
                             removed = try? queue.removeItem(at: queue.currentIndex)
                         }
-                        it("should remove the current item") {
+                        it("should remove the current item, and make the next item current") {
                             expect(removed).toNot(beNil())
-                            expect(queue.items.count).to(equal(self.dummyItems.count - 1))
-                            expect(queue.currentIndex).to(equal(-1))
-                            expect(queue.current).to(beNil())
+                            expect(queue.items.count).to(equal(self.items.count - 1))
+                            expect(queue.currentIndex).to(equal(0))
+                            expect(queue.current).to(equal(1))
                         }
                     }
 
@@ -408,21 +408,20 @@ class QueueManagerTests: QuickSpec {
                         }
                         it("should remove the current item") {
                             expect(removed).toNot(beNil())
-                            expect(queue.items.count).to(equal(self.dummyItems.count - 1))
-                            expect(queue.currentIndex).to(equal(-1))
+                            expect(queue.items.count).to(equal(self.items.count - 1))
+                            expect(queue.currentIndex).to(equal(0))
                         }
-
                     }
 
                     context("then removing with too large index") {
                         var removed: Int?
                         beforeEach {
-                            removed = try? queue.removeItem(at: self.dummyItems.count)
+                            removed = try? queue.removeItem(at: self.items.count)
                         }
 
                         it("should not remove any items") {
                             expect(removed).to(beNil())
-                            expect(queue.items.count).to(equal(self.dummyItems.count))
+                            expect(queue.items.count).to(equal(self.items.count))
                         }
                     }
                     
@@ -434,7 +433,7 @@ class QueueManagerTests: QuickSpec {
                         
                         it("should not remove any items") {
                             expect(removed).to(beNil())
-                            expect(queue.items.count).to(equal(self.dummyItems.count))
+                            expect(queue.items.count).to(equal(self.items.count))
                         }
                     }
                     
@@ -615,8 +614,8 @@ class QueueManagerTests: QuickSpec {
 
                     }
                     
-                    context("then moving 2nd to 4th") {
-                        let afterMoving: [Int] = [0, 2, 3, 1, 4, 5, 6]
+                    context("then moving 2nd to 3rd") {
+                        let afterMoving: [Int] = [0, 2, 1]
                         beforeEach {
                             try? queue.moveItem(fromIndex: 1, toIndex: 3)
                         }

@@ -202,7 +202,7 @@ class QueueManager<T> {
         let result = items.remove(at: index)
 
         if (index == currentIndex) {
-            currentIndex = -1;
+            currentIndex = currentIndex % items.count;
             updateCurrentItem()
         } else if index < currentIndex {
             currentIndex -= 1
