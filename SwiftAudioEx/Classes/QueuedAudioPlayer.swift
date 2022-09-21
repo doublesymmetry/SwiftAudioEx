@@ -77,7 +77,9 @@ public class QueuedAudioPlayer: AudioPlayer, QueueManagerDelegate {
      - throws: `APError`
      */
     public func add(item: AudioItem, playWhenReady: Bool? = nil) throws {
-        self.playWhenReady = playWhenReady ?? self.playWhenReady
+        if let playWhenReady = playWhenReady {
+            self.playWhenReady = playWhenReady
+        }
         queue.add(item)
     }
 
@@ -89,7 +91,9 @@ public class QueuedAudioPlayer: AudioPlayer, QueueManagerDelegate {
      - throws: `APError`
      */
     public func add(items: [AudioItem], playWhenReady: Bool? = nil) throws {
-        self.playWhenReady = playWhenReady ?? self.playWhenReady
+        if let playWhenReady = playWhenReady {
+            self.playWhenReady = playWhenReady
+        }
         queue.add(items)
     }
 
@@ -134,7 +138,9 @@ public class QueuedAudioPlayer: AudioPlayer, QueueManagerDelegate {
      - throws: `APError`
      */
     public func jumpToItem(atIndex index: Int, playWhenReady: Bool? = nil) throws {
-        self.playWhenReady = playWhenReady ?? self.playWhenReady
+        if let playWhenReady = playWhenReady {
+            self.playWhenReady = playWhenReady
+        }
         if (index == currentIndex) {
             seek(to: 0)
         } else {
