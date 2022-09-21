@@ -163,6 +163,10 @@ public class AudioPlayer: AVPlayerWrapperDelegate {
      - parameter playWhenReady: Optional, whether to start playback when the item is ready.
      */
     public func load(item: AudioItem, playWhenReady: Bool? = nil) throws {
+        if let playWhenReady = playWhenReady {
+            self.playWhenReady = playWhenReady
+        }
+
         let url: URL
         switch item.getSourceType() {
         case .stream:
@@ -193,7 +197,7 @@ public class AudioPlayer: AVPlayerWrapperDelegate {
         
         wrapper.load(
             from: url,
-            playWhenReady: playWhenReady ?? self.playWhenReady,
+            playWhenReady: self.playWhenReady,
             initialTime: (item as? InitialTiming)?.getInitialTime(),
             options:(item as? AssetOptionsProviding)?.getAssetOptions()
         )
