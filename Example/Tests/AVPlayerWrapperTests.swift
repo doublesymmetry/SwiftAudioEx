@@ -168,8 +168,8 @@ class AVPlayerWrapperTests: XCTestCase {
     
     // MARK: - Rate tests
     
-    func test_AVPlayerWrapper__rate__should_be_0() {
-        XCTAssert(wrapper.rate == 0.0)
+    func test_AVPlayerWrapper__rate__should_be_1() {
+        XCTAssert(wrapper.rate == 1)
     }
     
     func test_AVPlayerWrapper__rate__playing_a_source__should_be_1() {

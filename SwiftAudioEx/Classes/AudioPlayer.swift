@@ -46,15 +46,6 @@ public class AudioPlayer: AVPlayerWrapperDelegate {
 
     // MARK: - Getters from AVPlayerWrapper
 
-    public var playWhenReady: Bool {
-        get {
-            return wrapper.playWhenReady
-        }
-        set {
-            wrapper.playWhenReady = newValue
-        }
-    }
-
     /**
      The elapsed playback time of the current item.
      */
@@ -85,6 +76,14 @@ public class AudioPlayer: AVPlayerWrapperDelegate {
 
     // MARK: - Setters for AVPlayerWrapper
 
+    /**
+     Whether the player should automatically start playing when it is ready to do so.
+     */
+    public var playWhenReady: Bool {
+        get { wrapper.playWhenReady }
+        set { wrapper.playWhenReady = newValue }
+    }
+    
     /**
      The amount of seconds to be buffered by the player. Default value is 0 seconds, this means the AVPlayer will choose an appropriate level of buffering.
 
@@ -123,19 +122,9 @@ public class AudioPlayer: AVPlayerWrapperDelegate {
         set { wrapper.isMuted = newValue }
     }
 
-    private var _rate: Float = 1.0
     public var rate: Float {
-        get { _rate }
-        set {
-            _rate = newValue
-
-            // Only update the rate of the wrapper if it is already playing,
-            // (otherwise it will be set later when the state changes to playing
-            // in the didChangeState delegate):
-            if wrapper.rate > 0 {
-                wrapper.rate = newValue
-            }
-        }
+        get { wrapper.rate }
+        set { wrapper.rate = newValue }
     }
 
     // MARK: - Init
@@ -328,8 +317,7 @@ public class AudioPlayer: AVPlayerWrapperDelegate {
     private func setTimePitchingAlgorithmForCurrentItem() {
         if let item = currentItem as? TimePitching {
             wrapper.currentItem?.audioTimePitchAlgorithm = item.getPitchAlgorithmType()
-        }
-        else {
+        } else {
             wrapper.currentItem?.audioTimePitchAlgorithm = audioTimePitchAlgorithm
         }
     }
@@ -340,10 +328,6 @@ public class AudioPlayer: AVPlayerWrapperDelegate {
         switch state {
             case .ready, .loading:
                 setTimePitchingAlgorithmForCurrentItem()
-            case .playing:
-                // When a track starts playing,
-                // reset the rate to the stored rate
-                wrapper.rate = rate
             default: break
         }
 
