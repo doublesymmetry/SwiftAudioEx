@@ -26,27 +26,27 @@ class AudioPlayerTests: XCTestCase {
     // MARK: - Load
     func test_AudioPlayer__load__load_source_without_playWhenReady__should_never_mutate_playWhenReady_to_false() {
         audioPlayer.playWhenReady = true
-        try? audioPlayer.load(item: Source.getAudioItem())
+        audioPlayer.load(item: Source.getAudioItem())
         XCTAssertTrue(audioPlayer.playWhenReady)
     }
 
     func test_AudioPlayer__load__load_source_without_playWhenReady__should_never_mutate_playWhenReady_to_true() {
         audioPlayer.playWhenReady = false
-        try? audioPlayer.load(item: Source.getAudioItem())
+        audioPlayer.load(item: Source.getAudioItem())
         XCTAssertFalse(audioPlayer.playWhenReady)
     }
     
     func test_AudioPlayer__load__load_source_with_playWhenReady_equals_true__should_mutate_playWhenReady() {
         audioPlayer.playWhenReady = true
         XCTAssertTrue(audioPlayer.playWhenReady)
-        try? audioPlayer.load(item: Source.getAudioItem(), playWhenReady: false)
+        audioPlayer.load(item: Source.getAudioItem(), playWhenReady: false)
         XCTAssertFalse(audioPlayer.playWhenReady)
     }
 
     func test_AudioPlayer__load__load_source_with_playWhenReady_equals_false__should_mutate_playWhenReady() {
         audioPlayer.playWhenReady = false
         XCTAssertFalse(audioPlayer.playWhenReady)
-        try? audioPlayer.load(item: Source.getAudioItem(), playWhenReady: true)
+        audioPlayer.load(item: Source.getAudioItem(), playWhenReady: true)
         XCTAssertTrue(audioPlayer.playWhenReady)
     }
 
@@ -54,7 +54,7 @@ class AudioPlayerTests: XCTestCase {
         let seekCompletionExpectation = XCTestExpectation()
         audioPlayer.playWhenReady = false
         XCTAssertFalse(audioPlayer.playWhenReady)
-        try? audioPlayer.load(item: FiveSecondSourceWithInitialTimeOfFourSeconds.getAudioItem())
+        audioPlayer.load(item: FiveSecondSourceWithInitialTimeOfFourSeconds.getAudioItem())
         listener.onSeekCompletion = { [weak audioPlayer] in
             XCTAssert((audioPlayer?.currentTime ?? 0) >= 4)
             seekCompletionExpectation.fulfill()
@@ -69,7 +69,7 @@ class AudioPlayerTests: XCTestCase {
             XCTAssertEqual(5, duration)
             durationExpectation.fulfill()
         }
-        try? audioPlayer.load(item: FiveSecondSource.getAudioItem())
+        audioPlayer.load(item: FiveSecondSource.getAudioItem())
         XCTAssertEqual(0, audioPlayer.duration)
         wait(for: [durationExpectation], timeout: 20.0)
         XCTAssertEqual(5, audioPlayer.duration)
@@ -81,12 +81,12 @@ class AudioPlayerTests: XCTestCase {
             XCTAssertEqual(5, duration)
             durationExpectation.fulfill()
         }
-        try? audioPlayer.load(item: FiveSecondSource.getAudioItem())
+        audioPlayer.load(item: FiveSecondSource.getAudioItem())
         XCTAssertEqual(0, audioPlayer.duration)
         wait(for: [durationExpectation], timeout: 20.0)
         durationExpectation = XCTestExpectation()
         XCTAssertEqual(5, audioPlayer.duration)
-        try? audioPlayer.load(item: FiveSecondSource.getAudioItem())
+        audioPlayer.load(item: FiveSecondSource.getAudioItem())
         XCTAssertEqual(0, audioPlayer.duration)
         wait(for: [durationExpectation], timeout: 20.0)
     }
@@ -97,7 +97,7 @@ class AudioPlayerTests: XCTestCase {
             XCTAssertEqual(5, duration)
             durationExpectation.fulfill()
         }
-        try? audioPlayer.load(item: FiveSecondSource.getAudioItem())
+        audioPlayer.load(item: FiveSecondSource.getAudioItem())
         XCTAssertEqual(0, audioPlayer.duration)
         wait(for: [durationExpectation], timeout: 20.0)
         durationExpectation = XCTestExpectation()
@@ -108,6 +108,19 @@ class AudioPlayerTests: XCTestCase {
     
     // MARK: - Failure
 
+    func test_AudioPlayer__failure__load_non_malformed_url__should_emit_fail_event() {
+        var didReceiveError = false;
+        listener.onReceiveFail = { error in
+            didReceiveError = true;
+        }
+        let malformedUrl = "";
+        let item = DefaultAudioItem(audioUrl: malformedUrl, artist: "Artist", title: "Title", albumTitle: "AlbumTitle", sourceType: .stream);
+        audioPlayer.load(item: item, playWhenReady: true)
+        eventually {
+            XCTAssertEqual(didReceiveError, true)
+        }
+    }
+
     func test_AudioPlayer__failure__load_non_existing_resource__should_emit_fail_event() {
         var didReceiveError = false;
         listener.onReceiveFail = { error in
@@ -115,7 +128,7 @@ class AudioPlayerTests: XCTestCase {
         }
         let nonExistingUrl = "https://\(String.random(length: 100)).com/\(String.random(length: 100)).mp3";
         let item = DefaultAudioItem(audioUrl: nonExistingUrl, artist: "Artist", title: "Title", albumTitle: "AlbumTitle", sourceType: .stream);
-        try? audioPlayer.load(item: item, playWhenReady: true)
+        audioPlayer.load(item: item, playWhenReady: true)
         eventually {
             XCTAssertEqual(didReceiveError, true)
         }
@@ -128,7 +141,7 @@ class AudioPlayerTests: XCTestCase {
         }
         let nonExistingUrl = "https://\(String.random(length: 100)).com/\(String.random(length: 100)).mp3";
         let item = DefaultAudioItem(audioUrl: nonExistingUrl, artist: "Artist", title: "Title", albumTitle: "AlbumTitle", sourceType: .stream);
-        try? audioPlayer.load(item: item, playWhenReady: true)
+        audioPlayer.load(item: item, playWhenReady: true)
         eventually {
             XCTAssertEqual(didReceiveError, true)
         }
@@ -140,7 +153,7 @@ class AudioPlayerTests: XCTestCase {
             }
         }
 
-        try? audioPlayer.load(item: Source.getAudioItem(), playWhenReady: false)
+        audioPlayer.load(item: Source.getAudioItem(), playWhenReady: false)
         wait(for: [didLoadExpectation], timeout: 20.0)
     }
     
@@ -151,7 +164,7 @@ class AudioPlayerTests: XCTestCase {
     }
     
     func test_AudioPlayer__state__load_source__should_be_loading() {
-        try? audioPlayer.load(item: Source.getAudioItem(), playWhenReady: false)
+        audioPlayer.load(item: Source.getAudioItem(), playWhenReady: false)
         XCTAssertEqual(audioPlayer.playerState, AudioPlayerState.loading)
     }
     
@@ -163,7 +176,7 @@ class AudioPlayerTests: XCTestCase {
             default: break
             }
         }
-        try? audioPlayer.load(item: Source.getAudioItem(), playWhenReady: false)
+        audioPlayer.load(item: Source.getAudioItem(), playWhenReady: false)
         wait(for: [expectation], timeout: 20.0)
     }
     
@@ -175,7 +188,7 @@ class AudioPlayerTests: XCTestCase {
             default: break
             }
         }
-        try? audioPlayer.load(item: Source.getAudioItem(), playWhenReady: true)
+        audioPlayer.load(item: Source.getAudioItem(), playWhenReady: true)
         wait(for: [expectation], timeout: 20.0)
     }
 
@@ -192,7 +205,7 @@ class AudioPlayerTests: XCTestCase {
                 case .idle: events.append("idle")
             }
         }
-        try? audioPlayer.load(item: Source.getAudioItem(), playWhenReady: true)
+        audioPlayer.load(item: Source.getAudioItem(), playWhenReady: true)
         var expectedEvents = ["idle", "loading", "ready", "playing"];
         eventually {
             XCTAssertEqual(events, expectedEvents)
@@ -227,7 +240,7 @@ class AudioPlayerTests: XCTestCase {
                 case .idle: events.append("idle")
             }
         }
-        try? audioPlayer.load(item: Source.getAudioItem(), playWhenReady: true)
+        audioPlayer.load(item: Source.getAudioItem(), playWhenReady: true)
         var expectedEvents = ["idle", "loading", "ready", "playing"];
         eventually {
             XCTAssertEqual(events, expectedEvents)
@@ -262,7 +275,7 @@ class AudioPlayerTests: XCTestCase {
                 case .idle: events.append("idle")
             }
         }
-        try? audioPlayer.load(item: Source.getAudioItem(), playWhenReady: true)
+        audioPlayer.load(item: Source.getAudioItem(), playWhenReady: true)
         var expectedEvents = ["idle", "loading", "ready", "playing"];
         eventually {
             XCTAssertEqual(events, expectedEvents)
@@ -272,7 +285,7 @@ class AudioPlayerTests: XCTestCase {
         eventually {
             XCTAssertEqual(events, expectedEvents)
         }
-        try? audioPlayer.load(item: Source.getAudioItem())
+        audioPlayer.load(item: Source.getAudioItem())
         expectedEvents.append(contentsOf: ["loading", "ready", "playing"]);
         eventually {
             XCTAssertEqual(events, expectedEvents)
@@ -288,7 +301,7 @@ class AudioPlayerTests: XCTestCase {
             default: break
             }
         }
-        try? audioPlayer.load(item: Source.getAudioItem(), playWhenReady: false)
+        audioPlayer.load(item: Source.getAudioItem(), playWhenReady: false)
         wait(for: [expectation], timeout: 20.0)
     }
     
@@ -301,7 +314,7 @@ class AudioPlayerTests: XCTestCase {
             default: break
             }
         }
-        try? audioPlayer.load(item: Source.getAudioItem(), playWhenReady: true)
+        audioPlayer.load(item: Source.getAudioItem(), playWhenReady: true)
         wait(for: [expectation], timeout: 20.0)
     }
 
@@ -315,7 +328,7 @@ class AudioPlayerTests: XCTestCase {
             default: break
             }
         }
-        try? audioPlayer.load(item: Source.getAudioItem(), playWhenReady: true)
+        audioPlayer.load(item: Source.getAudioItem(), playWhenReady: true)
         wait(for: [expectation], timeout: 20.0)
     }
 
@@ -329,7 +342,7 @@ class AudioPlayerTests: XCTestCase {
             default: break
             }
         }
-        try? audioPlayer.load(item: Source.getAudioItem(), playWhenReady: true)
+        audioPlayer.load(item: Source.getAudioItem(), playWhenReady: true)
         wait(for: [wasPausedExpectation], timeout: 20.0)
         let startedPlayingExpectation = XCTestExpectation()
         listener.onStateChange = { state in
@@ -358,7 +371,7 @@ class AudioPlayerTests: XCTestCase {
             default: break
             }
         }
-        try? audioPlayer.load(item: Source.getAudioItem(), playWhenReady: true)
+        audioPlayer.load(item: Source.getAudioItem(), playWhenReady: true)
         wait(for: [expectation], timeout: 20.0)
     }
     
@@ -377,7 +390,7 @@ class AudioPlayerTests: XCTestCase {
 //                expectation.fulfill()
 //            }
 //        }
-//        try? audioPlayer.load(item: LongSource.getAudioItem(), playWhenReady: true)
+//        audioPlayer.load(item: LongSource.getAudioItem(), playWhenReady: true)
 //        wait(for: [expectation], timeout: 20.0)
 //    }
     
@@ -438,7 +451,7 @@ class AudioPlayerTests: XCTestCase {
             }
         }
 
-        try? audioPlayer.load(item: FiveSecondSource.getAudioItem())
+        audioPlayer.load(item: FiveSecondSource.getAudioItem())
         audioPlayer.seek(to: 4.75)
         wait(for: [playedUntilEndExpectation], timeout: 20.0)
         XCTAssertNotNil(end)
@@ -472,7 +485,7 @@ class AudioPlayerTests: XCTestCase {
             }
         }
 
-        try? audioPlayer.load(item: FiveSecondSource.getAudioItem())
+        audioPlayer.load(item: FiveSecondSource.getAudioItem())
         wait(for: [readyExpectation], timeout: 20.0)
         audioPlayer.seek(to: 4.75)
         wait(for: [playedUntilEndExpectation], timeout: 20.0)
@@ -502,7 +515,7 @@ class AudioPlayerTests: XCTestCase {
             default: break
             }
         }
-        try? audioPlayer.load(item: Source.getAudioItem(), playWhenReady: true)
+        audioPlayer.load(item: Source.getAudioItem(), playWhenReady: true)
         wait(for: [expectation], timeout: 20.0)
     }
 
@@ -525,7 +538,7 @@ class AudioPlayerTests: XCTestCase {
                 playedUntilEndExpectation.fulfill()
             }
         }
-        try? audioPlayer.load(item: FiveSecondSource.getAudioItem(), playWhenReady: true)
+        audioPlayer.load(item: FiveSecondSource.getAudioItem(), playWhenReady: true)
         audioPlayer.rate = 10
         wait(for: [playedUntilEndExpectation], timeout: 20.0)
         XCTAssertNotNil(end)
@@ -556,7 +569,7 @@ class AudioPlayerTests: XCTestCase {
             }
         }
 
-        try? audioPlayer.load(item: FiveSecondSource.getAudioItem(), playWhenReady: true)
+        audioPlayer.load(item: FiveSecondSource.getAudioItem(), playWhenReady: true)
         audioPlayer.seek(to: 4.75)
         audioPlayer.rate = 0.25
         wait(for: [playedUntilEndExpectation], timeout: 20.0)
@@ -586,7 +599,7 @@ class AudioPlayerTests: XCTestCase {
             default: break
             }
         }
-        try? audioPlayer.load(item: Source.getAudioItem(), playWhenReady: false)
+        audioPlayer.load(item: Source.getAudioItem(), playWhenReady: false)
         wait(for: [expectation], timeout: 20.0)
     }
     

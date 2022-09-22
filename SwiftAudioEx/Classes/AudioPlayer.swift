@@ -159,22 +159,21 @@ public class AudioPlayer: AVPlayerWrapperDelegate {
      - parameter item: The AudioItem to load. The info given in this item is the one used for the InfoCenter.
      - parameter playWhenReady: Optional, whether to start playback when the item is ready.
      */
-    public func load(item: AudioItem, playWhenReady: Bool? = nil) throws {
+    public func load(item: AudioItem, playWhenReady: Bool? = nil) {
         if let playWhenReady = playWhenReady {
             self.playWhenReady = playWhenReady
         }
 
         let url: URL
-        switch item.getSourceType() {
-        case .stream:
-            if let itemUrl = URL(string: item.getSourceUrl()) {
-                url = itemUrl
-            }
-            else {
-                throw APError.LoadError.invalidSourceUrl(item.getSourceUrl())
-            }
-        case .file:
-            url = URL(fileURLWithPath: item.getSourceUrl())
+
+        if let itemUrl = item.getSourceType() == .file
+            ? URL(fileURLWithPath: item.getSourceUrl())
+            : URL(string: item.getSourceUrl()
+        ) {
+            url = itemUrl
+        } else {
+            event.fail.emit(data: APError.LoadError.invalidSourceUrl(item.getSourceUrl()))
+            return
         }
 
         currentItem = item

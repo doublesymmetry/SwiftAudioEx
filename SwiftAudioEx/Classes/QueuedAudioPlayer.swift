@@ -197,7 +197,7 @@ public class QueuedAudioPlayer: AudioPlayer, QueueManagerDelegate {
             super.reset()
             return
         }
-        try? super.load(item: currentItem)
+        super.load(item: currentItem)
         event.currentItem.emit(data: (item: currentItem, index: index == -1 ? nil : index))
     }
 

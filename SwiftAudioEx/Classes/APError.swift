@@ -14,10 +14,6 @@ public struct APError {
         case invalidSourceUrl(String)
     }
 
-    enum PlaybackError: Error {
-        case noLoadedItem
-    }
-
     enum QueueError: Error {
         case noCurrentItem
         case invalidIndex(index: Int, message: String)

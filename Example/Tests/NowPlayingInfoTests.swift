@@ -29,7 +29,7 @@ class NowPlayingInfoTests: QuickSpec {
                     
                     beforeEach {
                         item = Source.getAudioItem()
-                        try? audioPlayer.load(item: item, playWhenReady: false)
+                        audioPlayer.load(item: item, playWhenReady: false)
                     }
                     
                     it("should eventually be updated with meta data") {
@@ -53,7 +53,7 @@ class NowPlayingInfoTests: QuickSpec {
                     
                     beforeEach {
                         item = LongSource.getAudioItem()
-                        try? audioPlayer.load(item: item, playWhenReady: true)
+                        audioPlayer.load(item: item, playWhenReady: true)
                     }
                     
                     it("should eventually be updated with playback values") {
