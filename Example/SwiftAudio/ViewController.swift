@@ -26,10 +26,11 @@ class ViewController: UIViewController {
     
     private var isScrubbing: Bool = false
     private let controller = AudioController.shared
-    private var lastLoadFailed: Bool = false
+    private var playerFailed: Bool = false
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        controller.player.event.playWhenReadyChange.addListener(self, handlePlayWhenReadyChange)
         controller.player.event.stateChange.addListener(self, handleAudioPlayerStateChange)
         controller.player.event.playbackEnd.addListener(self, handleAudioPlayerPlaybackEnd(data:))
         controller.player.event.secondElapse.addListener(self, handleAudioPlayerSecondElapsed)
@@ -45,8 +46,8 @@ class ViewController: UIViewController {
         if !controller.audioSessionController.audioSessionIsActive {
             try? controller.audioSessionController.activateSession()
         }
-        if lastLoadFailed, let item = controller.player.currentItem {
-            lastLoadFailed = false
+        if playerFailed, let item = controller.player.currentItem {
+            playerFailed = false
             errorLabel.isHidden = true
             controller.player.load(item: item, playWhenReady: true)
         }
@@ -94,8 +95,8 @@ class ViewController: UIViewController {
         }
     }
     
-    func setPlayButtonState(forAudioPlayerState state: AudioPlayerState) {
-        playButton.setTitle(state == .paused ? "Play" : "Pause", for: .normal)
+    func updatePlayButton() {
+        playButton.setTitle(controller.player.playWhenReady && !playerFailed ? "Pause" : "Play", for: .normal)
     }
     
     func setErrorMessage(_ message: String) {
@@ -109,9 +110,13 @@ class ViewController: UIViewController {
     func handleAudioPlayerStateChange(data: AudioPlayer.StateChangeEventData) {
         print("state=\(data)")
         DispatchQueue.main.async {
-            self.setPlayButtonState(forAudioPlayerState: data)
+            self.updatePlayButton()
             switch data {
             case .loading:
+                if self.playerFailed {
+                    self.playerFailed = false
+                    self.errorLabel.isHidden = true
+                }
                 self.loadIndicator.startAnimating()
                 self.updateMetaData()
                 self.updateTimeValues()
@@ -128,6 +133,13 @@ class ViewController: UIViewController {
         }
     }
 
+    func handlePlayWhenReadyChange(data: AudioPlayer.PlayWhenReadyChangeData) {
+        print("playWhenReady=\(data)")
+        DispatchQueue.main.async {
+            self.updatePlayButton()
+        }
+    }
+    
     func handleAudioPlayerPlaybackEnd(data: AudioPlayer.PlaybackEndEventData) {
         print("playEndReason=\(data)")
     }
@@ -155,12 +167,13 @@ class ViewController: UIViewController {
     }
     
     func handlePlayerFailure(data: AudioPlayer.FailEventData) {
+        playerFailed = true
         if let error = data as NSError? {
-            if error.code == -1009 {
-                lastLoadFailed = true
-                DispatchQueue.main.async {
-                    self.setErrorMessage("Network disconnected. Please try again...")
-                }
+            let message = error.code == -1009 ? "Network disconnected. Please try again..." : "Playback failed. Please try again..."
+            DispatchQueue.main.async {
+                self.setErrorMessage(message)
+                self.updatePlayButton()
+                self.updateMetaData()
             }
         }
     }
