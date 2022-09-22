@@ -371,6 +371,10 @@ public class AudioPlayer: AVPlayerWrapperDelegate {
         event.receiveMetadata.emit(data: metadata)
     }
 
+    func AVWrapper(didChangePlayWhenReady playWhenReady: Bool) {
+        event.playWhenReadyChange.emit(data: playWhenReady)
+    }
+    
     func AVWrapperItemDidPlayToEndTime() {
         event.playbackEnd.emit(data: .playedUntilEnd)
     }

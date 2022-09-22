@@ -82,7 +82,10 @@ class AVPlayerWrapper: AVPlayerWrapperProtocol {
      */
     public var playWhenReady: Bool = false {
         didSet {
-            applyAVPlayerRate()
+            if oldValue != playWhenReady {
+                applyAVPlayerRate()
+                delegate?.AVWrapper(didChangePlayWhenReady: playWhenReady)
+            }
         }
     }
     

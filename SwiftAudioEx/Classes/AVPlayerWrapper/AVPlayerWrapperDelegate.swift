@@ -17,7 +17,7 @@ protocol AVPlayerWrapperDelegate: AnyObject {
     func AVWrapper(seekTo seconds: Double, didFinish: Bool)
     func AVWrapper(didUpdateDuration duration: Double)
     func AVWrapper(didReceiveMetadata metadata: [AVTimedMetadataGroup])
+    func AVWrapper(didChangePlayWhenReady playWhenReady: Bool)
     func AVWrapperItemDidPlayToEndTime()
     func AVWrapperDidRecreateAVPlayer()
-    
 }

@@ -10,6 +10,7 @@ import MediaPlayer
 
 extension AudioPlayer {
     
+    public typealias PlayWhenReadyChangeData = Bool
     public typealias StateChangeEventData = AudioPlayerState
     public typealias PlaybackEndEventData = PlaybackEndedReason
     public typealias SecondElapseEventData = TimeInterval
@@ -27,6 +28,12 @@ extension AudioPlayer {
          - Important: Remember to dispatch to the main queue if any UI is updated in the event handler.
          */
         public let stateChange: AudioPlayer.Event<StateChangeEventData> = AudioPlayer.Event()
+
+        /**
+         Emitted when the `AudioPlayer#playWhenReady` has changed
+         - Important: Remember to dispatch to the main queue if any UI is updated in the event handler.
+         */
+        public let playWhenReadyChange: AudioPlayer.Event<PlayWhenReadyChangeData> = AudioPlayer.Event()
         
         /**
          Emitted when the playback of the player, for some reason, has stopped.

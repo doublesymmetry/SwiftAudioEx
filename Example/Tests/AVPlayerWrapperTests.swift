@@ -193,6 +193,10 @@ class AVPlayerWrapperTests: XCTestCase {
 }
 
 class AVPlayerWrapperDelegateHolder: AVPlayerWrapperDelegate {
+    func AVWrapper(didChangePlayWhenReady playWhenReady: Bool) {
+
+    }
+    
     func AVWrapper(didReceiveMetadata metadata: [AVTimedMetadataGroup]) {
         
     }
