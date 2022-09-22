@@ -77,7 +77,7 @@ public class AudioPlayer: AVPlayerWrapperDelegate {
     // MARK: - Setters for AVPlayerWrapper
 
     /**
-     Whether the player should automatically start playing when it is ready to do so.
+     Whether the player should start playing automatically when the item is ready.
      */
     public var playWhenReady: Bool {
         get { wrapper.playWhenReady }
@@ -85,31 +85,39 @@ public class AudioPlayer: AVPlayerWrapperDelegate {
     }
     
     /**
-     The amount of seconds to be buffered by the player. Default value is 0 seconds, this means the AVPlayer will choose an appropriate level of buffering.
+     The amount of seconds to be buffered by the player. Default value is 0 seconds, this means the AVPlayer will choose an appropriate level of buffering. Setting `bufferDuration` to larger than zero automatically disables `automaticallyWaitsToMinimizeStalling`. Setting it back to zero automatically enables `automaticallyWaitsToMinimizeStalling`.
 
      [Read more from Apple Documentation](https://developer.apple.com/documentation/avfoundation/avplayeritem/1643630-preferredforwardbufferduration)
-
-     - Important: This setting will have no effect if `automaticallyWaitsToMinimizeStalling` is set to `true` in the AVPlayer
      */
     public var bufferDuration: TimeInterval {
         get { wrapper.bufferDuration }
-        set { wrapper.bufferDuration = newValue }
+        set {
+            wrapper.bufferDuration = newValue
+            wrapper.automaticallyWaitsToMinimizeStalling = wrapper.bufferDuration == 0
+        }
     }
 
+    /**
+     Indicates whether the player should automatically delay playback in order to minimize stalling. Setting this to true will also set `bufferDuration` back to `0`.
+
+     [Read more from Apple Documentation](https://developer.apple.com/documentation/avfoundation/avplayer/1643482-automaticallywaitstominimizestal)
+     */
+    public var automaticallyWaitsToMinimizeStalling: Bool {
+        get { wrapper.automaticallyWaitsToMinimizeStalling }
+        set {
+            if (newValue) {
+                wrapper.bufferDuration = 0
+            }
+            wrapper.automaticallyWaitsToMinimizeStalling = newValue
+        }
+    }
+    
     /**
      Set this to decide how often the player should call the delegate with time progress events.
      */
     public var timeEventFrequency: TimeEventFrequency {
         get { wrapper.timeEventFrequency }
         set { wrapper.timeEventFrequency = newValue }
-    }
-
-    /**
-     Indicates whether the player should automatically delay playback in order to minimize stalling
-     */
-    public var automaticallyWaitsToMinimizeStalling: Bool {
-        get { wrapper.automaticallyWaitsToMinimizeStalling }
-        set { wrapper.automaticallyWaitsToMinimizeStalling = newValue }
     }
 
     public var volume: Float {

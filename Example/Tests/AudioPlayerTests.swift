@@ -233,6 +233,35 @@ class AudioPlayerTests: XCTestCase {
 //        wait(for: [expectation], timeout: 20.0)
 //    }
     
+    // MARK: - Buffer
+    func test_AudioPlayer__buffer__automaticallyWaitsToMinimizeStalling_should_be_true() {
+        XCTAssert(audioPlayer.automaticallyWaitsToMinimizeStalling == true)
+    }
+
+    func test_AudioPlayer__buffer__bufferDuration_should_be_zero() {
+        XCTAssert(audioPlayer.bufferDuration == 0)
+    }
+
+    func test_AudioPlayer__buffer__setting_bufferDuration_disables_automaticallyWaitsToMinimizeStalling() {
+        audioPlayer.bufferDuration = 1;
+        XCTAssert(audioPlayer.bufferDuration == 1)
+        XCTAssert(audioPlayer.automaticallyWaitsToMinimizeStalling == false)
+    }
+
+    func test_AudioPlayer__buffer__setting_bufferDuration_back_to_zero_enables_automaticallyWaitsToMinimizeStalling() {
+        audioPlayer.bufferDuration = 1;
+        audioPlayer.bufferDuration = 0;
+        XCTAssert(audioPlayer.bufferDuration == 0)
+        XCTAssert(audioPlayer.automaticallyWaitsToMinimizeStalling == true)
+    }
+
+    func test_AudioPlayer__buffer__enabling_automaticallyWaitsToMinimizeStalling_sets_bufferDuration_to_zero() {
+        audioPlayer.bufferDuration = 1;
+        XCTAssert(audioPlayer.automaticallyWaitsToMinimizeStalling == false)
+        audioPlayer.automaticallyWaitsToMinimizeStalling = true
+        XCTAssert(audioPlayer.bufferDuration == 0)
+    }
+    
     // MARK: - Rate
     
     func test_AudioPlayer__rate__should_be_1() {
