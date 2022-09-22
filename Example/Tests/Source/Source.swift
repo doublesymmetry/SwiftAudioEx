@@ -38,10 +38,27 @@ struct LongSource {
 }
 
 struct FiveSecondSource {
-    static let path: String = Bundle.main.path(forResource: "five_seconds", ofType: "mp3")!
+    static let path: String = Bundle.main.path(forResource: "five_seconds", ofType: "m4a")!
     static let url: URL = URL(fileURLWithPath: FiveSecondSource.path)
     
     static func getAudioItem() -> AudioItem {
         return DefaultAudioItem(audioUrl: self.path, sourceType: .file)
+    }
+}
+
+struct FiveSecondSourceWithInitialTimeOfFourSeconds {
+    static let path: String = Bundle.main.path(forResource: "five_seconds", ofType: "m4a")!
+    static let url: URL = URL(fileURLWithPath: FiveSecondSource.path)
+    
+    static func getAudioItem() -> AudioItem {
+        return DefaultAudioItemInitialTime(
+            audioUrl: self.path,
+            artist: "a",
+            title: "a",
+            albumTitle: "a",
+            sourceType: .file,
+            artwork: nil,
+            initialTime: 4
+        )
     }
 }

@@ -22,6 +22,129 @@ class AudioPlayerTests: XCTestCase {
         listener = nil
         super.tearDown()
     }
+
+    // MARK: - Load
+    func test_AudioPlayer__load__load_source_without_playWhenReady__should_never_mutate_playWhenReady_to_false() {
+        audioPlayer.playWhenReady = true
+        try? audioPlayer.load(item: Source.getAudioItem())
+        XCTAssertTrue(audioPlayer.playWhenReady)
+    }
+
+    func test_AudioPlayer__load__load_source_without_playWhenReady__should_never_mutate_playWhenReady_to_true() {
+        audioPlayer.playWhenReady = false
+        try? audioPlayer.load(item: Source.getAudioItem())
+        XCTAssertFalse(audioPlayer.playWhenReady)
+    }
+    
+    func test_AudioPlayer__load__load_source_with_playWhenReady_equals_true__should_mutate_playWhenReady() {
+        audioPlayer.playWhenReady = true
+        XCTAssertTrue(audioPlayer.playWhenReady)
+        try? audioPlayer.load(item: Source.getAudioItem(), playWhenReady: false)
+        XCTAssertFalse(audioPlayer.playWhenReady)
+    }
+
+    func test_AudioPlayer__load__load_source_with_playWhenReady_equals_false__should_mutate_playWhenReady() {
+        audioPlayer.playWhenReady = false
+        XCTAssertFalse(audioPlayer.playWhenReady)
+        try? audioPlayer.load(item: Source.getAudioItem(), playWhenReady: true)
+        XCTAssertTrue(audioPlayer.playWhenReady)
+    }
+
+    func test_AudioPlayer__load__should_seek_when_audio_item_sets_initial_time() {
+        let seekCompletionExpectation = XCTestExpectation()
+        audioPlayer.playWhenReady = false
+        XCTAssertFalse(audioPlayer.playWhenReady)
+        try? audioPlayer.load(item: FiveSecondSourceWithInitialTimeOfFourSeconds.getAudioItem())
+        listener.onSeekCompletion = { [weak audioPlayer] in
+            XCTAssert((audioPlayer?.currentTime ?? 0) >= 4)
+            seekCompletionExpectation.fulfill()
+        }
+        wait(for: [seekCompletionExpectation], timeout: 20.0)
+    }
+    
+    // MARK: - Duration
+    func test_AudioPlayer__duration_should_set_duration_after_loading() {
+        let durationExpectation = XCTestExpectation()
+        listener.onUpdateDuration = { duration in
+            XCTAssertEqual(5, duration)
+            durationExpectation.fulfill()
+        }
+        try? audioPlayer.load(item: FiveSecondSource.getAudioItem())
+        XCTAssertEqual(0, audioPlayer.duration)
+        wait(for: [durationExpectation], timeout: 20.0)
+        XCTAssertEqual(5, audioPlayer.duration)
+    }
+
+    func test_AudioPlayer__duration_should_reset_duration_after_loading_again() {
+        var durationExpectation = XCTestExpectation()
+        listener.onUpdateDuration = { duration in
+            XCTAssertEqual(5, duration)
+            durationExpectation.fulfill()
+        }
+        try? audioPlayer.load(item: FiveSecondSource.getAudioItem())
+        XCTAssertEqual(0, audioPlayer.duration)
+        wait(for: [durationExpectation], timeout: 20.0)
+        durationExpectation = XCTestExpectation()
+        XCTAssertEqual(5, audioPlayer.duration)
+        try? audioPlayer.load(item: FiveSecondSource.getAudioItem())
+        XCTAssertEqual(0, audioPlayer.duration)
+        wait(for: [durationExpectation], timeout: 20.0)
+    }
+
+    func test_AudioPlayer__duration_should_reset_duration_after_reset() {
+        var durationExpectation = XCTestExpectation()
+        listener.onUpdateDuration = { duration in
+            XCTAssertEqual(5, duration)
+            durationExpectation.fulfill()
+        }
+        try? audioPlayer.load(item: FiveSecondSource.getAudioItem())
+        XCTAssertEqual(0, audioPlayer.duration)
+        wait(for: [durationExpectation], timeout: 20.0)
+        durationExpectation = XCTestExpectation()
+        XCTAssertEqual(5, audioPlayer.duration)
+        audioPlayer.reset()
+        XCTAssertEqual(0, audioPlayer.duration)
+    }
+    
+    // MARK: - Failure
+
+    func test_AudioPlayer__failure__load_non_existing_resource__should_emit_fail_event() {
+        var didReceiveError = false;
+        listener.onReceiveFail = { error in
+            didReceiveError = true;
+        }
+        let nonExistingUrl = "https://\(String.random(length: 100)).com/\(String.random(length: 100)).mp3";
+        let item = DefaultAudioItem(audioUrl: nonExistingUrl, artist: "Artist", title: "Title", albumTitle: "AlbumTitle", sourceType: .stream);
+        try? audioPlayer.load(item: item, playWhenReady: true)
+        eventually {
+            XCTAssertEqual(didReceiveError, true)
+        }
+    }
+
+    func test_AudioPlayer__failure__load_resource_should_succeeed_after_previous_failure() {
+        var didReceiveError = false;
+        listener.onReceiveFail = { error in
+            didReceiveError = true;
+        }
+        let nonExistingUrl = "https://\(String.random(length: 100)).com/\(String.random(length: 100)).mp3";
+        let item = DefaultAudioItem(audioUrl: nonExistingUrl, artist: "Artist", title: "Title", albumTitle: "AlbumTitle", sourceType: .stream);
+        try? audioPlayer.load(item: item, playWhenReady: true)
+        eventually {
+            XCTAssertEqual(didReceiveError, true)
+        }
+        let didLoadExpectation = XCTestExpectation()
+        listener.onStateChange = { state in
+            switch state {
+            case .ready: didLoadExpectation.fulfill()
+            default: break
+            }
+        }
+
+        try? audioPlayer.load(item: Source.getAudioItem(), playWhenReady: false)
+        wait(for: [didLoadExpectation], timeout: 20.0)
+    }
+    
+    // MARK: - State
     
     func test_AudioPlayer__state__should_be_idle() {
         XCTAssert(audioPlayer.playerState == AudioPlayerState.idle)
@@ -34,7 +157,7 @@ class AudioPlayerTests: XCTestCase {
     
     func test_AudioPlayer__state__load_source__should_be_ready() {
         let expectation = XCTestExpectation()
-        listener.stateUpdate = { state in
+        listener.onStateChange = { state in
             switch state {
             case .ready: expectation.fulfill()
             default: break
@@ -46,7 +169,7 @@ class AudioPlayerTests: XCTestCase {
     
     func test_AudioPlayer__state__load_source_playWhenReady__should_be_playing() {
         let expectation = XCTestExpectation()
-        listener.stateUpdate = { state in
+        listener.onStateChange = { state in
             switch state {
             case .playing: expectation.fulfill()
             default: break
@@ -58,7 +181,7 @@ class AudioPlayerTests: XCTestCase {
 
     func test_AudioPlayer__state__play_source__should_emit_events_in_reliable_order() {
         var events = [audioPlayer.playerState.rawValue == "idle" ? "idle" : "not_idle"]
-        listener.stateUpdate = { state in
+        listener.onStateChange = { state in
             switch state {
                 case .loading: events.append("loading")
                 case .ready: events.append("ready")
@@ -93,7 +216,7 @@ class AudioPlayerTests: XCTestCase {
 
     func test_AudioPlayer__state__play_source__should_emit_events_in_reliable_order_at_end_call_stop() {
         var events = [audioPlayer.playerState.rawValue == "idle" ? "idle" : "not_idle"]
-        listener.stateUpdate = { state in
+        listener.onStateChange = { state in
             switch state {
                 case .loading: events.append("loading")
                 case .ready: events.append("ready")
@@ -126,22 +249,9 @@ class AudioPlayerTests: XCTestCase {
         }
     }
     
-    func test_AudioPlayer__state__play_source__should_emit_fail_event_on_load_failure() {
-        var didReceiveError = false;
-        listener.onReceivedFail = { error in
-            didReceiveError = true;
-        }
-        let nonExistingUrl = "https://\(String.random(length: 100)).com/\(String.random(length: 100)).mp3";
-        let item = DefaultAudioItem(audioUrl: nonExistingUrl, artist: "Artist", title: "Title", albumTitle: "AlbumTitle", sourceType: .stream);
-        try? audioPlayer.load(item: item, playWhenReady: true)
-        eventually {
-            XCTAssertEqual(didReceiveError, true)
-        }
-    }
-    
     func test_AudioPlayer__state__play_source__should_emit_events_in_reliable_order_also_after_loading_after_reset() {
         var events = [audioPlayer.playerState.rawValue == "idle" ? "idle" : "not_idle"]
-        listener.stateUpdate = { state in
+        listener.onStateChange = { state in
             switch state {
                 case .loading: events.append("loading")
                 case .ready: events.append("ready")
@@ -171,7 +281,7 @@ class AudioPlayerTests: XCTestCase {
     
     func test_AudioPlayer__state__play_source__should_be_playing() {
         let expectation = XCTestExpectation()
-        listener.stateUpdate = { state in
+        listener.onStateChange = { state in
             switch state {
             case .ready: self.audioPlayer.play()
             case .playing: expectation.fulfill()
@@ -184,7 +294,7 @@ class AudioPlayerTests: XCTestCase {
     
     func test_AudioPlayer__state__pausing_source__should_be_paused() {
         let expectation = XCTestExpectation()
-        listener.stateUpdate = { [weak audioPlayer] state in
+        listener.onStateChange = { [weak audioPlayer] state in
             switch state {
             case .playing: audioPlayer?.pause()
             case .paused: expectation.fulfill()
@@ -194,11 +304,49 @@ class AudioPlayerTests: XCTestCase {
         try? audioPlayer.load(item: Source.getAudioItem(), playWhenReady: true)
         wait(for: [expectation], timeout: 20.0)
     }
+
+    func test_AudioPlayer__state__when_setting_playWhenReady_to_false__should_be_paused() {
+        let expectation = XCTestExpectation()
+        listener.onStateChange = { [weak audioPlayer] state in
+            switch state {
+            case .playing:
+                audioPlayer?.playWhenReady = false
+            case .paused: expectation.fulfill()
+            default: break
+            }
+        }
+        try? audioPlayer.load(item: Source.getAudioItem(), playWhenReady: true)
+        wait(for: [expectation], timeout: 20.0)
+    }
+
+    func test_AudioPlayer__state__when_setting_playWhenReady_to_true_after_pause__should_be_playing() {
+        let wasPausedExpectation = XCTestExpectation()
+        listener.onStateChange = { [weak audioPlayer] state in
+            switch state {
+            case .playing:
+                audioPlayer?.playWhenReady = false
+            case .paused: wasPausedExpectation.fulfill()
+            default: break
+            }
+        }
+        try? audioPlayer.load(item: Source.getAudioItem(), playWhenReady: true)
+        wait(for: [wasPausedExpectation], timeout: 20.0)
+        let startedPlayingExpectation = XCTestExpectation()
+        listener.onStateChange = { state in
+            switch state {
+                case .playing:
+                    startedPlayingExpectation.fulfill()
+                default: break
+            }
+        }
+        audioPlayer.playWhenReady = true
+        wait(for: [startedPlayingExpectation], timeout: 20.0)
+    }
     
     func test_AudioPlayer__state__stopping_source__should_be_idle() {
         let expectation = XCTestExpectation()
         var hasBeenPlaying: Bool = false
-        listener.stateUpdate = { [weak audioPlayer] state in
+        listener.onStateChange = { [weak audioPlayer] state in
             switch state {
             case .playing:
                 hasBeenPlaying = true
@@ -262,6 +410,80 @@ class AudioPlayerTests: XCTestCase {
         XCTAssert(audioPlayer.bufferDuration == 0)
     }
     
+    // MARK: - Seek
+    
+    func test_AudioPlayer__seek_seeking_should_work_before_loading_completed() {
+        var start: Date? = nil;
+        var end: Date? = nil;
+        let playedUntilEndExpectation = XCTestExpectation()
+        let seekedExpectation = XCTestExpectation()
+        seekedExpectation.expectedFulfillmentCount = 1
+
+        listener.onStateChange = { state in
+            switch state {
+            case .playing:
+                if (start == nil) {
+                    start = Date()
+                }
+            default: break
+            }
+        }
+        listener.onSeekCompletion = {
+            seekedExpectation.fulfill()
+        }
+        listener.onPlaybackEnd = { reason in
+            if (reason == .playedUntilEnd) {
+                end = Date()
+                playedUntilEndExpectation.fulfill()
+            }
+        }
+
+        try? audioPlayer.load(item: FiveSecondSource.getAudioItem())
+        audioPlayer.seek(to: 4.75)
+        wait(for: [playedUntilEndExpectation], timeout: 20.0)
+        XCTAssertNotNil(end)
+        XCTAssertNotNil(start)
+        if let start = start, let end = end {
+            let duration = end.timeIntervalSince(start);
+            XCTAssert(duration < 1)
+        }
+    }
+
+    func test_AudioPlayer__seek_seeking_should_work_after_loading_completed() {
+        var start: Date? = nil;
+        var end: Date? = nil;
+        let playedUntilEndExpectation = XCTestExpectation()
+        let readyExpectation = XCTestExpectation()
+        listener.onStateChange = { state in
+            switch state {
+            case .ready:
+                readyExpectation.fulfill()
+            case .playing:
+                if (start == nil) {
+                    start = Date()
+                }
+            default: break
+            }
+        }
+        listener.onPlaybackEnd = { reason in
+            if (reason == .playedUntilEnd) {
+                end = Date()
+                playedUntilEndExpectation.fulfill()
+            }
+        }
+
+        try? audioPlayer.load(item: FiveSecondSource.getAudioItem())
+        wait(for: [readyExpectation], timeout: 20.0)
+        audioPlayer.seek(to: 4.75)
+        wait(for: [playedUntilEndExpectation], timeout: 20.0)
+        XCTAssertNotNil(end)
+        XCTAssertNotNil(start)
+        if let start = start, let end = end {
+            let duration = end.timeIntervalSince(start);
+            XCTAssert(duration < 1)
+        }
+    }
+    
     // MARK: - Rate
     
     func test_AudioPlayer__rate__should_be_1() {
@@ -270,7 +492,7 @@ class AudioPlayerTests: XCTestCase {
     
     func test_AudioPlayer__rate__playing_source__should_be_1() {
         let expectation = XCTestExpectation()
-        listener.stateUpdate = { [weak audioPlayer] state in
+        listener.onStateChange = { [weak audioPlayer] state in
             guard let audioPlayer = audioPlayer else { return }
             switch state {
             case .playing:
@@ -283,6 +505,68 @@ class AudioPlayerTests: XCTestCase {
         try? audioPlayer.load(item: Source.getAudioItem(), playWhenReady: true)
         wait(for: [expectation], timeout: 20.0)
     }
+
+    func test_AudioPlayer__rate__setting_rate_should_speed_up_playback() {
+        var start: Date? = nil;
+        var end: Date? = nil;
+        let playedUntilEndExpectation = XCTestExpectation()
+        listener.onStateChange = { state in
+            switch state {
+            case .playing:
+                if (start == nil) {
+                    start = Date()
+                }
+            default: break
+            }
+        }
+        listener.onPlaybackEnd = { reason in
+            if (reason == .playedUntilEnd) {
+                end = Date()
+                playedUntilEndExpectation.fulfill()
+            }
+        }
+        try? audioPlayer.load(item: FiveSecondSource.getAudioItem(), playWhenReady: true)
+        audioPlayer.rate = 10
+        wait(for: [playedUntilEndExpectation], timeout: 20.0)
+        XCTAssertNotNil(end)
+        XCTAssertNotNil(start)
+        if let start = start, let end = end {
+            let duration = end.timeIntervalSince(start);
+            XCTAssert(duration <= 1)
+        }
+    }
+    
+    func test_AudioPlayer__rate__setting_rate_to_lower_than_1_should_slow_down_playback() {
+        var start: Date? = nil;
+        var end: Date? = nil;
+        let playedUntilEndExpectation = XCTestExpectation()
+        listener.onStateChange = { state in
+            switch state {
+            case .playing:
+                if (start == nil) {
+                    start = Date()
+                }
+            default: break
+            }
+        }
+        listener.onPlaybackEnd = { reason in
+            if (reason == .playedUntilEnd) {
+                end = Date()
+                playedUntilEndExpectation.fulfill()
+            }
+        }
+
+        try? audioPlayer.load(item: FiveSecondSource.getAudioItem(), playWhenReady: true)
+        audioPlayer.seek(to: 4.75)
+        audioPlayer.rate = 0.25
+        wait(for: [playedUntilEndExpectation], timeout: 20.0)
+        XCTAssertNotNil(end)
+        XCTAssertNotNil(start)
+        if let start = start, let end = end {
+            let duration = end.timeIntervalSince(start);
+            XCTAssert(duration >= 1)
+        }
+    }
     
     // MARK: - Current item
     
@@ -292,7 +576,7 @@ class AudioPlayerTests: XCTestCase {
     
     func test_AudioPlayer__currentItem__loading_source__should_not_be_nil() {
         let expectation = XCTestExpectation()
-        listener.stateUpdate = { [weak audioPlayer] state in
+        listener.onStateChange = { [weak audioPlayer] state in
             guard let audioPlayer = audioPlayer else { return }
             switch state {
             case .ready:
@@ -310,26 +594,24 @@ class AudioPlayerTests: XCTestCase {
 
 class AudioPlayerEventListener {
     
-    var state: AudioPlayerState? {
-        didSet {
-            if let state = state {
-                stateUpdate?(state)
-            }
-        }
-    }
+    var state: AudioPlayerState?
     
-    var stateUpdate: ((_ state: AudioPlayerState) -> Void)?
-    var secondsElapse: ((_ seconds: TimeInterval) -> Void)?
-    var seekCompletion: (() -> Void)?
-    var onReceivedFail: ((_ error: Error?) -> Void)?
-    
+    var onStateChange: ((_ state: AudioPlayerState) -> Void)?
+    var onSecondsElapse: ((_ seconds: TimeInterval) -> Void)?
+    var onSeekCompletion: (() -> Void)?
+    var onReceiveFail: ((_ error: Error?) -> Void)?
+    var onPlaybackEnd: ((_: AudioPlayer.PlaybackEndEventData) -> Void)?
+    var onUpdateDuration: ((_: AudioPlayer.UpdateDurationEventData) -> Void)?
+
     weak var audioPlayer: AudioPlayer?
     
     init(audioPlayer: AudioPlayer) {
-        audioPlayer.event.stateChange.addListener(self, handleDidUpdateState)
+        audioPlayer.event.updateDuration.addListener(self, handleUpdateDuration)
+        audioPlayer.event.stateChange.addListener(self, handleStateChange)
         audioPlayer.event.seek.addListener(self, handleSeek)
         audioPlayer.event.secondElapse.addListener(self, handleSecondsElapse)
         audioPlayer.event.fail.addListener(self, handleFail)
+        audioPlayer.event.playbackEnd.addListener(self, handlePlaybackEnd)
     }
     
     deinit {
@@ -338,22 +620,30 @@ class AudioPlayerEventListener {
         audioPlayer?.event.secondElapse.removeListener(self)
     }
     
-    func handleDidUpdateState(state: AudioPlayerState) {
+    func handleStateChange(state: AudioPlayerState) {
         self.state = state
+        onStateChange?(state)
     }
     
     func handleSeek(data: AudioPlayer.SeekEventData) {
-        seekCompletion?()
+        onSeekCompletion?()
     }
     
     func handleSecondsElapse(data: AudioPlayer.SecondElapseEventData) {
-        self.secondsElapse?(data)
+        self.onSecondsElapse?(data)
     }
 
     func handleFail(error: Error?) {
-        self.onReceivedFail?(error)
+        self.onReceiveFail?(error)
+    }
+
+    func handlePlaybackEnd(_ data: AudioPlayer.PlaybackEndEventData) {
+        self.onPlaybackEnd?(data)
     }
     
+    func handleUpdateDuration(_ data: AudioPlayer.UpdateDurationEventData) {
+        self.onUpdateDuration?(data)
+    }
 }
 
 // https://gist.github.com/dduan/5507c1e6db78b6ee38d56896764e288c
