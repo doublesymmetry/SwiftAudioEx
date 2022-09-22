@@ -172,6 +172,7 @@ public class AudioPlayer: AVPlayerWrapperDelegate {
         ) {
             url = itemUrl
         } else {
+            wrapper.reset()
             event.fail.emit(data: APError.LoadError.invalidSourceUrl(item.getSourceUrl()))
             return
         }
