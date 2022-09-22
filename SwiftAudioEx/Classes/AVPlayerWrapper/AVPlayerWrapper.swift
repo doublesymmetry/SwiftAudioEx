@@ -80,7 +80,7 @@ class AVPlayerWrapper: AVPlayerWrapperProtocol {
     /**
      Whether AVPlayer should start playing automatically when the item is ready.
      */
-    public var playWhenReady: Bool = true {
+    public var playWhenReady: Bool = false {
         didSet {
             applyAVPlayerRate()
         }

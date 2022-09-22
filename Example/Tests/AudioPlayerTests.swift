@@ -451,7 +451,7 @@ class AudioPlayerTests: XCTestCase {
             }
         }
 
-        audioPlayer.load(item: FiveSecondSource.getAudioItem())
+        audioPlayer.load(item: FiveSecondSource.getAudioItem(), playWhenReady: true)
         audioPlayer.seek(to: 4.75)
         wait(for: [playedUntilEndExpectation], timeout: 20.0)
         XCTAssertNotNil(end)
@@ -485,7 +485,7 @@ class AudioPlayerTests: XCTestCase {
             }
         }
 
-        audioPlayer.load(item: FiveSecondSource.getAudioItem())
+        audioPlayer.load(item: FiveSecondSource.getAudioItem(), playWhenReady: true)
         wait(for: [readyExpectation], timeout: 20.0)
         audioPlayer.seek(to: 4.75)
         wait(for: [playedUntilEndExpectation], timeout: 20.0)
