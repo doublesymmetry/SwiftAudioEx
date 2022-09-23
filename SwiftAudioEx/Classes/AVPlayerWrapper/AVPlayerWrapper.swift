@@ -311,10 +311,6 @@ extension AVPlayerWrapper: AVPlayerObserverDelegate {
     
     func player(statusDidChange status: AVPlayer.Status) {
         switch status {
-            case .readyToPlay:
-                state = .ready
-                break
-                
             case .failed:
                 delegate?.AVWrapper(failedWithError: avPlayer.error)
                 break
@@ -353,6 +349,11 @@ extension AVPlayerWrapper: AVPlayerItemNotificationObserverDelegate {
 }
 
 extension AVPlayerWrapper: AVPlayerItemObserverDelegate {
+    func item(didUpdatePlaybackLikelyToKeepUp playbackLikelyToKeepUp: Bool) {
+        if (playbackLikelyToKeepUp) {
+            state = .ready
+        }
+    }    
     
     // MARK: - AVPlayerItemObserverDelegate
     
