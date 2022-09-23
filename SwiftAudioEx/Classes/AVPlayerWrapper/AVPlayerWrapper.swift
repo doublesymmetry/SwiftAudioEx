@@ -216,11 +216,7 @@ class AVPlayerWrapper: AVPlayerWrapperProtocol {
                         )
                         item.preferredForwardBufferDuration = self.bufferDuration
                         self.avPlayer.replaceCurrentItem(with: item)
-                        // Register for events
-                        self.playerTimeObserver.registerForBoundaryTimeEvents()
-                        self.playerObserver.startObserving()
-                        self.playerItemNotificationObserver.startObserving(item: item)
-                        self.playerItemObserver.startObserving(item: item)
+                        self.startObservingAVPlayer(item: item)
                         
                         if pendingAsset.availableChapterLocales.count > 0 {
                             for locale in pendingAsset.availableChapterLocales {
@@ -269,10 +265,8 @@ class AVPlayerWrapper: AVPlayerWrapperProtocol {
     // MARK: - Util
     
     func reset() {
-        playerItemObserver.stopObservingCurrentItem()
-        playerTimeObserver.unregisterForBoundaryTimeEvents()
-        playerItemNotificationObserver.stopObservingCurrentItem()
-
+        stopObservingAVPlayer()
+        
         pendingAsset?.cancelLoading()
         pendingAsset = nil
         
@@ -280,7 +274,24 @@ class AVPlayerWrapper: AVPlayerWrapperProtocol {
         state = .idle
     }
     
+    private func startObservingAVPlayer(item: AVPlayerItem) {
+        playerObserver.startObserving()
+
+        playerTimeObserver.registerForBoundaryTimeEvents()
+        playerItemObserver.startObserving(item: item)
+        playerItemNotificationObserver.startObserving(item: item)
+    }
+
+    private func stopObservingAVPlayer() {
+        playerObserver.stopObserving()
+
+        playerTimeObserver.unregisterForBoundaryTimeEvents()
+        playerItemObserver.stopObservingCurrentItem()
+        playerItemNotificationObserver.stopObservingCurrentItem()
+    }
+    
     private func recreateAVPlayer() {
+        stopObservingAVPlayer()
         avPlayer = AVPlayer();
         setupAVPlayer()
         delegate?.AVWrapperDidRecreateAVPlayer()
@@ -353,7 +364,7 @@ extension AVPlayerWrapper: AVPlayerItemObserverDelegate {
         if (playbackLikelyToKeepUp) {
             state = .ready
         }
-    }    
+    }
     
     // MARK: - AVPlayerItemObserverDelegate
     
