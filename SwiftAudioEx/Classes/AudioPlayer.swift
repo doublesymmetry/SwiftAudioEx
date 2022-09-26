@@ -11,7 +11,6 @@ import MediaPlayer
 public typealias AudioPlayerState = AVPlayerWrapperState
 
 public class AudioPlayer: AVPlayerWrapperDelegate {
-
     /// The wrapper around the underlying AVPlayer
     let wrapper: AVPlayerWrapperProtocol = AVPlayerWrapper()
 
@@ -173,7 +172,7 @@ public class AudioPlayer: AVPlayerWrapperDelegate {
             url = itemUrl
         } else {
             wrapper.reset()
-            event.fail.emit(data: APError.LoadError.invalidSourceUrl(item.getSourceUrl()))
+            event.fail.emit(data: AudioPlayerError.LoadError.invalidSourceUrl(item.getSourceUrl()))
             return
         }
 

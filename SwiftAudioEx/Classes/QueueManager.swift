@@ -54,7 +54,7 @@ class QueueManager<T> {
     private(set) var currentIndex: Int = -1
     private func throwIfQueueEmpty() throws {
         if items.count == 0 {
-            throw APError.QueueError.empty
+            throw AudioPlayerError.QueueError.empty
         }
     }
 
@@ -65,7 +65,7 @@ class QueueManager<T> {
         max: Int? = nil
     ) throws {
         guard index >= (min ?? 0) && (max ?? items.count) > index else {
-            throw APError.QueueError.invalidIndex(
+            throw AudioPlayerError.QueueError.invalidIndex(
                 index: index,
                 message: "\(name.prefix(1).uppercased() + name.dropFirst())) has to be positive and smaller than the count of current items (\(items.count))"
             )
@@ -104,7 +104,7 @@ class QueueManager<T> {
     public func add(_ items: [T], at index: Int) throws {
         if (items.count == 0) { return }
         guard index >= 0 && self.items.count >= index else {
-            throw APError.QueueError.invalidIndex(index: index, message: "Index to insert at has to be non-negative and equal to or smaller than the number of items: (\(items.count))")
+            throw AudioPlayerError.QueueError.invalidIndex(index: index, message: "Index to insert at has to be non-negative and equal to or smaller than the number of items: (\(items.count))")
         }
         // Correct index when items were inserted in front of it:
         if (self.items.count > 1 && currentIndex >= index) {

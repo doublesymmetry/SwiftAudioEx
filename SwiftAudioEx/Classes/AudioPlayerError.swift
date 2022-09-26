@@ -8,12 +8,16 @@
 import Foundation
 
 
-public struct APError {
+public struct AudioPlayerError {
 
     enum LoadError: Error {
         case invalidSourceUrl(String)
     }
 
+    enum PlaybackError: Error {
+        case itemFailedToPlayToEndTime
+    }
+    
     enum QueueError: Error {
         case noCurrentItem
         case invalidIndex(index: Int, message: String)
