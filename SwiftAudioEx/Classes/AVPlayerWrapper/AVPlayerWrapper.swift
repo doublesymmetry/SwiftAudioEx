@@ -350,8 +350,15 @@ extension AVPlayerWrapper: AVPlayerTimeObserverDelegate {
 }
 
 extension AVPlayerWrapper: AVPlayerItemNotificationObserverDelegate {
-    
     // MARK: - AVPlayerItemNotificationObserverDelegate
+
+    func itemFailedToPlayToEndTime() {
+        delegate?.AVWrapperItemFailedToPlayToEndTime()
+    }
+    
+    func itemPlaybackStalled() {
+        delegate?.AVWrapperItemPlaybackStalled()
+    }
     
     func itemDidPlayToEndTime() {
         delegate?.AVWrapperItemDidPlayToEndTime()
@@ -360,14 +367,14 @@ extension AVPlayerWrapper: AVPlayerItemNotificationObserverDelegate {
 }
 
 extension AVPlayerWrapper: AVPlayerItemObserverDelegate {
+    // MARK: - AVPlayerItemObserverDelegate
+
     func item(didUpdatePlaybackLikelyToKeepUp playbackLikelyToKeepUp: Bool) {
         if (playbackLikelyToKeepUp) {
             state = .ready
         }
     }
-    
-    // MARK: - AVPlayerItemObserverDelegate
-    
+        
     func item(didUpdateDuration duration: Double) {
         delegate?.AVWrapper(didUpdateDuration: duration)
     }
@@ -375,5 +382,4 @@ extension AVPlayerWrapper: AVPlayerItemObserverDelegate {
     func item(didReceiveMetadata metadata: [AVTimedMetadataGroup]) {
         delegate?.AVWrapper(didReceiveMetadata: metadata)
     }
-    
 }

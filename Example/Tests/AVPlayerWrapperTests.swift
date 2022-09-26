@@ -193,6 +193,14 @@ class AVPlayerWrapperTests: XCTestCase {
 }
 
 class AVPlayerWrapperDelegateHolder: AVPlayerWrapperDelegate {
+    func AVWrapperItemPlaybackStalled() {
+
+    }
+    
+    func AVWrapperItemFailedToPlayToEndTime() {
+
+    }
+    
     func AVWrapper(didChangePlayWhenReady playWhenReady: Bool) {
 
     }
