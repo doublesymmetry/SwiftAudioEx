@@ -329,9 +329,12 @@ extension AVPlayerWrapper: AVPlayerObserverDelegate {
             case .unknown:
                 break
 
+            case .readyToPlay:
+                break
+
             @unknown default:
                 break
-        }
+            }
     }
 }
 
