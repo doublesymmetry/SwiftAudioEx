@@ -31,5 +31,7 @@ public enum AVPlayerWrapperState: String {
     
     /// No item loaded, the player is stopped.
     case idle
-    
+
+    /// Failed
+    case failed
 }

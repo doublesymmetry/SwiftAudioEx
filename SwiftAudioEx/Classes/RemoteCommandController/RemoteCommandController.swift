@@ -198,19 +198,9 @@ public class RemoteCommandController {
     }
     
     private func getRemoteCommandHandlerStatus(forError error: Error) -> MPRemoteCommandHandlerStatus {
-        if let error = error as? AudioPlayerError.LoadError {
-            switch error {
-            case .invalidSourceUrl(_):
-                return MPRemoteCommandHandlerStatus.commandFailed
-            }
-        }
-        else if let error = error as? AudioPlayerError.QueueError {
-            switch error {
-            case .empty, .noCurrentItem, .invalidIndex(_, _):
-                return MPRemoteCommandHandlerStatus.noSuchContent
-            }
-        }
-        return MPRemoteCommandHandlerStatus.commandFailed
+        return error is AudioPlayerError.QueueError
+            ? MPRemoteCommandHandlerStatus.noSuchContent
+            : MPRemoteCommandHandlerStatus.commandFailed
     }
     
 }

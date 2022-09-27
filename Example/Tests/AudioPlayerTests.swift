@@ -109,41 +109,73 @@ class AudioPlayerTests: XCTestCase {
     // MARK: - Failure
 
     func test_AudioPlayer__failure__load_non_malformed_url__should_emit_fail_event() {
-        var didReceiveError = false;
+        let didFailExpectation = XCTestExpectation()
+        var didReceiveFail = false;
+
         listener.onReceiveFail = { error in
-            didReceiveError = true;
+            didReceiveFail = true;
         }
-        let malformedUrl = "";
-        let item = DefaultAudioItem(audioUrl: malformedUrl, artist: "Artist", title: "Title", albumTitle: "AlbumTitle", sourceType: .stream);
+
+        listener.onStateChange = { state in
+            switch state {
+            case .failed: didFailExpectation.fulfill()
+            default: break
+            }
+        }
+
+        let item = DefaultAudioItem(
+            audioUrl: "", // malformed url
+            artist: "Artist",
+            title: "Title",
+            albumTitle: "AlbumTitle",
+            sourceType: .stream
+        );
         audioPlayer.load(item: item, playWhenReady: true)
         eventually {
-            XCTAssertEqual(didReceiveError, true)
+            XCTAssertNotNil(self.audioPlayer.playbackError)
+            XCTAssertEqual(self.audioPlayer.playerState, .failed)
+            XCTAssertEqual(didReceiveFail, true)
         }
+        wait(for: [didFailExpectation], timeout: 20.0)
     }
 
     func test_AudioPlayer__failure__load_non_existing_resource__should_emit_fail_event() {
-        var didReceiveError = false;
+        let didFailExpectation = XCTestExpectation()
+        var didReceiveFail = false;
+
         listener.onReceiveFail = { error in
-            didReceiveError = true;
+            didReceiveFail = true;
         }
+
+        listener.onStateChange = { state in
+            switch state {
+            case .failed: didFailExpectation.fulfill()
+            default: break
+            }
+        }
+ 
         let nonExistingUrl = "https://\(String.random(length: 100)).com/\(String.random(length: 100)).mp3";
         let item = DefaultAudioItem(audioUrl: nonExistingUrl, artist: "Artist", title: "Title", albumTitle: "AlbumTitle", sourceType: .stream);
         audioPlayer.load(item: item, playWhenReady: true)
         eventually {
-            XCTAssertEqual(didReceiveError, true)
+            XCTAssertNotNil(self.audioPlayer.playbackError)
+            XCTAssertEqual(self.audioPlayer.playerState, .failed)
+            XCTAssertEqual(didReceiveFail, true)
         }
+        wait(for: [didFailExpectation], timeout: 20.0)
     }
 
     func test_AudioPlayer__failure__load_resource_should_succeeed_after_previous_failure() {
-        var didReceiveError = false;
+        var didReceiveFail = false;
         listener.onReceiveFail = { error in
-            didReceiveError = true;
+            didReceiveFail = true;
         }
         let nonExistingUrl = "https://\(String.random(length: 100)).com/\(String.random(length: 100)).mp3";
         let item = DefaultAudioItem(audioUrl: nonExistingUrl, artist: "Artist", title: "Title", albumTitle: "AlbumTitle", sourceType: .stream);
         audioPlayer.load(item: item, playWhenReady: true)
         eventually {
-            XCTAssertEqual(didReceiveError, true)
+            XCTAssertEqual(didReceiveFail, true)
+            XCTAssertEqual(self.audioPlayer.playerState, .failed)
         }
         let didLoadExpectation = XCTestExpectation()
         listener.onStateChange = { state in
@@ -155,6 +187,8 @@ class AudioPlayerTests: XCTestCase {
 
         audioPlayer.load(item: Source.getAudioItem(), playWhenReady: false)
         wait(for: [didLoadExpectation], timeout: 20.0)
+        XCTAssertNil(self.audioPlayer.playbackError)
+
     }
     
     // MARK: - State
@@ -203,6 +237,7 @@ class AudioPlayerTests: XCTestCase {
                 case .playing: events.append("playing")
                 case .paused: events.append("paused")
                 case .idle: events.append("idle")
+                case .failed: events.append("failed")
             }
         }
         audioPlayer.load(item: Source.getAudioItem(), playWhenReady: true)
@@ -238,6 +273,7 @@ class AudioPlayerTests: XCTestCase {
                 case .playing: events.append("playing")
                 case .paused: events.append("paused")
                 case .idle: events.append("idle")
+                case .failed: events.append("failed")
             }
         }
         audioPlayer.load(item: Source.getAudioItem(), playWhenReady: true)
@@ -273,6 +309,7 @@ class AudioPlayerTests: XCTestCase {
                 case .playing: events.append("playing")
                 case .paused: events.append("paused")
                 case .idle: events.append("idle")
+                case .failed: events.append("failed")
             }
         }
         audioPlayer.load(item: Source.getAudioItem(), playWhenReady: true)

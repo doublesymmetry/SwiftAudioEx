@@ -193,7 +193,6 @@ public class QueuedAudioPlayer: AudioPlayer, QueueManagerDelegate {
 
     func onCurrentItemChanged(index: Int?) {
         guard let currentItem = currentItem else {
-            self.wrapper.reset()
             super.reset()
             return
         }

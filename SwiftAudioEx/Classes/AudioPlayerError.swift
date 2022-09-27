@@ -8,20 +8,20 @@
 import Foundation
 
 
-public struct AudioPlayerError {
+public enum AudioPlayerError: Error {
 
-    enum LoadError: Error {
+    public enum PlaybackError: Error {
+        case networkUnreachable
+        case failedToLoadKeyValue
         case invalidSourceUrl(String)
-    }
-
-    enum PlaybackError: Error {
-        case itemFailedToPlayToEndTime
+        case networkDisconnected
+        case playbackFailed
+        case itemWasUnplayable
     }
     
-    enum QueueError: Error {
+    public enum QueueError: Error {
         case noCurrentItem
         case invalidIndex(index: Int, message: String)
         case empty
     }
-
 }

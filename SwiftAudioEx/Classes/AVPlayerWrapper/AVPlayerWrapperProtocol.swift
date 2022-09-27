@@ -25,6 +25,7 @@ protocol AVPlayerWrapperProtocol: AnyObject {
     
     var reasonForWaitingToPlay: AVPlayer.WaitingReason? { get }
     
+    var playbackError: AudioPlayerError.PlaybackError? { get }
     
     var rate: Float { get set }
     
@@ -40,7 +41,6 @@ protocol AVPlayerWrapperProtocol: AnyObject {
     
     var automaticallyWaitsToMinimizeStalling: Bool { get set }
         
-    
     func play()
     
     func pause()
@@ -55,5 +55,7 @@ protocol AVPlayerWrapperProtocol: AnyObject {
     
     func load(from url: URL, playWhenReady: Bool, initialTime: TimeInterval?, options: [String: Any]?)
 
-    func reset()
+    func load(from url: String, type: SourceType, playWhenReady: Bool, initialTime: TimeInterval?, options: [String: Any]?)
+    
+    func unload()
 }

@@ -61,19 +61,25 @@ class AVPlayerTimeObserver {
             return
         }
         unregisterForBoundaryTimeEvents()
-        let startBoundaryTimes: [NSValue] = [AVPlayerTimeObserver.startBoundaryTime].map({NSValue(time: $0)})
-        boundaryTimeStartObserverToken = player.addBoundaryTimeObserver(forTimes: startBoundaryTimes, queue: nil, using: { [weak self] in
-            self?.delegate?.audioDidStart()
-        })
+        boundaryTimeStartObserverToken = player.addBoundaryTimeObserver(
+            forTimes: [AVPlayerTimeObserver.startBoundaryTime].map({
+                NSValue(time: $0)
+            }),
+            queue: nil,
+            using: { [weak self] in
+                self?.delegate?.audioDidStart()
+            }
+        )
     }
     
     /**
      Unregister from the boundary events of the player.
      */
     func unregisterForBoundaryTimeEvents() {
-        guard let player = player, let boundaryTimeStartObserverToken = boundaryTimeStartObserverToken else {
-            return
-        }
+        guard
+            let player = player,
+            let boundaryTimeStartObserverToken = boundaryTimeStartObserverToken
+        else { return }
         player.removeTimeObserver(boundaryTimeStartObserverToken)
         self.boundaryTimeStartObserverToken = nil
     }
