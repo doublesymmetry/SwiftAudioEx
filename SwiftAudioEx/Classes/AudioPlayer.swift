@@ -216,7 +216,7 @@ public class AudioPlayer: AVPlayerWrapperDelegate {
      Stop playback, unloading the player.
      */
     public func stop() {
-        reset()
+        unload()
         event.playbackEnd.emit(data: .playerStopped)
     }
 
@@ -289,7 +289,7 @@ public class AudioPlayer: AVPlayerWrapperDelegate {
         ])
     }
 
-    func reset() {
+    func unload() {
         currentItem = nil
         wrapper.unload()
     }

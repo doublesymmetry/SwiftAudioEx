@@ -102,7 +102,7 @@ class AudioPlayerTests: XCTestCase {
         wait(for: [durationExpectation], timeout: 20.0)
         durationExpectation = XCTestExpectation()
         XCTAssertEqual(5, audioPlayer.duration)
-        audioPlayer.reset()
+        audioPlayer.unload()
         XCTAssertEqual(0, audioPlayer.duration)
     }
     
@@ -255,7 +255,7 @@ class AudioPlayerTests: XCTestCase {
         eventually {
             XCTAssertEqual(events, expectedEvents)
         }
-        audioPlayer.reset()
+        audioPlayer.unload()
         expectedEvents.append("idle");
         eventually {
             XCTAssertEqual(events, expectedEvents)
@@ -317,7 +317,7 @@ class AudioPlayerTests: XCTestCase {
         eventually {
             XCTAssertEqual(events, expectedEvents)
         }
-        audioPlayer.reset()
+        audioPlayer.unload()
         expectedEvents.append(contentsOf: ["idle"]);
         eventually {
             XCTAssertEqual(events, expectedEvents)
