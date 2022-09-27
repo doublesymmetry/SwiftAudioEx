@@ -164,7 +164,77 @@ class AudioPlayerTests: XCTestCase {
         }
         wait(for: [didFailExpectation], timeout: 20.0)
     }
+    
+    func test_AudioPlayer__failure__calling_play_after_failure__should_retry_loading() {
+        var states = [audioPlayer.playerState.rawValue == "idle" ? "idle" : "not_idle"]
+        listener.onStateChange = { state in
+            switch state {
+                case .loading: states.append("loading")
+                case .ready: states.append("ready")
+                case .playing: states.append("playing")
+                case .paused: states.append("paused")
+                case .idle: states.append("idle")
+                case .failed: states.append("failed")
+                // Leaving out bufferring events because they can show up at any point
+                case .buffering: break
+            }
+        }
 
+        let nonExistingUrl = "https://\(String.random(length: 100)).com/\(String.random(length: 100)).mp3";
+        let item = DefaultAudioItem(
+            audioUrl: nonExistingUrl,
+            artist: "Artist",
+            title: "Title",
+            albumTitle: "AlbumTitle",
+            sourceType: .stream
+        );
+        audioPlayer.load(item: item, playWhenReady: true)
+        eventually {
+            XCTAssertEqual(states, ["idle", "loading", "failed"])
+        }
+
+        audioPlayer.play()
+
+        eventually {
+            XCTAssertEqual(states, ["idle", "loading", "failed", "idle", "loading", "failed"])
+        }
+    }
+
+    func test_AudioPlayer__failure__retting_playWhenReady_after_failure__should_retry_loading() {
+        var states = [audioPlayer.playerState.rawValue == "idle" ? "idle" : "not_idle"]
+        listener.onStateChange = { state in
+            switch state {
+                case .loading: states.append("loading")
+                case .ready: states.append("ready")
+                case .playing: states.append("playing")
+                case .paused: states.append("paused")
+                case .idle: states.append("idle")
+                case .failed: states.append("failed")
+                // Leaving out bufferring events because they can show up at any point
+                case .buffering: break
+            }
+        }
+
+        let nonExistingUrl = "https://\(String.random(length: 100)).com/\(String.random(length: 100)).mp3";
+        let item = DefaultAudioItem(
+            audioUrl: nonExistingUrl,
+            artist: "Artist",
+            title: "Title",
+            albumTitle: "AlbumTitle",
+            sourceType: .stream
+        );
+        audioPlayer.load(item: item, playWhenReady: true)
+        eventually {
+            XCTAssertEqual(states, ["idle", "loading", "failed"])
+        }
+
+        audioPlayer.playWhenReady = true
+
+        eventually {
+            XCTAssertEqual(states, ["idle", "loading", "failed", "idle", "loading", "failed"])
+        }
+    }
+    
     func test_AudioPlayer__failure__load_resource_should_succeeed_after_previous_failure() {
         var didReceiveFail = false;
         listener.onReceiveFail = { error in
@@ -177,10 +247,37 @@ class AudioPlayerTests: XCTestCase {
             XCTAssertEqual(didReceiveFail, true)
             XCTAssertEqual(self.audioPlayer.playerState, .failed)
         }
+
         let didLoadExpectation = XCTestExpectation()
         listener.onStateChange = { state in
             switch state {
-            case .ready: didLoadExpectation.fulfill()
+            case .loading: didLoadExpectation.fulfill()
+            default: break
+            }
+        }
+
+        audioPlayer.load(item: Source.getAudioItem(), playWhenReady: true)
+        wait(for: [didLoadExpectation], timeout: 20.0)
+        XCTAssertNil(self.audioPlayer.playbackError)
+    }
+
+    func test_AudioPlayer__failure__load_resource_playWhenReady_false_should_succeeed_after_previous_failure() {
+        var didReceiveFail = false;
+        listener.onReceiveFail = { error in
+            didReceiveFail = true;
+        }
+        let nonExistingUrl = "https://\(String.random(length: 100)).com/\(String.random(length: 100)).mp3";
+        let item = DefaultAudioItem(audioUrl: nonExistingUrl, artist: "Artist", title: "Title", albumTitle: "AlbumTitle", sourceType: .stream);
+        audioPlayer.load(item: item, playWhenReady: true)
+        eventually {
+            XCTAssertEqual(didReceiveFail, true)
+            XCTAssertEqual(self.audioPlayer.playerState, .failed)
+        }
+
+        let didLoadExpectation = XCTestExpectation()
+        listener.onStateChange = { state in
+            switch state {
+            case .loading: didLoadExpectation.fulfill()
             default: break
             }
         }
@@ -188,7 +285,6 @@ class AudioPlayerTests: XCTestCase {
         audioPlayer.load(item: Source.getAudioItem(), playWhenReady: false)
         wait(for: [didLoadExpectation], timeout: 20.0)
         XCTAssertNil(self.audioPlayer.playbackError)
-
     }
     
     // MARK: - State
@@ -227,105 +323,105 @@ class AudioPlayerTests: XCTestCase {
     }
 
     func test_AudioPlayer__state__play_source__should_emit_events_in_reliable_order() {
-        var events = [audioPlayer.playerState.rawValue == "idle" ? "idle" : "not_idle"]
+        var states = [audioPlayer.playerState.rawValue == "idle" ? "idle" : "not_idle"]
         listener.onStateChange = { state in
             switch state {
-                case .loading: events.append("loading")
-                case .ready: events.append("ready")
+                case .loading: states.append("loading")
+                case .ready: states.append("ready")
                 // Leaving out bufferring events because they can show up at any point
                 case .buffering: break
-                case .playing: events.append("playing")
-                case .paused: events.append("paused")
-                case .idle: events.append("idle")
-                case .failed: events.append("failed")
+                case .playing: states.append("playing")
+                case .paused: states.append("paused")
+                case .idle: states.append("idle")
+                case .failed: states.append("failed")
             }
         }
         audioPlayer.load(item: Source.getAudioItem(), playWhenReady: true)
         var expectedEvents = ["idle", "loading", "ready", "playing"];
         eventually {
-            XCTAssertEqual(events, expectedEvents)
+            XCTAssertEqual(states, expectedEvents)
         }
         audioPlayer.pause()
         expectedEvents.append("paused");
         eventually {
-            XCTAssertEqual(events, expectedEvents)
+            XCTAssertEqual(states, expectedEvents)
         }
         expectedEvents.append("playing");
         audioPlayer.play()
         eventually {
-            XCTAssertEqual(events, expectedEvents)
+            XCTAssertEqual(states, expectedEvents)
         }
         audioPlayer.unload()
         expectedEvents.append("idle");
         eventually {
-            XCTAssertEqual(events, expectedEvents)
+            XCTAssertEqual(states, expectedEvents)
         }
     }
 
     func test_AudioPlayer__state__play_source__should_emit_events_in_reliable_order_at_end_call_stop() {
-        var events = [audioPlayer.playerState.rawValue == "idle" ? "idle" : "not_idle"]
+        var states = [audioPlayer.playerState.rawValue == "idle" ? "idle" : "not_idle"]
         listener.onStateChange = { state in
             switch state {
-                case .loading: events.append("loading")
-                case .ready: events.append("ready")
+                case .loading: states.append("loading")
+                case .ready: states.append("ready")
                 // Leaving out bufferring events because they can show up at any point
                 case .buffering: break
-                case .playing: events.append("playing")
-                case .paused: events.append("paused")
-                case .idle: events.append("idle")
-                case .failed: events.append("failed")
+                case .playing: states.append("playing")
+                case .paused: states.append("paused")
+                case .idle: states.append("idle")
+                case .failed: states.append("failed")
             }
         }
         audioPlayer.load(item: Source.getAudioItem(), playWhenReady: true)
         var expectedEvents = ["idle", "loading", "ready", "playing"];
         eventually {
-            XCTAssertEqual(events, expectedEvents)
+            XCTAssertEqual(states, expectedEvents)
         }
         audioPlayer.pause()
         expectedEvents.append("paused");
         eventually {
-            XCTAssertEqual(events, expectedEvents)
+            XCTAssertEqual(states, expectedEvents)
         }
         expectedEvents.append(contentsOf: ["playing"]);
         audioPlayer.play()
         eventually {
-            XCTAssertEqual(events, expectedEvents)
+            XCTAssertEqual(states, expectedEvents)
         }
         audioPlayer.stop()
         expectedEvents.append(contentsOf: ["idle"]);
         eventually {
-            XCTAssertEqual(events, expectedEvents)
+            XCTAssertEqual(states, expectedEvents)
         }
     }
     
     func test_AudioPlayer__state__play_source__should_emit_events_in_reliable_order_also_after_loading_after_reset() {
-        var events = [audioPlayer.playerState.rawValue == "idle" ? "idle" : "not_idle"]
+        var states = [audioPlayer.playerState.rawValue == "idle" ? "idle" : "not_idle"]
         listener.onStateChange = { state in
             switch state {
-                case .loading: events.append("loading")
-                case .ready: events.append("ready")
+                case .loading: states.append("loading")
+                case .ready: states.append("ready")
                 // Leaving out bufferring events because they are not expected to show up in consistent order
                 case .buffering: break
-                case .playing: events.append("playing")
-                case .paused: events.append("paused")
-                case .idle: events.append("idle")
-                case .failed: events.append("failed")
+                case .playing: states.append("playing")
+                case .paused: states.append("paused")
+                case .idle: states.append("idle")
+                case .failed: states.append("failed")
             }
         }
         audioPlayer.load(item: Source.getAudioItem(), playWhenReady: true)
         var expectedEvents = ["idle", "loading", "ready", "playing"];
         eventually {
-            XCTAssertEqual(events, expectedEvents)
+            XCTAssertEqual(states, expectedEvents)
         }
         audioPlayer.unload()
         expectedEvents.append(contentsOf: ["idle"]);
         eventually {
-            XCTAssertEqual(events, expectedEvents)
+            XCTAssertEqual(states, expectedEvents)
         }
         audioPlayer.load(item: Source.getAudioItem())
         expectedEvents.append(contentsOf: ["loading", "ready", "playing"]);
         eventually {
-            XCTAssertEqual(events, expectedEvents)
+            XCTAssertEqual(states, expectedEvents)
         }
     }
     

@@ -62,7 +62,7 @@ class AVPlayerWrapper: AVPlayerWrapperProtocol {
                 case .paused:
                     if asset == nil {
                         state = .idle
-                    } else if (playWhenReady == false) {
+                    } else if (playWhenReady == false && state != .failed) {
                         state = .paused
                     }
                 case .waitingToPlayAtSpecifiedRate:
