@@ -221,6 +221,13 @@ public class AudioPlayer: AVPlayerWrapperDelegate {
     }
 
     /**
+     Reload the current item.
+     */
+    public func reload(startFromCurrentTime: Bool) {
+        wrapper.reload(startFromCurrentTime: startFromCurrentTime)
+    }
+    
+    /**
      Seek to a specific time in the item.
      */
     public func seek(to seconds: TimeInterval) {

@@ -84,12 +84,7 @@ class AVPlayerWrapper: AVPlayerWrapperProtocol {
     public var playWhenReady: Bool = false {
         didSet {
             if (playWhenReady == true && state == .failed) {
-                load()
-                if let currentItem = currentItem {
-                    if (!currentItem.duration.isIndefinite) {
-                        seek(to: currentItem.currentTime().seconds)
-                    }
-                }
+                reload(startFromCurrentTime: true)
             }
 
             if oldValue != playWhenReady {
@@ -314,6 +309,21 @@ class AVPlayerWrapper: AVPlayerWrapperProtocol {
     func unload() {
         clearCurrentItem()
         state = .idle
+    }
+
+    func reload(startFromCurrentTime: Bool) {
+        var time : Double? = nil
+        if (startFromCurrentTime) {
+            if let currentItem = currentItem {
+                if (!currentItem.duration.isIndefinite) {
+                    time = currentItem.currentTime().seconds
+                }
+            }
+        }
+        load()
+        if let time {
+            seek(to: time)
+        }
     }
     
     // MARK: - Util

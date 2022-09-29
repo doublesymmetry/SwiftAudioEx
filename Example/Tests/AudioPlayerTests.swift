@@ -200,7 +200,7 @@ class AudioPlayerTests: XCTestCase {
         }
     }
 
-    func test_AudioPlayer__failure__retting_playWhenReady_after_failure__should_retry_loading() {
+    func test_AudioPlayer__failure__setting_playWhenReady_after_failure__should_retry_loading() {
         var states = [audioPlayer.playerState.rawValue == "idle" ? "idle" : "not_idle"]
         listener.onStateChange = { state in
             switch state {
@@ -234,8 +234,43 @@ class AudioPlayerTests: XCTestCase {
             XCTAssertEqual(states, ["idle", "loading", "failed", "loading", "failed"])
         }
     }
+
+    func test_AudioPlayer__failure__calling_reload_after_failure__should_retry_loading() {
+        var states = [audioPlayer.playerState.rawValue == "idle" ? "idle" : "not_idle"]
+        listener.onStateChange = { state in
+            switch state {
+                case .loading: states.append("loading")
+                case .ready: states.append("ready")
+                case .playing: states.append("playing")
+                case .paused: states.append("paused")
+                case .idle: states.append("idle")
+                case .failed: states.append("failed")
+                // Leaving out bufferring events because they can show up at any point
+                case .buffering: break
+            }
+        }
+
+        let nonExistingUrl = "https://\(String.random(length: 100)).com/\(String.random(length: 100)).mp3";
+        let item = DefaultAudioItem(
+            audioUrl: nonExistingUrl,
+            artist: "Artist",
+            title: "Title",
+            albumTitle: "AlbumTitle",
+            sourceType: .stream
+        );
+        audioPlayer.load(item: item, playWhenReady: true)
+        eventually {
+            XCTAssertEqual(states, ["idle", "loading", "failed"])
+        }
+
+        audioPlayer.reload(startFromCurrentTime: true)
+
+        eventually {
+            XCTAssertEqual(states, ["idle", "loading", "failed", "loading", "failed"])
+        }
+    }
     
-    func test_AudioPlayer__failure__load_resource_should_succeeed_after_previous_failure() {
+    func test_AudioPlayer__failure__load_resource_should_succeed_after_previous_failure() {
         var didReceiveFail = false;
         listener.onReceiveFail = { error in
             didReceiveFail = true;
@@ -261,7 +296,7 @@ class AudioPlayerTests: XCTestCase {
         XCTAssertNil(self.audioPlayer.playbackError)
     }
 
-    func test_AudioPlayer__failure__load_resource_playWhenReady_false_should_succeeed_after_previous_failure() {
+    func test_AudioPlayer__failure__load_resource_playWhenReady_false_should_succeed_after_previous_failure() {
         var didReceiveFail = false;
         listener.onReceiveFail = { error in
             didReceiveFail = true;

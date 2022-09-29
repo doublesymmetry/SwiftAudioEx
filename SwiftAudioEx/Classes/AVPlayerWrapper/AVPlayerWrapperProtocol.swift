@@ -10,9 +10,9 @@ import AVFoundation
 
 
 protocol AVPlayerWrapperProtocol: AnyObject {
-
+    
     var state: AVPlayerWrapperState { get }
-
+    
     var playWhenReady: Bool { get set }
     
     var currentItem: AVPlayerItem? { get }
@@ -40,7 +40,7 @@ protocol AVPlayerWrapperProtocol: AnyObject {
     var isMuted: Bool { get set }
     
     var automaticallyWaitsToMinimizeStalling: Bool { get set }
-        
+    
     func play()
     
     func pause()
@@ -54,8 +54,10 @@ protocol AVPlayerWrapperProtocol: AnyObject {
     func load(from url: URL, playWhenReady: Bool, options: [String: Any]?)
     
     func load(from url: URL, playWhenReady: Bool, initialTime: TimeInterval?, options: [String: Any]?)
-
+    
     func load(from url: String, type: SourceType, playWhenReady: Bool, initialTime: TimeInterval?, options: [String: Any]?)
     
     func unload()
+    
+    func reload(startFromCurrentTime: Bool)
 }
