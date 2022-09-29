@@ -196,7 +196,7 @@ class AudioPlayerTests: XCTestCase {
         audioPlayer.play()
 
         eventually {
-            XCTAssertEqual(states, ["idle", "loading", "failed", "idle", "loading", "failed"])
+            XCTAssertEqual(states, ["idle", "loading", "failed", "loading", "failed"])
         }
     }
 
@@ -231,7 +231,7 @@ class AudioPlayerTests: XCTestCase {
         audioPlayer.playWhenReady = true
 
         eventually {
-            XCTAssertEqual(states, ["idle", "loading", "failed", "idle", "loading", "failed"])
+            XCTAssertEqual(states, ["idle", "loading", "failed", "loading", "failed"])
         }
     }
     

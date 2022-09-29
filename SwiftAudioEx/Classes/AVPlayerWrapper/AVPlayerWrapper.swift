@@ -208,7 +208,7 @@ class AVPlayerWrapper: AVPlayerWrapperProtocol {
         if (state == .failed) {
             recreateAVPlayer()
         } else {
-            unload()
+            clearCurrentItem()
         }
         if let url = url {
             let keys = ["playable"]
@@ -306,21 +306,25 @@ class AVPlayerWrapper: AVPlayerWrapperProtocol {
                 self.seek(to: initialTime)
             }
         } else {
-            unload()
+            clearCurrentItem()
             playbackFailed(error: AudioPlayerError.PlaybackError.invalidSourceUrl(url))
         }
     }
+
+    func unload() {
+        clearCurrentItem()
+        state = .idle
+    }
     
     // MARK: - Util
-    
-    func unload() {
+
+    private func clearCurrentItem() {
         stopObservingAVPlayerItem()
         
         asset?.cancelLoading()
         asset = nil
         
         avPlayer.replaceCurrentItem(with: nil)
-        state = .idle
     }
     
     private func startObservingAVPlayer(item: AVPlayerItem) {
@@ -339,7 +343,7 @@ class AVPlayerWrapper: AVPlayerWrapperProtocol {
         playerTimeObserver.unregisterForPeriodicEvents()
         playerObserver.stopObserving()
         stopObservingAVPlayerItem()
-        unload()
+        clearCurrentItem()
 
         avPlayer = AVPlayer();
         setupAVPlayer()
