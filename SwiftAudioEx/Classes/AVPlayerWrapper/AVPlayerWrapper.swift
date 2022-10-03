@@ -391,8 +391,8 @@ extension AVPlayerWrapper: AVPlayerObserverDelegate {
     func player(statusDidChange status: AVPlayer.Status) {
         if (status == .failed) {
             let error = item!.error as NSError?
-            playbackFailed(error: error?.code == -1009
-                 ? AudioPlayerError.PlaybackError.networkDisconnected
+            playbackFailed(error: error?.code == URLError.notConnectedToInternet.rawValue
+                 ? AudioPlayerError.PlaybackError.notConnectedToInternet
                  : AudioPlayerError.PlaybackError.playbackFailed
             )
         }

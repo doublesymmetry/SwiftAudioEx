@@ -11,10 +11,9 @@ import Foundation
 public enum AudioPlayerError: Error {
 
     public enum PlaybackError: Error {
-        case networkUnreachable
         case failedToLoadKeyValue
         case invalidSourceUrl(String)
-        case networkDisconnected
+        case notConnectedToInternet
         case playbackFailed
         case itemWasUnplayable
     }

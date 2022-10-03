@@ -107,12 +107,8 @@ class ViewController: UIViewController {
 
         // Render error label
         if (player.playerState == .failed) {
-            var message = "Playback failed."
-            if case AudioPlayerError.PlaybackError.networkDisconnected = self.controller.player.playbackError! {
-                message = "Network disconnected."
-            }
             self.errorLabel.isHidden = false
-            self.errorLabel.text = "\(message)"
+            self.errorLabel.text = "Playback failed."
         } else {
             self.errorLabel.text = ""
             self.errorLabel.isHidden = true
