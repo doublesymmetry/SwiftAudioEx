@@ -321,7 +321,7 @@ class AVPlayerWrapper: AVPlayerWrapperProtocol {
             }
         }
         load()
-        if let time {
+        if let time = time {
             seek(to: time)
         }
     }
