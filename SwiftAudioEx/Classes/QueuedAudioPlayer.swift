@@ -33,7 +33,7 @@ public class QueuedAudioPlayer: AudioPlayer, QueueManagerDelegate {
         queue.currentIndex
     }
 
-    override func unload() {
+    override func reset() {
         queue.clearQueue()
     }
 
@@ -193,7 +193,7 @@ public class QueuedAudioPlayer: AudioPlayer, QueueManagerDelegate {
 
     func onCurrentItemChanged(index: Int?) {
         guard let currentItem = currentItem else {
-            super.unload()
+            super.reset()
             return
         }
         super.load(item: currentItem)
