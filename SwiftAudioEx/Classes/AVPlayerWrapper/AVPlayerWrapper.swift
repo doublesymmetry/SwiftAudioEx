@@ -244,6 +244,7 @@ class AVPlayerWrapper: AVPlayerWrapperProtocol {
                     item.preferredForwardBufferDuration = self.bufferDuration
                     self.avPlayer.replaceCurrentItem(with: item)
                     self.startObservingAVPlayer(item: item)
+                    self.applyAVPlayerRate()
                     if pendingAsset.availableChapterLocales.count > 0 {
                         for locale in pendingAsset.availableChapterLocales {
                             let chapters = pendingAsset.chapterMetadataGroups(withTitleLocale: locale, containingItemsWithCommonKeys: nil)
