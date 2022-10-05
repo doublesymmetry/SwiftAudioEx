@@ -9,7 +9,7 @@ import Foundation
 
 protocol QueueManagerDelegate: AnyObject {
     func onReceivedFirstItem()
-    func onCurrentItemChanged(index: Int?)
+    func onCurrentItemChanged()
 }
 
 class QueueManager<T> {
@@ -43,8 +43,8 @@ class QueueManager<T> {
      The current item for the queue.
      */
     public var current: T? {
-        didSet {
-            delegate?.onCurrentItemChanged(index: currentIndex == -1 ? nil : currentIndex)
+        get {
+            return currentIndex == -1 ? nil : items[currentIndex]
         }
     }
 
@@ -72,8 +72,10 @@ class QueueManager<T> {
         }
     }
 
-    private func updateCurrentItem() {
-        current = currentIndex == -1 ? nil : items[currentIndex]
+    private func mutateCurrentIndex(index: Int) {
+        if (index == currentIndex) { return }
+        currentIndex = index
+        delegate?.onCurrentItemChanged()
     }
 
     /**
@@ -124,8 +126,7 @@ class QueueManager<T> {
             if (wrap) {
                 index = (items.count + index) % items.count;
             }
-            currentIndex = max(0, min(items.count - 1, index))
-            updateCurrentItem()
+            mutateCurrentIndex(index: max(0, min(items.count - 1, index)))
         }
         return current
     }
@@ -164,8 +165,7 @@ class QueueManager<T> {
         try throwIfQueueEmpty();
         try throwIfIndexInvalid(index: index)
 
-        currentIndex = index
-        updateCurrentItem()
+        mutateCurrentIndex(index: index)
         return current!
     }
 
@@ -201,12 +201,7 @@ class QueueManager<T> {
         try throwIfIndexInvalid(index: index)
         let result = items.remove(at: index)
 
-        if (index == currentIndex) {
-            currentIndex = currentIndex % items.count;
-            updateCurrentItem()
-        } else if index < currentIndex {
-            currentIndex -= 1
-        }
+        mutateCurrentIndex(index: index == currentIndex ? currentIndex % items.count : -1)
 
         return result;
     }
@@ -219,11 +214,11 @@ class QueueManager<T> {
     public func replaceCurrentItem(with item: T) {
         if currentIndex == -1  {
             add(item)
-            currentIndex = items.count - 1
+            mutateCurrentIndex(index: items.count - 1)
         } else {
             items[currentIndex] = item
+            delegate?.onCurrentItemChanged()
         }
-        updateCurrentItem()
     }
 
     /**
@@ -256,7 +251,7 @@ class QueueManager<T> {
         currentIndex = -1
         items.removeAll()
         if (!itemWasNil) {
-            updateCurrentItem()
+            delegate?.onCurrentItemChanged()
         }
     }
 

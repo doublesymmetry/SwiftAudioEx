@@ -19,7 +19,13 @@ extension AudioPlayer {
     public typealias UpdateDurationEventData = Double
     public typealias MetadataEventData = [AVTimedMetadataGroup]
     public typealias DidRecreateAVPlayerEventData = ()
-    public typealias CurrentItemEventData = (item: AudioItem?, index: Int?)
+    public typealias CurrentItemEventData = (
+        item: AudioItem?,
+        index: Int?,
+        lastItem: AudioItem?,
+        lastIndex: Int?,
+        lastPosition: Double?
+    )
     
     public struct EventHolder {
         
@@ -80,7 +86,7 @@ extension AudioPlayer {
         public let didRecreateAVPlayer: AudioPlayer.Event<()> = AudioPlayer.Event()
 
         /**
-         Emitted when a track starts to load.
+         Emitted when the current track has changed.
          - Important: Remember to dispatch to the main queue if any UI is updated in the event handler.
          - Note: It is only fired for instances of a QueuedAudioPlayer.
          */

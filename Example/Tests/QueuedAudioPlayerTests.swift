@@ -304,11 +304,23 @@ class QueuedAudioPlayerTests: QuickSpec {
             }
 
             class CurrentItemEventListener {
-                var lastIndex: Int? = nil
+                var item: AudioItem? = nil
+                var index: Int? = nil
                 var lastItem: AudioItem? = nil
-                func handleEvent(item: AudioItem?, index: Int?) {
-                    lastIndex = index
-                    lastItem = item
+                var lastIndex: Int? = nil
+                var lastPosition: Double? = nil
+                func handleEvent(
+                    item: AudioItem?,
+                    index: Int?,
+                    lastItem: AudioItem?,
+                    lastIndex: Int?,
+                    lastPosition: Double?
+                ) {
+                    self.item = item
+                    self.index = index
+                    self.lastItem = lastItem
+                    self.lastIndex = lastIndex
+                    self.lastPosition = lastPosition
                 }
             }
 

@@ -13,7 +13,9 @@ import MediaPlayer
  */
 public class QueuedAudioPlayer: AudioPlayer, QueueManagerDelegate {
     let queue: QueueManager = QueueManager<AudioItem>()
-    
+    fileprivate var lastIndex: Int = -1
+    fileprivate var lastItem: AudioItem? = nil
+
     public override init(nowPlayingInfoController: NowPlayingInfoControllerProtocol = NowPlayingInfoController(), remoteCommandController: RemoteCommandController = RemoteCommandController()) {
         super.init(nowPlayingInfoController: nowPlayingInfoController, remoteCommandController: remoteCommandController)
         queue.delegate = self
@@ -191,13 +193,24 @@ public class QueuedAudioPlayer: AudioPlayer, QueueManagerDelegate {
 
     // MARK: - QueueManagerDelegate
 
-    func onCurrentItemChanged(index: Int?) {
-        guard let currentItem = currentItem else {
+    func onCurrentItemChanged() {
+        let lastPosition = currentTime;
+        if let currentItem = currentItem {
+            super.load(item: currentItem)
+        } else {
             super.reset()
-            return
         }
-        super.load(item: currentItem)
-        event.currentItem.emit(data: (item: currentItem, index: index == -1 ? nil : index))
+        event.currentItem.emit(
+            data: (
+                item: currentItem,
+                index: currentIndex == -1 ? nil : currentIndex,
+                lastItem: lastItem,
+                lastIndex: lastIndex == -1 ? nil : lastIndex,
+                lastPosition: lastPosition
+            )
+        )
+        lastItem = currentItem
+        lastIndex = currentIndex
     }
 
     func onReceivedFirstItem() {
