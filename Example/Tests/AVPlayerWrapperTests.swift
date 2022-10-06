@@ -156,6 +156,19 @@ class AVPlayerWrapperTests: XCTestCase {
         wrapper.seek(to: seekTime)
         wait(for: [expectation], timeout: 20.0)
     }
+
+    func test_AVPlayerWrapper__seek_by__should_seek() {
+        let seekTime: TimeInterval = 5.0
+        let expectation = XCTestExpectation()
+        holder.stateUpdate = { state in
+            self.wrapper.seek(by: seekTime)
+        }
+        holder.didSeekTo = { seconds in
+            expectation.fulfill()
+        }
+        wrapper.load(from: Source.url, playWhenReady: false)
+        wait(for: [expectation], timeout: 20.0)
+    }
     
     func test_AVPlayerWrapper__loading_source_with_initial_time__should_seek() {
         let expectation = XCTestExpectation()

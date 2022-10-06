@@ -234,6 +234,13 @@ public class AudioPlayer: AVPlayerWrapperDelegate {
         wrapper.seek(to: seconds)
     }
 
+    /**
+     Seek by relative a time offset in the item.
+     */
+    public func seek(by offset: TimeInterval) {
+        wrapper.seek(by: offset)
+    }
+    
     // MARK: - Remote Command Center
 
     func enableRemoteCommands(_ commands: [RemoteCommand]) {

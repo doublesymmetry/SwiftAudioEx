@@ -192,6 +192,23 @@ class AVPlayerWrapper: AVPlayerWrapperProtocol {
          }
        }
      }
+
+    func seek(by seconds: TimeInterval) {
+        if let currentItem = avPlayer.currentItem {
+            let time = currentItem.currentTime().seconds + seconds
+            avPlayer.seek(
+                to: CMTimeMakeWithSeconds(time, preferredTimescale: 1000)
+            ) { (finished) in
+                  self.delegate?.AVWrapper(seekTo: Double(time), didFinish: finished)
+            }
+        } else {
+            if let timeToSeekToAfterLoading = timeToSeekToAfterLoading {
+                self.timeToSeekToAfterLoading = timeToSeekToAfterLoading + seconds
+            } else {
+                timeToSeekToAfterLoading = seconds
+            }
+        }
+    }
     
     private func playbackFailed(error: AudioPlayerError.PlaybackError) {
         state = .failed
@@ -358,7 +375,7 @@ class AVPlayerWrapper: AVPlayerWrapperProtocol {
 
         avPlayer = AVPlayer();
         setupAVPlayer()
-        
+
         delegate?.AVWrapperDidRecreateAVPlayer()
     }
     
