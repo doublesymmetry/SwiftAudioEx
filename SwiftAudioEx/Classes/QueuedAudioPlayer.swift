@@ -35,8 +35,9 @@ public class QueuedAudioPlayer: AudioPlayer, QueueManagerDelegate {
         queue.currentIndex
     }
 
-    override func reset() {
+    override public func clear() {
         queue.clearQueue()
+        super.clear()
     }
 
     /**
@@ -198,7 +199,7 @@ public class QueuedAudioPlayer: AudioPlayer, QueueManagerDelegate {
         if let currentItem = currentItem {
             super.load(item: currentItem)
         } else {
-            super.reset()
+            super.clear()
         }
         event.currentItem.emit(
             data: (
