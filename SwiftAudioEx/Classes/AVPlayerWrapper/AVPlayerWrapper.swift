@@ -87,8 +87,9 @@ class AVPlayerWrapper: AVPlayerWrapperProtocol {
                 reload(startFromCurrentTime: true)
             }
 
+            applyAVPlayerRate()
+
             if oldValue != playWhenReady {
-                applyAVPlayerRate()
                 delegate?.AVWrapper(didChangePlayWhenReady: playWhenReady)
             }
         }
