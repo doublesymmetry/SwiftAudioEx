@@ -61,7 +61,7 @@ class NowPlayingInfoControllerTests: QuickSpec {
                         }
                         
                         it("should be empty") {
-                            expect(nowPlayingController.infoCenter.nowPlayingInfo?.count).to(equal(0))
+                            expect(nowPlayingController.infoCenter.nowPlayingInfo?.count).to(beNil())
                         }
                     }
                 }

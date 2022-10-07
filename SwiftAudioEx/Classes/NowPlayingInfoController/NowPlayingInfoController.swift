@@ -59,11 +59,10 @@ public class NowPlayingInfoController: NowPlayingInfoControllerProtocol {
     }
     
     public func clear() {
+        self.info = [:]
         concurrentInfoQueue.async(flags: .barrier) { [weak self] in
             guard let self = self else { return }
-
-            self.info = [:]
-            self.infoCenter.nowPlayingInfo = self.info
+            self.infoCenter.nowPlayingInfo = nil
         }
     }
     

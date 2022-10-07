@@ -306,6 +306,7 @@ public class AudioPlayer: AVPlayerWrapperDelegate {
     public func clear() {
         currentItem = nil
         wrapper.unload()
+        nowPlayingInfoController.clear()
     }
 
     // MARK: - Private
