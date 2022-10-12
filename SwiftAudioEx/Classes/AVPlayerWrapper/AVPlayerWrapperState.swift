@@ -26,6 +26,9 @@ public enum AVPlayerWrapperState: String {
     /// The player is paused.
     case paused
     
+    /// The player is stopped.
+    case stopped
+    
     /// The player is playing.
     case playing
     

@@ -60,9 +60,9 @@ class AVPlayerWrapper: AVPlayerWrapperProtocol {
             if oldValue != lastPlayerTimeControlStatus {
                 switch lastPlayerTimeControlStatus {
                 case .paused:
-                    if asset == nil {
+                    if asset == nil && state != .stopped {
                         state = .idle
-                    } else if (playWhenReady == false && state != .failed) {
+                    } else if (playWhenReady == false && state != .failed && state != .stopped) {
                         state = .paused
                     }
                 case .waitingToPlayAtSpecifiedRate:
@@ -83,8 +83,8 @@ class AVPlayerWrapper: AVPlayerWrapperProtocol {
      */
     public var playWhenReady: Bool = false {
         didSet {
-            if (playWhenReady == true && state == .failed) {
-                reload(startFromCurrentTime: true)
+            if (playWhenReady == true && (state == .failed || state == .stopped)) {
+                reload(startFromCurrentTime: state == .failed)
             }
 
             applyAVPlayerRate()
@@ -180,7 +180,9 @@ class AVPlayerWrapper: AVPlayerWrapperProtocol {
     }
     
     func stop() {
-        unload()
+        state = .stopped
+        clearCurrentItem()
+        playWhenReady = false
     }
     
     func seek(to seconds: TimeInterval) {

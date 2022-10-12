@@ -175,6 +175,7 @@ class AudioPlayerTests: XCTestCase {
                 case .paused: states.append("paused")
                 case .idle: states.append("idle")
                 case .failed: states.append("failed")
+                case .stopped: states.append("stopped")
                 // Leaving out bufferring events because they can show up at any point
                 case .buffering: break
             }
@@ -210,6 +211,7 @@ class AudioPlayerTests: XCTestCase {
                 case .paused: states.append("paused")
                 case .idle: states.append("idle")
                 case .failed: states.append("failed")
+                case .stopped: states.append("stopped")
                 // Leaving out bufferring events because they can show up at any point
                 case .buffering: break
             }
@@ -245,6 +247,7 @@ class AudioPlayerTests: XCTestCase {
                 case .paused: states.append("paused")
                 case .idle: states.append("idle")
                 case .failed: states.append("failed")
+                case .stopped: states.append("stopped")
                 // Leaving out bufferring events because they can show up at any point
                 case .buffering: break
             }
@@ -369,6 +372,7 @@ class AudioPlayerTests: XCTestCase {
                 case .paused: states.append("paused")
                 case .idle: states.append("idle")
                 case .failed: states.append("failed")
+                case .stopped: states.append("stopped")
             }
         }
         audioPlayer.load(item: Source.getAudioItem(), playWhenReady: true)
@@ -405,6 +409,7 @@ class AudioPlayerTests: XCTestCase {
                 case .paused: states.append("paused")
                 case .idle: states.append("idle")
                 case .failed: states.append("failed")
+                case .stopped: states.append("stopped")
             }
         }
         audioPlayer.load(item: Source.getAudioItem(), playWhenReady: true)
@@ -423,9 +428,9 @@ class AudioPlayerTests: XCTestCase {
             XCTAssertEqual(states, expectedEvents)
         }
         audioPlayer.stop()
-        expectedEvents.append(contentsOf: ["idle"]);
+        expectedEvents.append(contentsOf: ["stopped"]);
         eventually {
-            XCTAssertEqual(states, expectedEvents)
+            XCTAssertEqual(expectedEvents, states)
         }
     }
     
@@ -441,6 +446,7 @@ class AudioPlayerTests: XCTestCase {
                 case .paused: states.append("paused")
                 case .idle: states.append("idle")
                 case .failed: states.append("failed")
+                case .stopped: states.append("stopped")
             }
         }
         audioPlayer.load(item: Source.getAudioItem(), playWhenReady: true)
@@ -532,7 +538,7 @@ class AudioPlayerTests: XCTestCase {
             case .playing:
                 hasBeenPlaying = true
                 audioPlayer?.stop()
-            case .idle:
+            case .stopped:
                 if hasBeenPlaying {
                     expectation.fulfill()
                 }

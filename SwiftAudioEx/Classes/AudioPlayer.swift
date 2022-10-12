@@ -213,10 +213,10 @@ public class AudioPlayer: AVPlayerWrapperDelegate {
     }
 
     /**
-     Stop playback, unloading the player.
+     Stop playback
      */
     public func stop() {
-        clear()
+        wrapper.stop()
         event.playbackEnd.emit(data: .playerStopped)
     }
 

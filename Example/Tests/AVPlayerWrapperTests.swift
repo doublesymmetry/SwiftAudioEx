@@ -88,7 +88,7 @@ class AVPlayerWrapperTests: XCTestCase {
         holder.stateUpdate = { state in
             switch state {
             case .playing: self.wrapper.stop()
-            case .idle: expectation.fulfill()
+            case .stopped: expectation.fulfill()
             default: break
             }
         }
