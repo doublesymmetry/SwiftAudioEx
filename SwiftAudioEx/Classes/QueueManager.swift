@@ -201,7 +201,9 @@ class QueueManager<T> {
         try throwIfIndexInvalid(index: index)
         let result = items.remove(at: index)
 
-        mutateCurrentIndex(index: index == currentIndex ? currentIndex % items.count : -1)
+        mutateCurrentIndex(index: index == currentIndex && items.count > 0
+           ? currentIndex % items.count : -1
+        )
 
         return result;
     }
