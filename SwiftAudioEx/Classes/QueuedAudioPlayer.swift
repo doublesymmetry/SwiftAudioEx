@@ -110,6 +110,10 @@ public class QueuedAudioPlayer: AudioPlayer, QueueManagerDelegate {
      - throws: `APError`
      */
     public func next() {
+        if (repeatMode == .queue && queue.items.count == 1) {
+            seek(to: 0)
+            return
+        }
         _ = queue.next(wrap: repeatMode == .queue)
         event.playbackEnd.emit(data: .skippedToNext)
     }
@@ -118,6 +122,10 @@ public class QueuedAudioPlayer: AudioPlayer, QueueManagerDelegate {
      Step to the previous item in the queue.
      */
     public func previous() {
+        if (repeatMode == .queue && queue.items.count == 1) {
+            seek(to: 0)
+            return
+        }
         _ = queue.previous(wrap: repeatMode == .queue)
         event.playbackEnd.emit(data: .skippedToPrevious)
     }
@@ -180,13 +188,12 @@ public class QueuedAudioPlayer: AudioPlayer, QueueManagerDelegate {
     // MARK: - AVPlayerWrapperDelegate
 
     override func AVWrapperItemDidPlayToEndTime() {
-        super.AVWrapperItemDidPlayToEndTime()
-        if (repeatMode == .track) {
+        event.playbackEnd.emit(data: .playedUntilEnd)
+        if (repeatMode == .track || (repeatMode == .queue && queue.items.count == 1)) {
             seek(to: 0);
             play()
         } else if (repeatMode == .queue) {
             _ = queue.next(wrap: true)
-        // Avoid looping the last item when not in queue repeat mode:
         } else if (currentIndex != items.count - 1) {
             _ = queue.next(wrap: false)
         }
