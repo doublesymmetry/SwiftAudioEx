@@ -11,7 +11,7 @@ import AVFoundation
 
 protocol AVPlayerWrapperProtocol: AnyObject {
     
-    var state: AVPlayerWrapperState { get }
+    var state: AVPlayerWrapperState { get set }
     
     var playWhenReady: Bool { get set }
     

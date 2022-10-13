@@ -384,6 +384,7 @@ public class AudioPlayer: AVPlayerWrapperDelegate {
     
     func AVWrapperItemDidPlayToEndTime() {
         event.playbackEnd.emit(data: .playedUntilEnd)
+        wrapper.state = .ended
     }
 
     func AVWrapperItemFailedToPlayToEndTime() {

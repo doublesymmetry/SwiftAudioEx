@@ -196,6 +196,8 @@ public class QueuedAudioPlayer: AudioPlayer, QueueManagerDelegate {
             _ = queue.next(wrap: true)
         } else if (currentIndex != items.count - 1) {
             _ = queue.next(wrap: false)
+        } else {
+            wrapper.state = .ended
         }
     }
 

@@ -47,7 +47,7 @@ class AVPlayerWrapper: AVPlayerWrapperProtocol {
 
     fileprivate(set) var playbackError: AudioPlayerError.PlaybackError? = nil
     
-    fileprivate(set) var state: AVPlayerWrapperState = AVPlayerWrapperState.idle {
+    var state: AVPlayerWrapperState = AVPlayerWrapperState.idle {
         didSet {
             if oldValue != state {
                 delegate?.AVWrapper(didChangeState: state)
