@@ -176,6 +176,7 @@ class AudioPlayerTests: XCTestCase {
                 case .idle: states.append("idle")
                 case .failed: states.append("failed")
                 case .stopped: states.append("stopped")
+                case .ended: states.append("ended")
                 // Leaving out bufferring events because they can show up at any point
                 case .buffering: break
             }
@@ -212,6 +213,7 @@ class AudioPlayerTests: XCTestCase {
                 case .idle: states.append("idle")
                 case .failed: states.append("failed")
                 case .stopped: states.append("stopped")
+                case .ended: states.append("ended")
                 // Leaving out bufferring events because they can show up at any point
                 case .buffering: break
             }
@@ -248,6 +250,7 @@ class AudioPlayerTests: XCTestCase {
                 case .idle: states.append("idle")
                 case .failed: states.append("failed")
                 case .stopped: states.append("stopped")
+                case .ended: states.append("ended")
                 // Leaving out bufferring events because they can show up at any point
                 case .buffering: break
             }
@@ -373,6 +376,7 @@ class AudioPlayerTests: XCTestCase {
                 case .idle: states.append("idle")
                 case .failed: states.append("failed")
                 case .stopped: states.append("stopped")
+                case .ended: states.append("ended")
             }
         }
         audioPlayer.load(item: Source.getAudioItem(), playWhenReady: true)
@@ -410,6 +414,7 @@ class AudioPlayerTests: XCTestCase {
                 case .idle: states.append("idle")
                 case .failed: states.append("failed")
                 case .stopped: states.append("stopped")
+                case .ended: states.append("ended")
             }
         }
         audioPlayer.load(item: Source.getAudioItem(), playWhenReady: true)
@@ -447,6 +452,7 @@ class AudioPlayerTests: XCTestCase {
                 case .idle: states.append("idle")
                 case .failed: states.append("failed")
                 case .stopped: states.append("stopped")
+                case .ended: states.append("ended")
             }
         }
         audioPlayer.load(item: Source.getAudioItem(), playWhenReady: true)

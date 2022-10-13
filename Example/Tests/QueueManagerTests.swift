@@ -12,7 +12,7 @@ class QueueManagerTests: QuickSpec {
     
     override func spec() {
         
-        fdescribe("A QueueManager") {
+        describe("A QueueManager") {
             
             var queue: QueueManager<Int>!
             
