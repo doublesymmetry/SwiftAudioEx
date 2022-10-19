@@ -112,9 +112,11 @@ public class QueuedAudioPlayer: AudioPlayer, QueueManagerDelegate {
     public func next() {
         if (repeatMode == .queue && queue.items.count == 1) {
             seek(to: 0)
-            return
+        } else {
+            let lastIndex = currentIndex
+            _ = queue.next(wrap: repeatMode == .queue)
+            if (lastIndex == currentIndex) { return }
         }
-        _ = queue.next(wrap: repeatMode == .queue)
         event.playbackEnd.emit(data: .skippedToNext)
     }
 
@@ -124,9 +126,11 @@ public class QueuedAudioPlayer: AudioPlayer, QueueManagerDelegate {
     public func previous() {
         if (repeatMode == .queue && queue.items.count == 1) {
             seek(to: 0)
-            return
+        } else {
+            let lastIndex = currentIndex
+            _ = queue.previous(wrap: repeatMode == .queue)
+            if (lastIndex == currentIndex) { return }
         }
-        _ = queue.previous(wrap: repeatMode == .queue)
         event.playbackEnd.emit(data: .skippedToPrevious)
     }
 
@@ -156,8 +160,8 @@ public class QueuedAudioPlayer: AudioPlayer, QueueManagerDelegate {
             seek(to: 0)
         } else {
             _ = try queue.jump(to: index)
-            event.playbackEnd.emit(data: .jumpedToIndex)
         }
+        event.playbackEnd.emit(data: .jumpedToIndex)
     }
 
     /**
