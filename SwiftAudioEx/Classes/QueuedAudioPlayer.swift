@@ -68,7 +68,9 @@ public class QueuedAudioPlayer: AudioPlayer, QueueManagerDelegate {
      - parameter playWhenReady: Optional, whether to start playback when the item is ready.
      */
     public override func load(item: AudioItem, playWhenReady: Bool? = nil) {
-        self.playWhenReady = playWhenReady ?? self.playWhenReady
+        if let playWhenReady = playWhenReady {
+            self.playWhenReady = playWhenReady
+        }
         queue.replaceCurrentItem(with: item)
     }
 
@@ -108,28 +110,24 @@ public class QueuedAudioPlayer: AudioPlayer, QueueManagerDelegate {
      - throws: `APError`
      */
     public func next() {
-        if (repeatMode == .queue && queue.items.count == 1) {
-            seek(to: 0)
-        } else {
-            let lastIndex = currentIndex
-            _ = queue.next(wrap: repeatMode == .queue)
-            if (lastIndex == currentIndex) { return }
+        let lastIndex = currentIndex
+        let playbackWasActive = wrapper.playbackActive;
+        _ = queue.next(wrap: repeatMode == .queue)
+        if (playbackWasActive && lastIndex != currentIndex || repeatMode == .queue) {
+            event.playbackEnd.emit(data: .skippedToNext)
         }
-        event.playbackEnd.emit(data: .skippedToNext)
     }
 
     /**
      Step to the previous item in the queue.
      */
     public func previous() {
-        if (repeatMode == .queue && queue.items.count == 1) {
-            seek(to: 0)
-        } else {
-            let lastIndex = currentIndex
-            _ = queue.previous(wrap: repeatMode == .queue)
-            if (lastIndex == currentIndex) { return }
+        let lastIndex = currentIndex
+        let playbackWasActive = wrapper.playbackActive;
+        _ = queue.previous(wrap: repeatMode == .queue)
+        if (playbackWasActive && lastIndex != currentIndex || repeatMode == .queue) {
+            event.playbackEnd.emit(data: .skippedToPrevious)
         }
-        event.playbackEnd.emit(data: .skippedToPrevious)
     }
 
     /**
@@ -187,13 +185,17 @@ public class QueuedAudioPlayer: AudioPlayer, QueueManagerDelegate {
         queue.removePreviousItems()
     }
 
+    func replay() {
+        seek(to: 0);
+        play()
+    }
+    
     // MARK: - AVPlayerWrapperDelegate
 
     override func AVWrapperItemDidPlayToEndTime() {
         event.playbackEnd.emit(data: .playedUntilEnd)
-        if (repeatMode == .track || (repeatMode == .queue && queue.items.count == 1)) {
-            seek(to: 0);
-            play()
+        if (repeatMode == .track) {
+            replay()
         } else if (repeatMode == .queue) {
             _ = queue.next(wrap: true)
         } else if (currentIndex != items.count - 1) {
@@ -223,6 +225,12 @@ public class QueuedAudioPlayer: AudioPlayer, QueueManagerDelegate {
         )
         lastItem = currentItem
         lastIndex = currentIndex
+    }
+    
+    func onSkippedToSameCurrentItem() {
+        if (wrapper.playbackActive) {
+            replay()
+        }
     }
 
     func onReceivedFirstItem() {

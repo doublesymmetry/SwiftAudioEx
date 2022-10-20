@@ -10,6 +10,7 @@ import Foundation
 protocol QueueManagerDelegate: AnyObject {
     func onReceivedFirstItem()
     func onCurrentItemChanged()
+    func onSkippedToSameCurrentItem()
 }
 
 class QueueManager<T> {
@@ -73,7 +74,10 @@ class QueueManager<T> {
     }
 
     private func mutateCurrentIndex(index: Int) {
-        if (index == currentIndex) { return }
+        if (index == currentIndex) {
+            delegate?.onSkippedToSameCurrentItem()
+            return
+        }
         currentIndex = index
         delegate?.onCurrentItemChanged()
     }
@@ -126,7 +130,9 @@ class QueueManager<T> {
             if (wrap) {
                 index = (items.count + index) % items.count;
             }
-            mutateCurrentIndex(index: max(0, min(items.count - 1, index)))
+            mutateCurrentIndex(
+                index: max(0, min(items.count - 1, index))
+            )
         }
         return current
     }
@@ -216,7 +222,9 @@ class QueueManager<T> {
     public func replaceCurrentItem(with item: T) {
         if currentIndex == -1  {
             add(item)
-            mutateCurrentIndex(index: items.count - 1)
+            if (currentIndex == -1) {
+                mutateCurrentIndex(index: items.count - 1)
+            }
         } else {
             items[currentIndex] = item
             delegate?.onCurrentItemChanged()

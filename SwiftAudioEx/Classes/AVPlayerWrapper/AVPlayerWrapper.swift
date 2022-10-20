@@ -16,6 +16,8 @@ public enum PlaybackEndedReason: String {
     case skippedToNext
     case skippedToPrevious
     case jumpedToIndex
+    case cleared
+    case failed
 }
 
 class AVPlayerWrapper: AVPlayerWrapperProtocol {
@@ -97,6 +99,14 @@ class AVPlayerWrapper: AVPlayerWrapperProtocol {
     
     var currentItem: AVPlayerItem? {
         avPlayer.currentItem
+    }
+
+    var playbackActive: Bool {
+        switch state {
+        case .idle, .stopped, .ended, .failed:
+            return false
+        default: return true
+        }
     }
     
     var currentTime: TimeInterval {

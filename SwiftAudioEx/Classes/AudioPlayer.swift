@@ -216,8 +216,11 @@ public class AudioPlayer: AVPlayerWrapperDelegate {
      Stop playback
      */
     public func stop() {
+        let wasActive = wrapper.playbackActive
         wrapper.stop()
-        event.playbackEnd.emit(data: .playerStopped)
+        if (wasActive) {
+            event.playbackEnd.emit(data: .playerStopped)
+        }
     }
 
     /**
@@ -304,9 +307,13 @@ public class AudioPlayer: AVPlayerWrapperDelegate {
     }
 
     public func clear() {
+        let playbackWasActive = wrapper.playbackActive
         currentItem = nil
         wrapper.unload()
         nowPlayingInfoController.clear()
+        if (playbackWasActive) {
+            event.playbackEnd.emit(data: .cleared)
+        }
     }
 
     // MARK: - Private
@@ -361,6 +368,7 @@ public class AudioPlayer: AVPlayerWrapperDelegate {
 
     func AVWrapper(failedWithError error: Error?) {
         event.fail.emit(data: error)
+        event.playbackEnd.emit(data: .failed)
     }
 
     func AVWrapper(seekTo seconds: Double, didFinish: Bool) {
