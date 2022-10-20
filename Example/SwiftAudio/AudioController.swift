@@ -39,7 +39,7 @@ class AudioController {
         try? audioSessionController.set(category: .playback)
         player.repeatMode = .queue
         DispatchQueue.main.async {
-            try? self.player.add(items: self.sources)
+            self.player.add(items: self.sources)
         }
     }
     

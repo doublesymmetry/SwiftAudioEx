@@ -43,7 +43,7 @@ class QueuedAudioPlayerTests: QuickSpec {
                     beforeEach {
                         fiveSecondItem = FiveSecondSource.getAudioItem()
                         item = Source.getAudioItem()
-                        try? audioPlayer.add(item: fiveSecondItem)
+                        audioPlayer.add(item: fiveSecondItem)
                     }
                     it("should not be nil") {
                         expect(audioPlayer.currentItem).toNot(beNil())
@@ -99,7 +99,7 @@ class QueuedAudioPlayerTests: QuickSpec {
 
                 context("when adding multiple items") {
                     beforeEach {
-                        try? audioPlayer.add(items: [FiveSecondSource.getAudioItem(), FiveSecondSource.getAudioItem()], playWhenReady: false)
+                        audioPlayer.add(items: [FiveSecondSource.getAudioItem(), FiveSecondSource.getAudioItem()], playWhenReady: false)
                     }
                     it("should not be nil") {
                         expect(audioPlayer.currentItem).toNot(beNil())
@@ -114,7 +114,7 @@ class QueuedAudioPlayerTests: QuickSpec {
 
                 context("when adding 2 items") {
                     beforeEach {
-                        try? audioPlayer.add(items: [Source.getAudioItem(), Source.getAudioItem()])
+                        audioPlayer.add(items: [Source.getAudioItem(), Source.getAudioItem()])
                     }
                     it("should contain 1 item") {
                         expect(audioPlayer.nextItems.count).to(equal(1))
@@ -228,7 +228,7 @@ class QueuedAudioPlayerTests: QuickSpec {
             describe("onNext") {
                 context("player was paused") {
                     beforeEach {
-                        try? audioPlayer.add(items: [FiveSecondSource.getAudioItem(), FiveSecondSource.getAudioItem()])
+                        audioPlayer.add(items: [FiveSecondSource.getAudioItem(), FiveSecondSource.getAudioItem()])
                     }
 
                     context("then calling next()") {
@@ -245,7 +245,7 @@ class QueuedAudioPlayerTests: QuickSpec {
                 }
                 context("player was paused") {
                     beforeEach {
-                        try? audioPlayer.add(items: [FiveSecondSource.getAudioItem(), FiveSecondSource.getAudioItem()])
+                        audioPlayer.add(items: [FiveSecondSource.getAudioItem(), FiveSecondSource.getAudioItem()])
                         audioPlayer.pause()
 
                     }
@@ -265,7 +265,7 @@ class QueuedAudioPlayerTests: QuickSpec {
                 context("player was playing") {
                     beforeEach {
                         audioPlayer.play()
-                        try? audioPlayer.add(items: [FiveSecondSource.getAudioItem(), FiveSecondSource.getAudioItem()])
+                        audioPlayer.add(items: [FiveSecondSource.getAudioItem(), FiveSecondSource.getAudioItem()])
                     }
 
                     context("then calling next()") {
@@ -285,7 +285,7 @@ class QueuedAudioPlayerTests: QuickSpec {
             describe("onPrevious") {
                 context("player was playing") {
                     beforeEach {
-                        try? audioPlayer.add(items: [FiveSecondSource.getAudioItem(), FiveSecondSource.getAudioItem()], playWhenReady: true)
+                        audioPlayer.add(items: [FiveSecondSource.getAudioItem(), FiveSecondSource.getAudioItem()], playWhenReady: true)
                         audioPlayer.next()
                     }
 
@@ -304,7 +304,7 @@ class QueuedAudioPlayerTests: QuickSpec {
                 }
                 context("player was paused") {
                     beforeEach {
-                        try? audioPlayer.add(items: [FiveSecondSource.getAudioItem(), FiveSecondSource.getAudioItem()])
+                        audioPlayer.add(items: [FiveSecondSource.getAudioItem(), FiveSecondSource.getAudioItem()])
                         audioPlayer.next()
                         audioPlayer.pause()
 
@@ -350,7 +350,12 @@ class QueuedAudioPlayerTests: QuickSpec {
                 context("when adding 2 items") {
                     beforeEach {
                         audioPlayer.play()
-                        try? audioPlayer.add(items: [FiveSecondSource.getAudioItem(), FiveSecondSource.getAudioItem()])
+                        audioPlayer.add(
+                            items: [
+                                FiveSecondSource.getAudioItem(),
+                                FiveSecondSource.getAudioItem()
+                            ]
+                        )
                     }
 
                     context("then setting repeat mode off") {
@@ -500,7 +505,7 @@ class QueuedAudioPlayerTests: QuickSpec {
 
                 context("when adding 1 items") {
                     beforeEach {
-                        try? audioPlayer.add(item: FiveSecondSource.getAudioItem(), playWhenReady: true)
+                        audioPlayer.add(item: FiveSecondSource.getAudioItem(), playWhenReady: true)
                     }
 
                     context("then setting repeat mode off") {

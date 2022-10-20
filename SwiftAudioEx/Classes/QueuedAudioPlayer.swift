@@ -77,9 +77,8 @@ public class QueuedAudioPlayer: AudioPlayer, QueueManagerDelegate {
 
      - parameter item: The item to add.
      - parameter playWhenReady: Optional, whether to start playback when the item is ready.
-     - throws: `APError`
      */
-    public func add(item: AudioItem, playWhenReady: Bool? = nil) throws {
+    public func add(item: AudioItem, playWhenReady: Bool? = nil) {
         if let playWhenReady = playWhenReady {
             self.playWhenReady = playWhenReady
         }
@@ -91,9 +90,8 @@ public class QueuedAudioPlayer: AudioPlayer, QueueManagerDelegate {
 
      - parameter items: The items to add to the queue.
      - parameter playWhenReady: Optional, whether to start playback when the item is ready.
-     - throws: `APError`
      */
-    public func add(items: [AudioItem], playWhenReady: Bool? = nil) throws {
+    public func add(items: [AudioItem], playWhenReady: Bool? = nil) {
         if let playWhenReady = playWhenReady {
             self.playWhenReady = playWhenReady
         }
