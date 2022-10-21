@@ -194,6 +194,11 @@ public class QueuedAudioPlayer: AudioPlayer, QueueManagerDelegate {
 
     override func AVWrapperItemDidPlayToEndTime() {
         event.playbackEnd.emit(data: .playedUntilEnd)
+        if willSleepWhenCurrentItemReachesEnd {
+            wrapper.state = .ended
+            completeSleepTimer()
+            return
+        }
         if (repeatMode == .track) {
             replay()
         } else if (repeatMode == .queue) {
@@ -202,6 +207,7 @@ public class QueuedAudioPlayer: AudioPlayer, QueueManagerDelegate {
             _ = queue.next(wrap: false)
         } else {
             wrapper.state = .ended
+            wrapper.playWhenReady = false
         }
     }
 

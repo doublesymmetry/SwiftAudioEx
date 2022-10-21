@@ -149,7 +149,7 @@ extension QueuedAudioPlayer {
         }
         func handleEvent(state: AudioPlayerState) {
             states.append(state)
-            if (state != .ready && state != .buffering) {
+            if (state != .ready && state != .buffering && (statesWithoutBuffering.isEmpty || statesWithoutBuffering.last != state)) {
                 statesWithoutBuffering.append(state)
             }
         }
@@ -974,6 +974,82 @@ class QueuedAudioPlayerTests: QuickSpec {
                                 expect(audioPlayer.playerState).toEventually(equal(AudioPlayerState.playing))
                             }
                         }
+                    }
+                }
+            }
+            
+            // MARK: sleep timer
+            describe("its sleep timer") {
+                context("when adding 2 items") {
+                    beforeEach {
+                        audioPlayer.play()
+                        audioPlayer.add(
+                            items: [
+                                FiveSecondSource.getAudioItem(),
+                                FiveSecondSource.getAudioItem()
+                            ]
+                        )
+                        audioPlayer.repeatMode = .queue
+                    }
+                    it("after waiting for it to play, set a one second sleep timer") {
+                        expect(playerStateEventListener.statesWithoutBuffering).toEventually(equal([
+                            .loading, .playing
+                        ]))
+                        audioPlayer.setSleepTimer(time: 1)
+                        expect(audioPlayer.playerState).toEventually(
+                            equal(AudioPlayerState.paused),
+                            timeout: DispatchTimeInterval.seconds(3)
+                        )
+                        expect(playerStateEventListener.statesWithoutBuffering).toEventually(equal([
+                            .loading, .playing, .paused
+                        ]))
+                    }
+
+                    it("after waiting for it to play, set a sleep timer for the end of the track") {
+                        expect(playerStateEventListener.statesWithoutBuffering).toEventually(equal([
+                            .loading, .playing
+                        ]))
+                        audioPlayer.sleepWhenCurrentItemReachesEnd()
+                        audioPlayer.seek(to: 4.95)
+                        expect(playerStateEventListener.statesWithoutBuffering).toEventually(equal([
+                            .loading, .playing, .ended
+                        ]))
+                    }
+
+                    it("setting sleepWhenCurrentItemReachesEnd to true clears any previous sleep timer") {
+                        audioPlayer.setSleepTimer(time: 10)
+                        audioPlayer.sleepWhenCurrentItemReachesEnd()
+                        expect(audioPlayer.sleepTimerTime).to(equal(-1))
+                    }
+
+                    it("setting sleepTimer clears sleepWhenCurrentItemReachesEnd") {
+                        audioPlayer.sleepWhenCurrentItemReachesEnd()
+                        audioPlayer.setSleepTimer(time: 10)
+                        audioPlayer.seek(to: 4.95)
+                        expect(playerStateEventListener.statesWithoutBuffering).toEventually(equal([
+                            .loading, .playing, .loading, .playing
+                        ]))
+                    }
+                    
+                    it("after waiting for it to play, set a sleep timer for the end of the track, but skip to the next, which should cancel the end sleep timer") {
+                        expect(playerStateEventListener.statesWithoutBuffering).toEventually(equal([
+                            .loading, .playing
+                        ]))
+                        audioPlayer.sleepWhenCurrentItemReachesEnd()
+                        audioPlayer.next()
+                        expect(playerStateEventListener.statesWithoutBuffering.prefix(4)).toEventually(equal([
+                            .loading, .playing, .loading, .playing
+                        ]))
+                    }
+                    it("after waiting for it to play, set a sleep timer duration, then allow the queue to play to the next track, which should not cancel the sleep timer") {
+                        expect(playerStateEventListener.statesWithoutBuffering).toEventually(equal([
+                            .loading, .playing
+                        ]))
+                        audioPlayer.setSleepTimer(time: 2)
+                        audioPlayer.seek(to: 4.5)
+                        expect(playerStateEventListener.statesWithoutBuffering).toEventually(equal([
+                            .loading, .playing, .loading, .playing, .paused
+                        ]), timeout: DispatchTimeInterval.seconds(3))
                     }
                 }
             }

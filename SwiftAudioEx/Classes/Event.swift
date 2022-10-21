@@ -18,6 +18,7 @@ extension AudioPlayer {
     public typealias SeekEventData = (seconds: Double, didFinish: Bool)
     public typealias UpdateDurationEventData = Double
     public typealias MetadataEventData = [AVTimedMetadataGroup]
+    public typealias SleepTimerChangeEventData = [String : Any]?
     public typealias DidRecreateAVPlayerEventData = ()
     public typealias CurrentItemEventData = (
         item: AudioItem?,
@@ -91,6 +92,17 @@ extension AudioPlayer {
          - Note: It is only fired for instances of a QueuedAudioPlayer.
          */
         public let currentItem: AudioPlayer.Event<CurrentItemEventData> = AudioPlayer.Event()
+
+        /**
+         Emitted when the sleep timer progresses.
+         */
+        public let sleepTimerChange: AudioPlayer.Event<SleepTimerChangeEventData> = AudioPlayer.Event()
+
+        /**
+         Emitted when the sleep timer completes.
+         */
+        public let sleepTimerComplete: AudioPlayer.Event<()> = AudioPlayer.Event()
+
     }
     
     public typealias EventClosure<EventData> = (EventData) -> Void
