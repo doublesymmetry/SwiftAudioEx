@@ -420,7 +420,7 @@ class AudioPlayerTests: XCTestCase {
         audioPlayer.load(item: Source.getAudioItem(), playWhenReady: true)
         var expectedEvents = ["idle", "loading", "ready", "playing"];
         eventually {
-            XCTAssertEqual(states, expectedEvents)
+            XCTAssertEqual(expectedEvents, states)
         }
         audioPlayer.pause()
         expectedEvents.append("paused");

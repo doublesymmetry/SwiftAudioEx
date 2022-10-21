@@ -33,7 +33,11 @@ class AVPlayerWrapper: AVPlayerWrapperProtocol {
     fileprivate var item: AVPlayerItem? = nil
     fileprivate var url: URL? = nil
     fileprivate var urlOptions: [String: Any]? = nil
-    
+    fileprivate let stateQueue = DispatchQueue(
+        label: "AVPlayerWrapper.stateQueue",
+        attributes: .concurrent
+    )
+
     public init() {
         playerTimeObserver = AVPlayerTimeObserver(periodicObserverTimeInterval: timeEventFrequency.getTime())
 
@@ -49,36 +53,29 @@ class AVPlayerWrapper: AVPlayerWrapperProtocol {
 
     fileprivate(set) var playbackError: AudioPlayerError.PlaybackError? = nil
     
-    var state: AVPlayerWrapperState = AVPlayerWrapperState.idle {
-        didSet {
-            if oldValue != state {
-                delegate?.AVWrapper(didChangeState: state)
+    var _state: AVPlayerWrapperState = AVPlayerWrapperState.idle
+    var state: AVPlayerWrapperState {
+        get {
+            var state: AVPlayerWrapperState!
+            stateQueue.sync {
+                state = _state
             }
-        }
-    }
 
-    fileprivate(set) var lastPlayerTimeControlStatus: AVPlayer.TimeControlStatus = AVPlayer.TimeControlStatus.paused {
-        didSet {
-            if oldValue != lastPlayerTimeControlStatus {
-                switch lastPlayerTimeControlStatus {
-                case .paused:
-                    if asset == nil && state != .stopped {
-                        state = .idle
-                    } else if (playWhenReady == false && state != .failed && state != .stopped) {
-                        state = .paused
-                    }
-                case .waitingToPlayAtSpecifiedRate:
-                    if asset != nil {
-                        state = .buffering
-                    }
-                case .playing:
-                    state = .playing
-                @unknown default:
-                    break
+            return state
+        }
+        set {
+            stateQueue.async(flags: .barrier) { [weak self] in
+                guard let self = self else { return }
+                let currentState = self._state
+                if (currentState != newValue) {
+                    self._state = newValue
+                    self.delegate?.AVWrapper(didChangeState: newValue)
                 }
             }
         }
     }
+
+    fileprivate(set) var lastPlayerTimeControlStatus: AVPlayer.TimeControlStatus = AVPlayer.TimeControlStatus.paused
 
     /**
      Whether AVPlayer should start playing automatically when the item is ready.
@@ -90,7 +87,7 @@ class AVPlayerWrapper: AVPlayerWrapperProtocol {
             }
 
             applyAVPlayerRate()
-
+            
             if oldValue != playWhenReady {
                 delegate?.AVWrapper(didChangePlayWhenReady: playWhenReady)
             }
@@ -360,10 +357,11 @@ class AVPlayerWrapper: AVPlayerWrapperProtocol {
     // MARK: - Util
 
     private func clearCurrentItem() {
+        guard let asset = asset else { return }
         stopObservingAVPlayerItem()
         
-        asset?.cancelLoading()
-        asset = nil
+        asset.cancelLoading()
+        self.asset = nil
         
         avPlayer.replaceCurrentItem(with: nil)
     }
@@ -416,7 +414,22 @@ extension AVPlayerWrapper: AVPlayerObserverDelegate {
     // MARK: - AVPlayerObserverDelegate
     
     func player(didChangeTimeControlStatus status: AVPlayer.TimeControlStatus) {
-        lastPlayerTimeControlStatus = status;
+        switch status {
+        case .paused:
+            if self.asset == nil && self.state != .stopped {
+                self.state = .idle
+            } else if (self.playWhenReady == false && self.state != .failed && self.state != .stopped && self.state != .loading) {
+                self.state = .paused
+            }
+        case .waitingToPlayAtSpecifiedRate:
+            if self.asset != nil {
+                self.state = .buffering
+            }
+        case .playing:
+            self.state = .playing
+        @unknown default:
+            break
+        }
     }
     
     func player(statusDidChange status: AVPlayer.Status) {

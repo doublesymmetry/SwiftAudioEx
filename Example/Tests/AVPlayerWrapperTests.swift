@@ -206,6 +206,11 @@ class AVPlayerWrapperTests: XCTestCase {
 }
 
 class AVPlayerWrapperDelegateHolder: AVPlayerWrapperDelegate {
+    private let lockQueue = DispatchQueue(
+        label: "AVPlayerWrapperDelegateHolder.lockQueue",
+        target: .global()
+    )
+
     func AVWrapperItemPlaybackStalled() {
 
     }
@@ -230,14 +235,28 @@ class AVPlayerWrapperDelegateHolder: AVPlayerWrapperDelegate {
         
     }
     
+    private var _state: AVPlayerWrapperState? = nil
     var state: AVPlayerWrapperState? {
-        didSet {
-            if let state = state {
-                self.stateUpdate?(state)
+        get {
+            return lockQueue.sync {
+                return _state
+            }
+        }
+
+        set {
+            lockQueue.async(flags: .barrier) { [weak self] in
+                guard let self = self else { return }
+                if let newValue = newValue {
+                    let changed = self._state != newValue;
+                    if (changed) {
+                        self._state = newValue
+                        self.stateUpdate?(newValue)
+                    }
+                }
             }
         }
     }
-    
+
     var stateUpdate: ((_ state: AVPlayerWrapperState) -> Void)?
     var didUpdateDuration: ((_ duration: Double) -> Void)?
     var didSeekTo: ((_ seconds: Double) -> Void)?

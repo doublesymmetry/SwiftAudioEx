@@ -16,6 +16,26 @@ protocol QueueManagerDelegate: AnyObject {
 class QueueManager<T> {
 
     weak var delegate: QueueManagerDelegate? = nil
+    fileprivate let currentIndexQueue = DispatchQueue(label: "QueueManager.currentIndexQueue", qos: .default, attributes: .concurrent)
+
+    var _currentIndex: Int = -1
+    /**
+     The index of the current item. `-1` when there is no current item
+     */
+    private(set) var currentIndex: Int {
+        get {
+            return currentIndexQueue.sync {
+                return _currentIndex
+            }
+        }
+        
+        set {
+            currentIndexQueue.async(flags: .barrier) { [weak self] in
+                guard let self = self else { return }
+                self._currentIndex = newValue
+            }
+        }
+    }
 
     /**
      All items held by the queue.
@@ -49,10 +69,6 @@ class QueueManager<T> {
         }
     }
 
-    /**
-     The index of the current item. `-1` when there is no current item
-     */
-    private(set) var currentIndex: Int = -1
     private func throwIfQueueEmpty() throws {
         if items.count == 0 {
             throw AudioPlayerError.QueueError.empty
