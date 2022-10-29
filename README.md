@@ -42,7 +42,7 @@ SwiftAudio is available through [CocoaPods](http://cocoapods.org). To install
 it, simply add the following line to your Podfile:
 
 ```ruby
-pod 'SwiftAudio', '~> 0.11.2'
+pod 'SwiftAudioEx', '~> 0.15.3'
 ```
 
 ### Carthage
