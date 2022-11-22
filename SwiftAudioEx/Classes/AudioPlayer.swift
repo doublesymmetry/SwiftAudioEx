@@ -352,7 +352,7 @@ public class AudioPlayer: AVPlayerWrapperDelegate {
     }
     
     func AVWrapper(seekTo seconds: Int, didFinish: Bool) {
-        if !didFinish && automaticallyUpdateNowPlayingInfo {
+        if didFinish && automaticallyUpdateNowPlayingInfo {
             updateNowPlayingCurrentTime(currentTime)
         }
         event.seek.emit(data: (seconds, didFinish))
