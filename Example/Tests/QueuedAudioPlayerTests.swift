@@ -353,6 +353,7 @@ class QueuedAudioPlayerTests: QuickSpec {
 
                 context("when adding 2 items") {
                     beforeEach {
+                        audioPlayer.play()
                         audioPlayer.add(items: [FiveSecondSource.getAudioItem(), FiveSecondSource.getAudioItem()])
                         waitUntil { done in
                             if (playerStateEventListener.states.count > 0) {
