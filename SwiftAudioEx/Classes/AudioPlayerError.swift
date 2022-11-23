@@ -1,5 +1,5 @@
 //
-//  APError.swift
+//  AudioPlayerError.swift
 //  SwiftAudio
 //
 //  Created by Jørgen Henrichsen on 25/03/2018.
@@ -17,7 +17,7 @@ public enum AudioPlayerError: Error {
         case playbackFailed
         case itemWasUnplayable
     }
-    
+
     public enum QueueError: Error {
         case noCurrentItem
         case invalidIndex(index: Int, message: String)

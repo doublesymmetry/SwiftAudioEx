@@ -106,8 +106,6 @@ public class QueuedAudioPlayer: AudioPlayer, QueueManagerDelegate {
 
     /**
      Step to the next item in the queue.
-
-     - throws: `APError`
      */
     public func next() {
         let lastIndex = currentIndex
@@ -134,7 +132,7 @@ public class QueuedAudioPlayer: AudioPlayer, QueueManagerDelegate {
      Remove an item from the queue.
 
      - parameter index: The index of the item to remove.
-     - throws: `APError.QueueError`
+     - throws: `AudioPlayerError.QueueError`
      */
     public func removeItem(at index: Int) throws {
         try queue.removeItem(at: index)
@@ -146,7 +144,7 @@ public class QueuedAudioPlayer: AudioPlayer, QueueManagerDelegate {
 
      - parameter index: The index of the item to jump to.
      - parameter playWhenReady: Optional, whether to start playback when the item is ready.
-     - throws: `APError`
+     - throws: `AudioPlayerError`
      */
     public func jumpToItem(atIndex index: Int, playWhenReady: Bool? = nil) throws {
         if let playWhenReady = playWhenReady {
@@ -165,7 +163,7 @@ public class QueuedAudioPlayer: AudioPlayer, QueueManagerDelegate {
 
      - parameter fromIndex: The index of the item to move.
      - parameter toIndex: The index to move the item to.
-     - throws: `APError.QueueError`
+     - throws: `AudioPlayerError.QueueError`
      */
     public func moveItem(fromIndex: Int, toIndex: Int) throws {
         try queue.moveItem(fromIndex: fromIndex, toIndex: toIndex)
@@ -189,7 +187,7 @@ public class QueuedAudioPlayer: AudioPlayer, QueueManagerDelegate {
         seek(to: 0);
         play()
     }
-    
+
     // MARK: - AVPlayerWrapperDelegate
 
     override func AVWrapperItemDidPlayToEndTime() {
@@ -232,7 +230,7 @@ public class QueuedAudioPlayer: AudioPlayer, QueueManagerDelegate {
         lastItem = currentItem
         lastIndex = currentIndex
     }
-    
+
     func onSkippedToSameCurrentItem() {
         if (wrapper.playbackActive) {
             replay()

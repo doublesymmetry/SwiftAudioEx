@@ -28,7 +28,7 @@ class QueueManager<T> {
                 return _currentIndex
             }
         }
-        
+
         set {
             currentIndexQueue.async(flags: .barrier) { [weak self] in
                 guard let self = self else { return }
@@ -179,7 +179,7 @@ class QueueManager<T> {
      Will update the current item.
 
      - parameter index: The index to jump to.
-     - throws: `APError.QueueError`
+     - throws: `AudioPlayerError.QueueError`
      - returns: The item at the index.
      */
     @discardableResult
@@ -196,7 +196,7 @@ class QueueManager<T> {
 
      - parameter fromIndex: The index of the item to be moved.
      - parameter toIndex: The index to move the item to. If the index is larger than the size of the queue, the item is moved to the end of the queue instead.
-     - throws: `APError.QueueError`
+     - throws: `AudioPlayerError.QueueError`
      */
     func moveItem(fromIndex: Int, toIndex: Int) throws {
         try throwIfQueueEmpty();
@@ -214,7 +214,7 @@ class QueueManager<T> {
      Remove an item.
 
      - parameter index: The index of the item to remove.
-     - throws: APError.QueueError
+     - throws: AudioPlayerError.QueueError
      - returns: The removed item.
      */
     @discardableResult
