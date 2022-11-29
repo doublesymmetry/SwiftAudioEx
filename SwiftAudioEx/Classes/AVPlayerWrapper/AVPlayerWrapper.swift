@@ -37,6 +37,10 @@ class AVPlayerWrapper: AVPlayerWrapperProtocol {
 
     /// True when the track was paused for the purpose of switching tracks
     fileprivate var pausedForLoad: Bool = false
+  
+    // We need to track this ourselves, in addition to avPlayer having its rate, because
+    // any call to avPlayer.play() resets its playback rate to 0!
+    fileprivate var playRate: Float = 1.0
     
     public init() {
         playerTimeObserver = AVPlayerTimeObserver(periodicObserverTimeInterval: timeEventFrequency.getTime())
@@ -125,8 +129,11 @@ class AVPlayerWrapper: AVPlayerWrapperProtocol {
     }
 
     var rate: Float {
-        get { avPlayer.rate }
-        set { avPlayer.rate = newValue }
+        get { playRate }
+        set {
+          playRate = newValue
+          avPlayer.rate = newValue
+        }
     }
 
     weak var delegate: AVPlayerWrapperDelegate? = nil
@@ -156,7 +163,9 @@ class AVPlayerWrapper: AVPlayerWrapperProtocol {
     
     func play() {
         playWhenReady = true
-        avPlayer.play()
+        avPlayer.rate = playRate
+        print("You're playing with new code!");
+        //avPlayer.play()
     }
     
     func pause() {
