@@ -18,13 +18,8 @@ public class AudioPlayer: AVPlayerWrapperDelegate {
     public let remoteCommandController: RemoteCommandController
     public let event = EventHolder()
 
+    private(set) var currentItem: AudioItem?
 
-    private(set) var currentItem: AudioItem? {
-        didSet {
-            willSleepWhenCurrentItemReachesEnd = false
-        }
-    }
-    
     /**
      Set this to false to disable automatic updating of now playing info for control center and lock screen.
      */
@@ -321,78 +316,6 @@ public class AudioPlayer: AVPlayerWrapperDelegate {
         }
     }
 
-    // MARK: sleep timer
-    
-    private var sleepTimerJob: DispatchWorkItem?
-
-    public var sleepTimerTime = -1 as TimeInterval {
-        didSet {
-            if (sleepTimerTime > -1) {
-                willSleepWhenCurrentItemReachesEnd = false
-            } else {
-                cancelSleepTimerJob()
-            }
-        }
-    }
-    public var willSleepWhenCurrentItemReachesEnd = false {
-        didSet {
-            if willSleepWhenCurrentItemReachesEnd {
-                sleepTimerTime = -1
-            }
-        }
-    }
-    
-    private func cancelSleepTimerJob() {
-        sleepTimerJob?.cancel()
-    }
-    
-    public func clearSleepTimer() {
-        let hasSleepTimer = sleepTimerTime > -1 || willSleepWhenCurrentItemReachesEnd
-        if (!hasSleepTimer) { return }
-        sleepTimerTime = -1
-        willSleepWhenCurrentItemReachesEnd = false
-        event.sleepTimerChange.emit(data: nil)
-    }
-
-    public func getSleepTimer() -> [String : Any]? {
-        let sleepOnEnd = willSleepWhenCurrentItemReachesEnd
-        let hasSleepTimerTime = sleepTimerTime > -1;
-        if (!hasSleepTimerTime && !sleepOnEnd) { return nil }
-
-        var body: [String : Any] = [:]
-        if (hasSleepTimerTime) {
-            body["time"] = Int(sleepTimerTime * 1000)
-        }
-
-        if (sleepOnEnd) {
-            body["sleepWhenPlayedToEnd"] = sleepOnEnd
-        }
-        return body
-    }
-    
-    public func setSleepTimer(time: TimeInterval) {
-        cancelSleepTimerJob()
-        sleepTimerJob = DispatchWorkItem(block: completeSleepTimer)
-        sleepTimerTime = Date().timeIntervalSince1970 + time
-        DispatchQueue.main.asyncAfter(deadline: .now() + time, execute: sleepTimerJob!)
-        event.sleepTimerChange.emit(data: getSleepTimer())
-    }
-   
-    public func sleepWhenCurrentItemReachesEnd() {
-        let changed = willSleepWhenCurrentItemReachesEnd == false
-        willSleepWhenCurrentItemReachesEnd = true
-        if (changed) {
-            event.sleepTimerChange.emit(data: getSleepTimer())
-        }
-    }
-    
-    internal func completeSleepTimer() {
-        wrapper.pause()
-        sleepTimerTime = -1
-        event.sleepTimerChange.emit(data: nil)
-        event.sleepTimerComplete.emit(data: ())
-    }
-    
     // MARK: - Private
 
     private func setNowPlayingCurrentTime(seconds: Double) {
@@ -470,9 +393,6 @@ public class AudioPlayer: AVPlayerWrapperDelegate {
     func AVWrapperItemDidPlayToEndTime() {
         event.playbackEnd.emit(data: .playedUntilEnd)
         wrapper.state = .ended
-        if willSleepWhenCurrentItemReachesEnd {
-            completeSleepTimer()
-        }
     }
 
     func AVWrapperItemFailedToPlayToEndTime() {
