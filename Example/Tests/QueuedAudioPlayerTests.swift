@@ -149,7 +149,7 @@ extension QueuedAudioPlayer {
         }
         func handleEvent(state: AudioPlayerState) {
             states.append(state)
-            if (state != .ready && state != .buffering) {
+            if (state != .ready && state != .buffering && (statesWithoutBuffering.isEmpty || statesWithoutBuffering.last != state)) {
                 statesWithoutBuffering.append(state)
             }
         }
@@ -353,7 +353,6 @@ class QueuedAudioPlayerTests: QuickSpec {
 
                 context("when adding 2 items") {
                     beforeEach {
-                        audioPlayer.play()
                         audioPlayer.add(items: [FiveSecondSource.getAudioItem(), FiveSecondSource.getAudioItem()])
                         waitUntil { done in
                             if (playerStateEventListener.states.count > 0) {
