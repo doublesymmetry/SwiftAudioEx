@@ -10,6 +10,8 @@ import AVFoundation
 
 protocol AVPlayerItemNotificationObserverDelegate: AnyObject {
     func itemDidPlayToEndTime()
+    func itemFailedToPlayToEndTime()
+    func itemPlaybackStalled()
 }
 
 /**
@@ -40,7 +42,24 @@ class AVPlayerItemNotificationObserver {
         stopObservingCurrentItem()
         observingItem = item
         isObserving = true
-        notificationCenter.addObserver(self, selector: #selector(itemDidPlayToEndTime), name: NSNotification.Name.AVPlayerItemDidPlayToEndTime, object: item)
+        notificationCenter.addObserver(
+            self,
+            selector: #selector(itemDidPlayToEndTime),
+            name: NSNotification.Name.AVPlayerItemDidPlayToEndTime,
+            object: item
+        )
+        notificationCenter.addObserver(
+            self,
+            selector: #selector(itemFailedToPlayToEndTime),
+            name: NSNotification.Name.AVPlayerItemFailedToPlayToEndTime,
+            object: item
+        )
+        notificationCenter.addObserver(
+            self,
+            selector: #selector(itemPlaybackStalled),
+            name: NSNotification.Name.AVPlayerItemPlaybackStalled,
+            object: item
+        )
     }
     
     /**
@@ -50,7 +69,21 @@ class AVPlayerItemNotificationObserver {
         guard let observingItem = observingItem, isObserving else {
             return
         }
-        notificationCenter.removeObserver(self, name: NSNotification.Name.AVPlayerItemDidPlayToEndTime, object: observingItem)
+        notificationCenter.removeObserver(
+            self,
+            name: NSNotification.Name.AVPlayerItemDidPlayToEndTime,
+            object: observingItem
+        )
+        notificationCenter.removeObserver(
+            self,
+            name: NSNotification.Name.AVPlayerItemFailedToPlayToEndTime,
+            object: observingItem
+        )
+        notificationCenter.removeObserver(
+            self,
+            name: NSNotification.Name.AVPlayerItemPlaybackStalled,
+            object: observingItem
+        )
         self.observingItem = nil
         isObserving = false
     }
@@ -58,5 +91,12 @@ class AVPlayerItemNotificationObserver {
     @objc private func itemDidPlayToEndTime() {
         delegate?.itemDidPlayToEndTime()
     }
-    
+
+    @objc private func itemFailedToPlayToEndTime() {
+        delegate?.itemFailedToPlayToEndTime()
+    }
+
+    @objc private func itemPlaybackStalled() {
+        delegate?.itemPlaybackStalled()
+    }
 }

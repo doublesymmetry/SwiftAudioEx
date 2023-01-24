@@ -10,15 +10,22 @@ import MediaPlayer
 
 extension AudioPlayer {
     
+    public typealias PlayWhenReadyChangeData = Bool
     public typealias StateChangeEventData = AudioPlayerState
     public typealias PlaybackEndEventData = PlaybackEndedReason
     public typealias SecondElapseEventData = TimeInterval
     public typealias FailEventData = Error?
-    public typealias SeekEventData = (seconds: Int, didFinish: Bool)
+    public typealias SeekEventData = (seconds: Double, didFinish: Bool)
     public typealias UpdateDurationEventData = Double
     public typealias MetadataEventData = [AVTimedMetadataGroup]
     public typealias DidRecreateAVPlayerEventData = ()
-    public typealias QueueIndexEventData = (previousIndex: Int?, newIndex: Int?)
+    public typealias CurrentItemEventData = (
+        item: AudioItem?,
+        index: Int?,
+        lastItem: AudioItem?,
+        lastIndex: Int?,
+        lastPosition: Double?
+    )
     
     public struct EventHolder {
         
@@ -27,6 +34,12 @@ extension AudioPlayer {
          - Important: Remember to dispatch to the main queue if any UI is updated in the event handler.
          */
         public let stateChange: AudioPlayer.Event<StateChangeEventData> = AudioPlayer.Event()
+
+        /**
+         Emitted when the `AudioPlayer#playWhenReady` has changed
+         - Important: Remember to dispatch to the main queue if any UI is updated in the event handler.
+         */
+        public let playWhenReadyChange: AudioPlayer.Event<PlayWhenReadyChangeData> = AudioPlayer.Event()
         
         /**
          Emitted when the playback of the player, for some reason, has stopped.
@@ -73,11 +86,11 @@ extension AudioPlayer {
         public let didRecreateAVPlayer: AudioPlayer.Event<()> = AudioPlayer.Event()
 
         /**
-         Emitted when a new track starts and the queue index changes.
+         Emitted when the current track has changed.
          - Important: Remember to dispatch to the main queue if any UI is updated in the event handler.
          - Note: It is only fired for instances of a QueuedAudioPlayer.
          */
-        public let queueIndex: AudioPlayer.Event<QueueIndexEventData> = AudioPlayer.Event()
+        public let currentItem: AudioPlayer.Event<CurrentItemEventData> = AudioPlayer.Event()
     }
     
     public typealias EventClosure<EventData> = (EventData) -> Void

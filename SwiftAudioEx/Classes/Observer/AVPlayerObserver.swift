@@ -54,13 +54,23 @@ class AVPlayerObserver: NSObject {
      Start receiving events from this observer.
      */
     func startObserving() {
+        if (isObserving) { return };
         guard let player = player else {
             return
         }
-        stopObserving()
         isObserving = true
-        player.addObserver(self, forKeyPath: AVPlayerKeyPath.status, options: statusChangeOptions, context: &AVPlayerObserver.context)
-        player.addObserver(self, forKeyPath: AVPlayerKeyPath.timeControlStatus, options: timeControlStatusChangeOptions, context: &AVPlayerObserver.context)
+        player.addObserver(
+            self,
+            forKeyPath: AVPlayerKeyPath.status,
+            options: statusChangeOptions,
+            context: &AVPlayerObserver.context
+        )
+        player.addObserver(
+            self,
+            forKeyPath: AVPlayerKeyPath.timeControlStatus,
+            options: timeControlStatusChangeOptions,
+            context: &AVPlayerObserver.context
+        )
     }
 
     func stopObserving() {

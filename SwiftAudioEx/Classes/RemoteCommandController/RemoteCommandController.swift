@@ -171,26 +171,16 @@ public class RemoteCommandController {
     
     private func handleNextTrackCommandDefault(event: MPRemoteCommandEvent) -> MPRemoteCommandHandlerStatus {
         if let player = audioPlayer as? QueuedAudioPlayer {
-            do {
-                try player.next()
-                return MPRemoteCommandHandlerStatus.success
-            }
-            catch let error {
-                return getRemoteCommandHandlerStatus(forError: error)
-            }
+            player.next()
+            return MPRemoteCommandHandlerStatus.success
         }
         return MPRemoteCommandHandlerStatus.commandFailed
     }
     
     private func handlePreviousTrackCommandDefault(event: MPRemoteCommandEvent) -> MPRemoteCommandHandlerStatus {
         if let player = audioPlayer as? QueuedAudioPlayer {
-            do {
-                try player.previous()
-                return MPRemoteCommandHandlerStatus.success
-            }
-            catch let error {
-                return getRemoteCommandHandlerStatus(forError: error)
-            }
+            player.previous()
+            return MPRemoteCommandHandlerStatus.success
         }
         return MPRemoteCommandHandlerStatus.commandFailed
     }
@@ -208,19 +198,9 @@ public class RemoteCommandController {
     }
     
     private func getRemoteCommandHandlerStatus(forError error: Error) -> MPRemoteCommandHandlerStatus {
-        if let error = error as? APError.LoadError {
-            switch error {
-            case .invalidSourceUrl(_):
-                return MPRemoteCommandHandlerStatus.commandFailed
-            }
-        }
-        else if let error = error as? APError.QueueError {
-            switch error {
-            case .noNextItem, .noPreviousItem, .invalidIndex(_, _), .noNextWhenRepeatModeTrack:
-                return MPRemoteCommandHandlerStatus.noSuchContent
-            }
-        }
-        return MPRemoteCommandHandlerStatus.commandFailed
+        return error is AudioPlayerError.QueueError
+            ? MPRemoteCommandHandlerStatus.noSuchContent
+            : MPRemoteCommandHandlerStatus.commandFailed
     }
     
 }

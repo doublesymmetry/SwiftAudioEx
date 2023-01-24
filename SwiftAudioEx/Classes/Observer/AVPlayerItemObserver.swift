@@ -11,10 +11,14 @@ import AVFoundation
 protocol AVPlayerItemObserverDelegate: AnyObject {
     
     /**
-     Called when the observed item updates the duration.
+     Called when the duration of the observed item is updated.
      */
     func item(didUpdateDuration duration: Double)
 
+    /**
+     Called when the playback of the observed item is or is no longer likely to keep up.
+     */
+    func item(didUpdatePlaybackLikelyToKeepUp playbackLikelyToKeepUp: Bool)
     /**
      Called when the observed item receives metadata
      */
@@ -34,6 +38,7 @@ class AVPlayerItemObserver: NSObject {
     private struct AVPlayerItemKeyPath {
         static let duration = #keyPath(AVPlayerItem.duration)
         static let loadedTimeRanges = #keyPath(AVPlayerItem.loadedTimeRanges)
+        static let playbackLikelyToKeepUp = #keyPath(AVPlayerItem.isPlaybackLikelyToKeepUp)
     }
     
     private(set) var isObserving: Bool = false
@@ -63,6 +68,7 @@ class AVPlayerItemObserver: NSObject {
         observingItem = item
         item.addObserver(self, forKeyPath: AVPlayerItemKeyPath.duration, options: [.new], context: &AVPlayerItemObserver.context)
         item.addObserver(self, forKeyPath: AVPlayerItemKeyPath.loadedTimeRanges, options: [.new], context: &AVPlayerItemObserver.context)
+        item.addObserver(self, forKeyPath: AVPlayerItemKeyPath.playbackLikelyToKeepUp, options: [.new], context: &AVPlayerItemObserver.context)
         item.add(metadataOutput)
     }
     
@@ -72,6 +78,7 @@ class AVPlayerItemObserver: NSObject {
         }
         observingItem.removeObserver(self, forKeyPath: AVPlayerItemKeyPath.duration, context: &AVPlayerItemObserver.context)
         observingItem.removeObserver(self, forKeyPath: AVPlayerItemKeyPath.loadedTimeRanges, context: &AVPlayerItemObserver.context)
+        observingItem.removeObserver(self, forKeyPath: AVPlayerItemKeyPath.playbackLikelyToKeepUp, context: &AVPlayerItemObserver.context)
         observingItem.remove(metadataOutput)
         isObserving = false
         self.observingItem = nil
@@ -94,6 +101,11 @@ class AVPlayerItemObserver: NSObject {
                 delegate?.item(didUpdateDuration: duration.seconds)
             }
 
+        case AVPlayerItemKeyPath.playbackLikelyToKeepUp:
+            if let playbackLikelyToKeepUp = change?[.newKey] as? Bool {
+                delegate?.item(didUpdatePlaybackLikelyToKeepUp: playbackLikelyToKeepUp)
+            }
+             
         default: break
             
         }

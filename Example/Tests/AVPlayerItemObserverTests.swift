@@ -47,6 +47,10 @@ class AVPlayerItemObserverTests: QuickSpec {
 }
 
 class AVPlayerItemObserverDelegateHolder: AVPlayerItemObserverDelegate {
+    func item(didUpdatePlaybackLikelyToKeepUp playbackLikelyToKeepUp: Bool) {
+
+    }
+    
     var receivedMetadata: ((_ metadata: [AVTimedMetadataGroup]) -> Void)?
     
     func item(didReceiveMetadata metadata: [AVTimedMetadataGroup]) {

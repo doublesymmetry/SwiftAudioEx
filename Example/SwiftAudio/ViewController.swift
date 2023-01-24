@@ -26,41 +26,37 @@ class ViewController: UIViewController {
     
     private var isScrubbing: Bool = false
     private let controller = AudioController.shared
-    private var lastLoadFailed: Bool = false
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        controller.player.event.playWhenReadyChange.addListener(self, handlePlayWhenReadyChange)
         controller.player.event.stateChange.addListener(self, handleAudioPlayerStateChange)
         controller.player.event.playbackEnd.addListener(self, handleAudioPlayerPlaybackEnd(data:))
         controller.player.event.secondElapse.addListener(self, handleAudioPlayerSecondElapsed)
         controller.player.event.seek.addListener(self, handleAudioPlayerDidSeek)
         controller.player.event.updateDuration.addListener(self, handleAudioPlayerUpdateDuration)
         controller.player.event.didRecreateAVPlayer.addListener(self, handleAVPlayerRecreated)
-        controller.player.event.fail.addListener(self, handlePlayerFailure)
-        updateMetaData()
         handleAudioPlayerStateChange(data: controller.player.playerState)
+        DispatchQueue.main.async {
+            self.render()
+        }
     }
+    
+    // MARK: - Actions
     
     @IBAction func togglePlay(_ sender: Any) {
         if !controller.audioSessionController.audioSessionIsActive {
             try? controller.audioSessionController.activateSession()
         }
-        if lastLoadFailed, let item = controller.player.currentItem {
-            lastLoadFailed = false
-            errorLabel.isHidden = true
-            try? controller.player.load(item: item, playWhenReady: true)
-        }
-        else {
-            controller.player.togglePlaying()
-        }
+        controller.player.playWhenReady = playButton.currentTitle == "Play"
     }
     
     @IBAction func previous(_ sender: Any) {
-        try? controller.player.previous()
+        controller.player.previous()
     }
     
     @IBAction func next(_ sender: Any) {
-        try? controller.player.next()
+        controller.player.next()
     }
     
     @IBAction func startScrubbing(_ sender: UISlider) {
@@ -77,31 +73,56 @@ class ViewController: UIViewController {
         remainingTimeLabel.text = (controller.player.duration - value).secondsToString()
     }
     
-    func updateTimeValues() {
+    // MARK: - Render
+    
+    func renderTimeValues() {
         self.slider.maximumValue = Float(self.controller.player.duration)
         self.slider.setValue(Float(self.controller.player.currentTime), animated: true)
         self.elapsedTimeLabel.text = self.controller.player.currentTime.secondsToString()
         self.remainingTimeLabel.text = (self.controller.player.duration - self.controller.player.currentTime).secondsToString()
     }
-    
-    func updateMetaData() {
-        if let item = controller.player.currentItem {
-            titleLabel.text = item.getTitle()
-            artistLabel.text = item.getArtist()
+
+    func render() {
+        let player = self.controller.player
+        
+        // Render play button
+        self.playButton.setTitle(
+            !player.playWhenReady || player.playerState == .failed
+                ? "Play"
+                : "Pause",
+            for: .normal
+        )
+
+        // Render metadata
+        if let item = player.currentItem {
+            self.titleLabel.text = item.getTitle()
+            self.artistLabel.text = item.getArtist()
             item.getArtwork({ (image) in
                 self.imageView.image = image
             })
         }
-    }
-    
-    func setPlayButtonState(forAudioPlayerState state: AudioPlayerState) {
-        playButton.setTitle(state == .playing ? "Pause" : "Play", for: .normal)
-    }
-    
-    func setErrorMessage(_ message: String) {
-        self.loadIndicator.stopAnimating()
-        errorLabel.isHidden = false
-        errorLabel.text = message
+
+        // Render time values
+        self.renderTimeValues()
+
+        // Render error label
+        if (player.playerState == .failed) {
+            self.errorLabel.isHidden = false
+            self.errorLabel.text = "Playback failed."
+        } else {
+            self.errorLabel.text = ""
+            self.errorLabel.isHidden = true
+        }
+
+        // Render load indicator:
+        if (
+            (player.playerState == .loading || player.playerState == .buffering)
+            && self.controller.player.playWhenReady // Avoid showing indicator before user has pressed play
+        ) {
+            self.loadIndicator.startAnimating()
+        } else {
+            self.loadIndicator.stopAnimating()
+        }
     }
     
     // MARK: - AudioPlayer Event Handlers
@@ -109,25 +130,17 @@ class ViewController: UIViewController {
     func handleAudioPlayerStateChange(data: AudioPlayer.StateChangeEventData) {
         print("state=\(data)")
         DispatchQueue.main.async {
-            self.setPlayButtonState(forAudioPlayerState: data)
-            switch data {
-            case .loading:
-                self.loadIndicator.startAnimating()
-                self.updateMetaData()
-                self.updateTimeValues()
-            case .buffering:
-                self.loadIndicator.startAnimating()
-            case .ready:
-                self.loadIndicator.stopAnimating()
-                self.updateMetaData()
-                self.updateTimeValues()
-            case .playing, .paused, .idle:
-                self.loadIndicator.stopAnimating()
-                self.updateTimeValues()
-            }
+            self.render()
         }
     }
-
+    
+    func handlePlayWhenReadyChange(data: AudioPlayer.PlayWhenReadyChangeData) {
+        print("playWhenReady=\(data)")
+        DispatchQueue.main.async {
+            self.render()
+        }
+    }
+    
     func handleAudioPlayerPlaybackEnd(data: AudioPlayer.PlaybackEndEventData) {
         print("playEndReason=\(data)")
     }
@@ -135,7 +148,7 @@ class ViewController: UIViewController {
     func handleAudioPlayerSecondElapsed(data: AudioPlayer.SecondElapseEventData) {
         if !isScrubbing {
             DispatchQueue.main.async {
-                self.updateTimeValues()
+                self.renderTimeValues()
             }
         }
     }
@@ -146,23 +159,11 @@ class ViewController: UIViewController {
     
     func handleAudioPlayerUpdateDuration(data: AudioPlayer.UpdateDurationEventData) {
         DispatchQueue.main.async {
-            self.updateTimeValues()
+            self.renderTimeValues()
         }
     }
     
     func handleAVPlayerRecreated() {
         try? controller.audioSessionController.set(category: .playback)
     }
-    
-    func handlePlayerFailure(data: AudioPlayer.FailEventData) {
-        if let error = data as NSError? {
-            if error.code == -1009 {
-                lastLoadFailed = true
-                DispatchQueue.main.async {
-                    self.setErrorMessage("Network disconnected. Please try again...")
-                }
-            }
-        }
-    }
-    
 }

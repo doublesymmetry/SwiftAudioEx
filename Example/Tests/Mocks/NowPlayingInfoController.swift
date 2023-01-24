@@ -12,7 +12,6 @@ import MediaPlayer
 @testable import SwiftAudioEx
 
 class NowPlayingInfoController_Mock: NowPlayingInfoControllerProtocol {
-    
     var info: [String: Any] = [:]
     
     required public init() {
@@ -29,6 +28,12 @@ class NowPlayingInfoController_Mock: NowPlayingInfoControllerProtocol {
     
     public func set(keyValue: NowPlayingInfoKeyValue) {
         info[keyValue.getKey()] = keyValue.getValue()
+    }
+
+    func setWithoutUpdate(keyValues: [NowPlayingInfoKeyValue]) {
+        keyValues.forEach { (keyValue) in
+            info[keyValue.getKey()] = keyValue.getValue()
+        }
     }
     
     func getTitle() -> String? {

@@ -10,12 +10,14 @@ import AVFoundation
 
 
 protocol AVPlayerWrapperProtocol: AnyObject {
-
-    var state: AVPlayerWrapperState { get }
-
-    var playWhenReady: Bool { get }
+    
+    var state: AVPlayerWrapperState { get set }
+    
+    var playWhenReady: Bool { get set }
     
     var currentItem: AVPlayerItem? { get }
+    
+    var playbackActive: Bool { get }
     
     var currentTime: TimeInterval { get }
     
@@ -25,6 +27,7 @@ protocol AVPlayerWrapperProtocol: AnyObject {
     
     var reasonForWaitingToPlay: AVPlayer.WaitingReason? { get }
     
+    var playbackError: AudioPlayerError.PlaybackError? { get }
     
     var rate: Float { get set }
     
@@ -39,7 +42,6 @@ protocol AVPlayerWrapperProtocol: AnyObject {
     var isMuted: Bool { get set }
     
     var automaticallyWaitsToMinimizeStalling: Bool { get set }
-        
     
     func play()
     
@@ -50,8 +52,16 @@ protocol AVPlayerWrapperProtocol: AnyObject {
     func stop()
     
     func seek(to seconds: TimeInterval)
-    
+
+    func seek(by offset: TimeInterval)
+
     func load(from url: URL, playWhenReady: Bool, options: [String: Any]?)
     
     func load(from url: URL, playWhenReady: Bool, initialTime: TimeInterval?, options: [String: Any]?)
+    
+    func load(from url: String, type: SourceType, playWhenReady: Bool, initialTime: TimeInterval?, options: [String: Any]?)
+    
+    func unload()
+    
+    func reload(startFromCurrentTime: Bool)
 }

@@ -88,7 +88,7 @@ class AVPlayerWrapperTests: XCTestCase {
         holder.stateUpdate = { state in
             switch state {
             case .playing: self.wrapper.stop()
-            case .idle: expectation.fulfill()
+            case .stopped: expectation.fulfill()
             default: break
             }
         }
@@ -156,6 +156,19 @@ class AVPlayerWrapperTests: XCTestCase {
         wrapper.seek(to: seekTime)
         wait(for: [expectation], timeout: 20.0)
     }
+
+    func test_AVPlayerWrapper__seek_by__should_seek() {
+        let seekTime: TimeInterval = 5.0
+        let expectation = XCTestExpectation()
+        holder.stateUpdate = { state in
+            self.wrapper.seek(by: seekTime)
+        }
+        holder.didSeekTo = { seconds in
+            expectation.fulfill()
+        }
+        wrapper.load(from: Source.url, playWhenReady: false)
+        wait(for: [expectation], timeout: 20.0)
+    }
     
     func test_AVPlayerWrapper__loading_source_with_initial_time__should_seek() {
         let expectation = XCTestExpectation()
@@ -168,8 +181,8 @@ class AVPlayerWrapperTests: XCTestCase {
     
     // MARK: - Rate tests
     
-    func test_AVPlayerWrapper__rate__should_be_0() {
-        XCTAssert(wrapper.rate == 0.0)
+    func test_AVPlayerWrapper__rate__should_be_1() {
+        XCTAssert(wrapper.rate == 1)
     }
     
     func test_AVPlayerWrapper__rate__playing_a_source__should_be_1() {
@@ -193,6 +206,23 @@ class AVPlayerWrapperTests: XCTestCase {
 }
 
 class AVPlayerWrapperDelegateHolder: AVPlayerWrapperDelegate {
+    private let lockQueue = DispatchQueue(
+        label: "AVPlayerWrapperDelegateHolder.lockQueue",
+        target: .global()
+    )
+
+    func AVWrapperItemPlaybackStalled() {
+
+    }
+    
+    func AVWrapperItemFailedToPlayToEndTime() {
+
+    }
+    
+    func AVWrapper(didChangePlayWhenReady playWhenReady: Bool) {
+
+    }
+    
     func AVWrapper(didReceiveMetadata metadata: [AVTimedMetadataGroup]) {
         
     }
@@ -205,17 +235,31 @@ class AVPlayerWrapperDelegateHolder: AVPlayerWrapperDelegate {
         
     }
     
+    private var _state: AVPlayerWrapperState? = nil
     var state: AVPlayerWrapperState? {
-        didSet {
-            if let state = state {
-                self.stateUpdate?(state)
+        get {
+            return lockQueue.sync {
+                return _state
+            }
+        }
+
+        set {
+            lockQueue.async(flags: .barrier) { [weak self] in
+                guard let self = self else { return }
+                if let newValue = newValue {
+                    let changed = self._state != newValue;
+                    if (changed) {
+                        self._state = newValue
+                        self.stateUpdate?(newValue)
+                    }
+                }
             }
         }
     }
-    
+
     var stateUpdate: ((_ state: AVPlayerWrapperState) -> Void)?
     var didUpdateDuration: ((_ duration: Double) -> Void)?
-    var didSeekTo: ((_ seconds: Int) -> Void)?
+    var didSeekTo: ((_ seconds: Double) -> Void)?
     var itemDidComplete: (() -> Void)?
     
     func AVWrapper(didChangeState state: AVPlayerWrapperState) {
@@ -230,7 +274,7 @@ class AVPlayerWrapperDelegateHolder: AVPlayerWrapperDelegate {
         
     }
     
-    func AVWrapper(seekTo seconds: Int, didFinish: Bool) {
+    func AVWrapper(seekTo seconds: Double, didFinish: Bool) {
          didSeekTo?(seconds)
     }
     
