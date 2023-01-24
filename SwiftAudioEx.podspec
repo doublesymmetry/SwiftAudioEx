@@ -8,7 +8,7 @@
 
 Pod::Spec.new do |s|
   s.name             = 'SwiftAudioEx'
-  s.version          = '0.15.3'
+  s.version          = '1.0.0-rc.1'
   s.summary          = 'Easy audio streaming for iOS'
   s.description      = <<-DESC
 SwiftAudioEx is an audio player written in Swift, making it simpler to work with audio playback from streams and files.
