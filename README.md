@@ -11,7 +11,10 @@ SwiftAudio is an audio player written in Swift, making it simpler to work with a
 ## Example
 
 To see the audio player in action, run the example project!
-To run the example project, clone the repo, and run `pod install` from the Example directory first.
+To run the example project, clone the repo, then open
+`Example/SwiftAudio.xcodeproj` in Xcode. Choose "Example for SwiftAudio" in the
+XCode project navigator and Build/Run it in a simulator (or on an actual
+device).
 
 ## Requirements
 iOS 11.0+
@@ -68,12 +71,12 @@ To subscribe to an event:
 class MyCustomViewController: UIViewController {
 
     let audioPlayer = AudioPlayer()
-    
+
     override func viewDidLoad() {
         super.viewDidLoad()
         audioPlayer.event.stateChange.addListener(self, handleAudioPlayerStateChange)
     }
-    
+
     func handleAudioPlayerStateChange(state: AudioPlayerState) {
         // Handle the event
     }
