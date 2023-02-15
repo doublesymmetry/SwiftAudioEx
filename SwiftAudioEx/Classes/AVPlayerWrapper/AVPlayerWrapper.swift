@@ -197,7 +197,8 @@ class AVPlayerWrapper: AVPlayerWrapperProtocol {
         if (avPlayer.currentItem == nil) {
          timeToSeekToAfterLoading = seconds
        } else {
-         avPlayer.seek(to: CMTimeMakeWithSeconds(seconds, preferredTimescale: 1000)) { (finished) in
+           let time = CMTimeMakeWithSeconds(seconds, preferredTimescale: 1000)
+           avPlayer.seek(to: time, toleranceBefore: CMTime.zero, toleranceAfter: CMTime.zero) { (finished) in
              self.delegate?.AVWrapper(seekTo: Double(seconds), didFinish: finished)
          }
        }
