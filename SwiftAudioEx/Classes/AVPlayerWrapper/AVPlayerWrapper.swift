@@ -480,7 +480,7 @@ extension AVPlayerWrapper: AVPlayerItemObserverDelegate {
     // MARK: - AVPlayerItemObserverDelegate
 
     func item(didUpdatePlaybackLikelyToKeepUp playbackLikelyToKeepUp: Bool) {
-        if (playbackLikelyToKeepUp) {
+        if (playbackLikelyToKeepUp && state != .playing) {
             state = .ready
         }
     }
