@@ -401,6 +401,37 @@ class AudioPlayerTests: XCTestCase {
         }
     }
 
+    func test_AudioPlayer__state__play_source__should_update_playWhenReady_after_external_pause() {
+        var states = [audioPlayer.playerState.rawValue == "idle" ? "idle" : "not_idle"]
+        listener.onStateChange = { state in
+            switch state {
+                case .loading: states.append("loading")
+                // Leaving out bufferring & ready events because they can show up at any point
+                case .buffering, .ready: break
+                case .playing: states.append("playing")
+                case .paused: states.append("paused")
+                case .idle: states.append("idle")
+                case .failed: states.append("failed")
+                case .stopped: states.append("stopped")
+                case .ended: states.append("ended")
+            }
+        }
+        audioPlayer.load(item: Source.getAudioItem(), playWhenReady: true)
+        var expectedEvents = ["idle", "loading", "ready", "playing"];
+        eventually {
+            XCTAssertEqual(states, expectedEvents)
+        }
+
+        // Simulate avplayer becoming paused due to external reason:
+        audioPlayer.wrapper.rate = 0
+
+        expectedEvents.append("paused");
+        eventually {
+            XCTAssertEqual(states, expectedEvents)
+            XCTAssertEqual(self.audioPlayer.playWhenReady, false)
+        }
+    }
+    
     func test_AudioPlayer__state__play_source__should_emit_events_in_reliable_order_at_end_call_stop() {
         var states = [audioPlayer.playerState.rawValue == "idle" ? "idle" : "not_idle"]
         listener.onStateChange = { state in

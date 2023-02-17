@@ -417,10 +417,19 @@ extension AVPlayerWrapper: AVPlayerObserverDelegate {
     func player(didChangeTimeControlStatus status: AVPlayer.TimeControlStatus) {
         switch status {
         case .paused:
-            if self.asset == nil && self.state != .stopped {
+            let state = self.state
+            if self.asset == nil && state != .stopped {
                 self.state = .idle
-            } else if (self.playWhenReady == false && self.state != .failed && self.state != .stopped && self.state != .loading) {
-                self.state = .paused
+            } else if (state != .failed && state != .stopped && state != .loading) {
+                // Playback may have become paused externally for example due to a bluetooth device disconnecting:
+                if (self.playWhenReady) {
+                    // Only if we are not on the boundaries of the track, otherwise itemDidPlayToEndTime will handle it instead.
+                    if (self.currentTime > 0 && self.currentTime < self.duration) {
+                        self.playWhenReady = false;
+                    }
+                } else {
+                    self.state = .paused
+                }
             }
         case .waitingToPlayAtSpecifiedRate:
             if self.asset != nil {
