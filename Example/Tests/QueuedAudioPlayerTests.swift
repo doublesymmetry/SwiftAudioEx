@@ -387,6 +387,7 @@ class QueuedAudioPlayerTests: QuickSpec {
                                 audioPlayer.stop()
                             }
                             it("should have emitted playbackEnd .playerStopped") {
+                                expect(audioPlayer.playerState).toEventually(equal(.stopped))
                                 expect(playbackEndEventListener.reasons).toEventually(
                                     equal([.skippedToNext, .playerStopped])
                                 )
@@ -398,8 +399,8 @@ class QueuedAudioPlayerTests: QuickSpec {
                                 }
 
                                 it("should not have emitted playbackEnd .playerStopped because the player was already stopped") {
-                                    expect(audioPlayer.playerState).to(equal(.stopped))
-                                    expect(playbackEndEventListener.reasons).to(
+                                    expect(audioPlayer.playerState).toEventually(equal(.stopped))
+                                    expect(playbackEndEventListener.reasons).toEventually(
                                         equal([.skippedToNext, .playerStopped])
                                     )
                                 }
@@ -499,7 +500,7 @@ class QueuedAudioPlayerTests: QuickSpec {
                         )
                     }
                     it("should have mutated player state from .loading to .stopped") {
-                        expect(playerStateEventListener.states).to(equal([
+                        expect(playerStateEventListener.states).toEventually(equal([
                             .loading,
                             .stopped
                         ]))

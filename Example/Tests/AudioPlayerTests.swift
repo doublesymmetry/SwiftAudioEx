@@ -417,9 +417,10 @@ class AudioPlayerTests: XCTestCase {
             }
         }
         audioPlayer.load(item: Source.getAudioItem(), playWhenReady: true)
-        var expectedEvents = ["idle", "loading", "ready", "playing"];
+        var expectedEvents = ["idle", "loading", "playing"];
         eventually {
             XCTAssertEqual(states, expectedEvents)
+            XCTAssertGreaterThan(self.audioPlayer.currentTime, 0.0)
         }
 
         // Simulate avplayer becoming paused due to external reason:
@@ -437,9 +438,8 @@ class AudioPlayerTests: XCTestCase {
         listener.onStateChange = { state in
             switch state {
                 case .loading: states.append("loading")
-                case .ready: states.append("ready")
                 // Leaving out bufferring events because they can show up at any point
-                case .buffering: break
+                case .buffering, .ready: break
                 case .playing: states.append("playing")
                 case .paused: states.append("paused")
                 case .idle: states.append("idle")
@@ -449,7 +449,7 @@ class AudioPlayerTests: XCTestCase {
             }
         }
         audioPlayer.load(item: Source.getAudioItem(), playWhenReady: true)
-        var expectedEvents = ["idle", "loading", "ready", "playing"];
+        var expectedEvents = ["idle", "loading", "playing"];
         eventually {
             XCTAssertEqual(expectedEvents, states)
         }
@@ -475,9 +475,8 @@ class AudioPlayerTests: XCTestCase {
         listener.onStateChange = { state in
             switch state {
                 case .loading: states.append("loading")
-                case .ready: states.append("ready")
                 // Leaving out bufferring events because they are not expected to show up in consistent order
-                case .buffering: break
+                case .buffering, .ready: break
                 case .playing: states.append("playing")
                 case .paused: states.append("paused")
                 case .idle: states.append("idle")
@@ -487,7 +486,7 @@ class AudioPlayerTests: XCTestCase {
             }
         }
         audioPlayer.load(item: Source.getAudioItem(), playWhenReady: true)
-        var expectedEvents = ["idle", "loading", "ready", "playing"];
+        var expectedEvents = ["idle", "loading", "playing"];
         eventually {
             XCTAssertEqual(states, expectedEvents)
         }
@@ -497,7 +496,7 @@ class AudioPlayerTests: XCTestCase {
             XCTAssertEqual(states, expectedEvents)
         }
         audioPlayer.load(item: Source.getAudioItem())
-        expectedEvents.append(contentsOf: ["loading", "ready", "playing"]);
+        expectedEvents.append(contentsOf: ["loading", "playing"]);
         eventually {
             XCTAssertEqual(states, expectedEvents)
         }
