@@ -401,14 +401,13 @@ class AudioPlayerTests: XCTestCase {
         }
     }
 
-    func test_AudioPlayer__state__play_source__should_emit_events_in_reliable_order_at_end_call_stop() {
+    func test_AudioPlayer__state__play_source__should_update_playWhenReady_after_external_pause() {
         var states = [audioPlayer.playerState.rawValue == "idle" ? "idle" : "not_idle"]
         listener.onStateChange = { state in
             switch state {
                 case .loading: states.append("loading")
-                case .ready: states.append("ready")
-                // Leaving out bufferring events because they can show up at any point
-                case .buffering: break
+                // Leaving out bufferring & ready events because they can show up at any point
+                case .buffering, .ready: break
                 case .playing: states.append("playing")
                 case .paused: states.append("paused")
                 case .idle: states.append("idle")
@@ -418,7 +417,39 @@ class AudioPlayerTests: XCTestCase {
             }
         }
         audioPlayer.load(item: Source.getAudioItem(), playWhenReady: true)
-        var expectedEvents = ["idle", "loading", "ready", "playing"];
+        var expectedEvents = ["idle", "loading", "playing"];
+        eventually {
+            XCTAssertEqual(states, expectedEvents)
+            XCTAssertGreaterThan(self.audioPlayer.currentTime, 0.0)
+        }
+
+        // Simulate avplayer becoming paused due to external reason:
+        audioPlayer.wrapper.rate = 0
+
+        expectedEvents.append("paused");
+        eventually {
+            XCTAssertEqual(states, expectedEvents)
+            XCTAssertEqual(self.audioPlayer.playWhenReady, false)
+        }
+    }
+    
+    func test_AudioPlayer__state__play_source__should_emit_events_in_reliable_order_at_end_call_stop() {
+        var states = [audioPlayer.playerState.rawValue == "idle" ? "idle" : "not_idle"]
+        listener.onStateChange = { state in
+            switch state {
+                case .loading: states.append("loading")
+                // Leaving out bufferring events because they can show up at any point
+                case .buffering, .ready: break
+                case .playing: states.append("playing")
+                case .paused: states.append("paused")
+                case .idle: states.append("idle")
+                case .failed: states.append("failed")
+                case .stopped: states.append("stopped")
+                case .ended: states.append("ended")
+            }
+        }
+        audioPlayer.load(item: Source.getAudioItem(), playWhenReady: true)
+        var expectedEvents = ["idle", "loading", "playing"];
         eventually {
             XCTAssertEqual(expectedEvents, states)
         }
@@ -444,9 +475,8 @@ class AudioPlayerTests: XCTestCase {
         listener.onStateChange = { state in
             switch state {
                 case .loading: states.append("loading")
-                case .ready: states.append("ready")
                 // Leaving out bufferring events because they are not expected to show up in consistent order
-                case .buffering: break
+                case .buffering, .ready: break
                 case .playing: states.append("playing")
                 case .paused: states.append("paused")
                 case .idle: states.append("idle")
@@ -456,7 +486,7 @@ class AudioPlayerTests: XCTestCase {
             }
         }
         audioPlayer.load(item: Source.getAudioItem(), playWhenReady: true)
-        var expectedEvents = ["idle", "loading", "ready", "playing"];
+        var expectedEvents = ["idle", "loading", "playing"];
         eventually {
             XCTAssertEqual(states, expectedEvents)
         }
@@ -466,7 +496,7 @@ class AudioPlayerTests: XCTestCase {
             XCTAssertEqual(states, expectedEvents)
         }
         audioPlayer.load(item: Source.getAudioItem())
-        expectedEvents.append(contentsOf: ["loading", "ready", "playing"]);
+        expectedEvents.append(contentsOf: ["loading", "playing"]);
         eventually {
             XCTAssertEqual(states, expectedEvents)
         }
