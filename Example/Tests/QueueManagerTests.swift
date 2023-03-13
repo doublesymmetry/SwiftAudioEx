@@ -344,22 +344,20 @@ class QueueManagerTests: QuickSpec {
                     // MARK: - Removal
                     
                     context("then removing a item with index less than currentIndex") {
+                        var removed: Int?
+                        var initialCurrentIndex: Int!
                         beforeEach {
-                            var removed: Int?
-                            var initialCurrentIndex: Int!
-                            beforeEach {
-                                let _ = try? queue.jump(to: 3)
-                                initialCurrentIndex = queue.currentIndex
-                                removed = try? queue.removeItem(at: initialCurrentIndex - 1)
-                            }
-                            
-                            it("should remove an item") {
-                                expect(removed).toNot(beNil())
-                            }
-                            
-                            it("should decrement the currentIndex") {
-                                expect(queue.currentIndex).to(equal(initialCurrentIndex - 1))
-                            }
+                            let _ = try? queue.jump(to: 1)
+                            initialCurrentIndex = queue.currentIndex
+                            removed = try? queue.removeItem(at: initialCurrentIndex - 1)
+                        }
+
+                        it("should remove an item") {
+                            expect(removed).toNot(beNil())
+                        }
+
+                        it("should decrement the currentIndex") {
+                            expect(queue.currentIndex).to(equal(initialCurrentIndex - 1))
                         }
                     }
                     
