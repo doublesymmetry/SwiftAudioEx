@@ -223,9 +223,15 @@ class QueueManager<T> {
         try throwIfIndexInvalid(index: index)
         let result = items.remove(at: index)
 
-        mutateCurrentIndex(index: index == currentIndex && items.count > 0
-           ? currentIndex % items.count : -1
-        )
+        // #42 - if you've removed the current item, make sure you treat it as
+        // if the current item changed. mutateCurrentIndex doesn't do so.
+        if (index == currentIndex) {
+            delegate?.onCurrentItemChanged()
+        } else {
+            mutateCurrentIndex(index:
+                items.count > 0 ? currentIndex % items.count : -1
+            )
+        }
 
         return result;
     }
