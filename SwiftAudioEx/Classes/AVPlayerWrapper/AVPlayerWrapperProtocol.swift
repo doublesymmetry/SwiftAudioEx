@@ -10,11 +10,7 @@ import AVFoundation
 
 
 protocol AVPlayerWrapperProtocol: AnyObject {
-    
-    var state: AVPlayerWrapperState { get set }
-    
-    var playWhenReady: Bool { get set }
-    
+        
     var currentItem: AVPlayerItem? { get }
     
     var playbackActive: Bool { get }
@@ -43,25 +39,33 @@ protocol AVPlayerWrapperProtocol: AnyObject {
     
     var automaticallyWaitsToMinimizeStalling: Bool { get set }
     
-    func play()
-    
-    func pause()
-    
-    func togglePlaying()
-    
-    func stop()
-    
-    func seek(to seconds: TimeInterval)
+    func getPlayWhenReady() -> Bool
 
-    func seek(by offset: TimeInterval)
+    func setPlayWhenReady(_ playWhenReady: Bool) async
+    
+    func getState() -> AVPlayerWrapperState
 
-    func load(from url: URL, playWhenReady: Bool, options: [String: Any]?)
+    func setState(state: AVPlayerWrapperState) async
+
+    func play() async
     
-    func load(from url: URL, playWhenReady: Bool, initialTime: TimeInterval?, options: [String: Any]?)
+    func pause() async
     
-    func load(from url: String, type: SourceType, playWhenReady: Bool, initialTime: TimeInterval?, options: [String: Any]?)
+    func togglePlaying() async
     
-    func unload()
+    func stop() async
     
-    func reload(startFromCurrentTime: Bool)
+    func seek(to seconds: TimeInterval) async
+
+    func seek(by offset: TimeInterval) async
+
+    func load(from url: URL, playWhenReady: Bool, options: [String: Any]?) async
+    
+    func load(from url: URL, playWhenReady: Bool, initialTime: TimeInterval?, options: [String: Any]?) async
+    
+    func load(from url: String, type: SourceType, playWhenReady: Bool, initialTime: TimeInterval?, options: [String: Any]?) async
+    
+    func unload() async
+    
+    func reload(startFromCurrentTime: Bool) async
 }

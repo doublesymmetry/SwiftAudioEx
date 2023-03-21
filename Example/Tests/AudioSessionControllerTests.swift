@@ -65,7 +65,7 @@ class AudioSessionControllerTests: QuickSpec {
                     }
                     
                     it("should eventually be updated with the interruption type") {
-                        expect(delegate.interruptionType).toEventually(equal(InterruptionType.ended(shouldResume: true)))
+                        await expect(delegate.interruptionType).toEventually(equal(InterruptionType.ended(shouldResume: true)))
                     }
                     
                 }
@@ -81,7 +81,7 @@ class AudioSessionControllerTests: QuickSpec {
                     }
                     
                     it("should eventually be updated with the interruption type") {
-                        expect(delegate.interruptionType).toEventually(equal(InterruptionType.began))
+                        await expect(delegate.interruptionType).toEventually(equal(InterruptionType.began))
                     }
                     
                 }

@@ -48,15 +48,21 @@ class ViewController: UIViewController {
         if !controller.audioSessionController.audioSessionIsActive {
             try? controller.audioSessionController.activateSession()
         }
-        controller.player.playWhenReady = playButton.currentTitle == "Play"
+        Task {
+            await controller.player.setPlayWhenReady(playButton.currentTitle == "Play")
+        }
     }
     
     @IBAction func previous(_ sender: Any) {
-        controller.player.previous()
+        Task {
+            await controller.player.previous()
+        }
     }
     
     @IBAction func next(_ sender: Any) {
-        controller.player.next()
+        Task {
+            await controller.player.next()
+        }
     }
     
     @IBAction func startScrubbing(_ sender: UISlider) {
@@ -64,7 +70,9 @@ class ViewController: UIViewController {
     }
     
     @IBAction func scrubbing(_ sender: UISlider) {
-        controller.player.seek(to: Double(slider.value))
+        Task {
+            await controller.player.seek(to: Double(slider.value))
+        }
     }
     
     @IBAction func scrubbingValueChanged(_ sender: UISlider) {
@@ -87,7 +95,7 @@ class ViewController: UIViewController {
         
         // Render play button
         self.playButton.setTitle(
-            !player.playWhenReady || player.playerState == .failed
+            !player.getPlayWhenReady() || player.playerState == .failed
                 ? "Play"
                 : "Pause",
             for: .normal
@@ -117,7 +125,7 @@ class ViewController: UIViewController {
         // Render load indicator:
         if (
             (player.playerState == .loading || player.playerState == .buffering)
-            && self.controller.player.playWhenReady // Avoid showing indicator before user has pressed play
+            && self.controller.player.getPlayWhenReady() // Avoid showing indicator before user has pressed play
         ) {
             self.loadIndicator.startAnimating()
         } else {

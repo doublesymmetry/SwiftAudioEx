@@ -12,10 +12,18 @@ class AVPlayerTimeObserverTests: QuickSpec {
             
             var player: AVPlayer!
             var observer: AVPlayerTimeObserver!
+
+            @MainActor
+            @Sendable
+            func setAutomaticallyWaitsToMinimizeStalling(for player: AVPlayer, value: Bool) async {
+                player.automaticallyWaitsToMinimizeStalling = value
+            }
+
             
             beforeEach {
-                player = AVPlayer()
-                player.automaticallyWaitsToMinimizeStalling = false
+                let p = AVPlayer()
+                player = p
+                await setAutomaticallyWaitsToMinimizeStalling(for: p, value: false)
                 player.volume = 0
                 observer = AVPlayerTimeObserver(periodicObserverTimeInterval: TimeEventFrequency.everyQuarterSecond.getTime())
                 observer.player = player

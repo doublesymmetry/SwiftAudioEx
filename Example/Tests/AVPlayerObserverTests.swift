@@ -35,7 +35,7 @@ class AVPlayerObserverTests: QuickSpec, AVPlayerObserverDelegate {
                 }
                 
                 it("should be observing") {
-                    expect(observer.isObserving).toEventually(beTrue())
+                    await expect(observer.isObserving).toEventually(beTrue())
                 }
                 
                 context("when player has started") {
@@ -45,8 +45,8 @@ class AVPlayerObserverTests: QuickSpec, AVPlayerObserverDelegate {
                     }
                     
                     it("it should update the delegate") {
-                        expect(self.status).toEventuallyNot(beNil())
-                        expect(self.timeControlStatus).toEventuallyNot(beNil())
+                        await expect(self.status).toEventuallyNot(beNil())
+                        await expect(self.timeControlStatus).toEventuallyNot(beNil())
                     }
                 }
                 
@@ -56,7 +56,7 @@ class AVPlayerObserverTests: QuickSpec, AVPlayerObserverDelegate {
                     }
                     
                     it("should be observing") {
-                        expect(observer.isObserving).toEventually(beTrue())
+                        await expect(observer.isObserving).toEventually(beTrue())
                     }
                 }
                 

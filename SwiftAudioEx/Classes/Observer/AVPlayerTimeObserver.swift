@@ -10,13 +10,14 @@ import Foundation
 import AVFoundation
 
 protocol AVPlayerTimeObserverDelegate: AnyObject {
-    func audioDidStart()
-    func timeEvent(time: CMTime)
+    func audioDidStart() async
+    func timeEvent(time: CMTime) async
 }
 
 /**
  Class for observing time-based events from the AVPlayer
  */
+@available(iOS 13.0, *)
 class AVPlayerTimeObserver {
     
     /// The time to use as start boundary time. Cannot be zero.
@@ -67,7 +68,11 @@ class AVPlayerTimeObserver {
             }),
             queue: nil,
             using: { [weak self] in
-                self?.delegate?.audioDidStart()
+                if let self = self {
+                    Task {
+                        await self.delegate?.audioDidStart()
+                    }
+                }
             }
         )
     }
@@ -94,7 +99,9 @@ class AVPlayerTimeObserver {
         }
         unregisterForPeriodicEvents()
         periodicTimeObserverToken = player.addPeriodicTimeObserver(forInterval: periodicObserverTimeInterval, queue: nil, using: { (time) in
-            self.delegate?.timeEvent(time: time)
+            Task {
+                await self.delegate?.timeEvent(time: time)
+            }
         })
     }
     

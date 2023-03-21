@@ -11,6 +11,7 @@ import MediaPlayer
 /**
  An audio player that can keep track of a queue of AudioItems.
  */
+@available(iOS 13.0, *)
 public class QueuedAudioPlayer: AudioPlayer, QueueManagerDelegate {
     let queue: QueueManager = QueueManager<AudioItem>()
     fileprivate var lastIndex: Int = -1
@@ -35,9 +36,9 @@ public class QueuedAudioPlayer: AudioPlayer, QueueManagerDelegate {
         queue.currentIndex
     }
 
-    override public func clear() {
-        queue.clearQueue()
-        super.clear()
+    override public func clear() async {
+        await queue.clearQueue()
+        await super.clear()
     }
 
     /**
@@ -67,11 +68,11 @@ public class QueuedAudioPlayer: AudioPlayer, QueueManagerDelegate {
      - parameter item: The AudioItem to replace the current item.
      - parameter playWhenReady: Optional, whether to start playback when the item is ready.
      */
-    public override func load(item: AudioItem, playWhenReady: Bool? = nil) {
+    public override func load(item: AudioItem, playWhenReady: Bool? = nil) async {
         if let playWhenReady = playWhenReady {
-            self.playWhenReady = playWhenReady
+            await self.setPlayWhenReady(playWhenReady)
         }
-        queue.replaceCurrentItem(with: item)
+        await queue.replaceCurrentItem(with: item)
     }
 
     /**
@@ -80,11 +81,11 @@ public class QueuedAudioPlayer: AudioPlayer, QueueManagerDelegate {
      - parameter item: The item to add.
      - parameter playWhenReady: Optional, whether to start playback when the item is ready.
      */
-    public func add(item: AudioItem, playWhenReady: Bool? = nil) {
+    public func add(item: AudioItem, playWhenReady: Bool? = nil) async {
         if let playWhenReady = playWhenReady {
-            self.playWhenReady = playWhenReady
+            await self.setPlayWhenReady(playWhenReady)
         }
-        queue.add(item)
+        await queue.add(item)
     }
 
     /**
@@ -93,38 +94,38 @@ public class QueuedAudioPlayer: AudioPlayer, QueueManagerDelegate {
      - parameter items: The items to add to the queue.
      - parameter playWhenReady: Optional, whether to start playback when the item is ready.
      */
-    public func add(items: [AudioItem], playWhenReady: Bool? = nil) {
+    public func add(items: [AudioItem], playWhenReady: Bool? = nil) async {
         if let playWhenReady = playWhenReady {
-            self.playWhenReady = playWhenReady
+            await self.setPlayWhenReady(playWhenReady)
         }
-        queue.add(items)
+        await queue.add(items)
     }
 
-    public func add(items: [AudioItem], at index: Int) throws {
-        try queue.add(items, at: index)
+    public func add(items: [AudioItem], at index: Int) async throws {
+        try await queue.add(items, at: index)
     }
 
     /**
      Step to the next item in the queue.
      */
-    public func next() {
+    public func next() async {
         let lastIndex = currentIndex
         let playbackWasActive = wrapper.playbackActive;
-        _ = queue.next(wrap: repeatMode == .queue)
+        _ = await queue.next(wrap: repeatMode == .queue)
         if (playbackWasActive && lastIndex != currentIndex || repeatMode == .queue) {
-            event.playbackEnd.emit(data: .skippedToNext)
+            await event.playbackEnd.emit(data: .skippedToNext)
         }
     }
 
     /**
      Step to the previous item in the queue.
      */
-    public func previous() {
+    public func previous() async {
         let lastIndex = currentIndex
         let playbackWasActive = wrapper.playbackActive;
-        _ = queue.previous(wrap: repeatMode == .queue)
+        _ = await queue.previous(wrap: repeatMode == .queue)
         if (playbackWasActive && lastIndex != currentIndex || repeatMode == .queue) {
-            event.playbackEnd.emit(data: .skippedToPrevious)
+            await event.playbackEnd.emit(data: .skippedToPrevious)
         }
     }
 
@@ -134,8 +135,8 @@ public class QueuedAudioPlayer: AudioPlayer, QueueManagerDelegate {
      - parameter index: The index of the item to remove.
      - throws: `AudioPlayerError.QueueError`
      */
-    public func removeItem(at index: Int) throws {
-        try queue.removeItem(at: index)
+    public func removeItem(at index: Int) async throws {
+        _ = try await queue.removeItem(at: index)
     }
 
 
@@ -146,16 +147,16 @@ public class QueuedAudioPlayer: AudioPlayer, QueueManagerDelegate {
      - parameter playWhenReady: Optional, whether to start playback when the item is ready.
      - throws: `AudioPlayerError`
      */
-    public func jumpToItem(atIndex index: Int, playWhenReady: Bool? = nil) throws {
+    public func jumpToItem(atIndex index: Int, playWhenReady: Bool? = nil) async throws {
         if let playWhenReady = playWhenReady {
-            self.playWhenReady = playWhenReady
+            await self.setPlayWhenReady(playWhenReady)
         }
         if (index == currentIndex) {
-            seek(to: 0)
+            await seek(to: 0)
         } else {
-            _ = try queue.jump(to: index)
+            _ = try await queue.jump(to: index)
         }
-        event.playbackEnd.emit(data: .jumpedToIndex)
+        await event.playbackEnd.emit(data: .jumpedToIndex)
     }
 
     /**
@@ -183,55 +184,57 @@ public class QueuedAudioPlayer: AudioPlayer, QueueManagerDelegate {
         queue.removePreviousItems()
     }
 
-    func replay() {
-        seek(to: 0);
-        play()
+    func replay() async {
+        await seek(to: 0);
+        await play()
     }
 
     // MARK: - AVPlayerWrapperDelegate
 
-    override func AVWrapperItemDidPlayToEndTime() {
-        event.playbackEnd.emit(data: .playedUntilEnd)
+    override func AVWrapperItemDidPlayToEndTime() async {
+        await event.playbackEnd.emit(data: .playedUntilEnd)
         if (repeatMode == .track) {
-            replay()
+            await replay()
         } else if (repeatMode == .queue) {
-            _ = queue.next(wrap: true)
+            _ = await queue.next(wrap: true)
         } else if (currentIndex != items.count - 1) {
-            _ = queue.next(wrap: false)
+            _ = await queue.next(wrap: false)
         } else {
-            wrapper.state = .ended
+            await wrapper.setState(state: .ended)
         }
     }
 
     // MARK: - QueueManagerDelegate
 
-    func onCurrentItemChanged() {
+    func onCurrentItemChanged() async {
         let lastPosition = currentTime;
         if let currentItem = currentItem {
-            super.load(item: currentItem)
+            await super.load(item: currentItem)
         } else {
-            super.clear()
+            await super.clear()
         }
-        event.currentItem.emit(
+        let lastItemToEmit = currentItem
+        let lastIndexToEmit = lastIndex == -1 ? nil : lastIndex
+        lastItem = currentItem
+        lastIndex = currentIndex
+        await event.currentItem.emit(
             data: (
                 item: currentItem,
                 index: currentIndex == -1 ? nil : currentIndex,
-                lastItem: lastItem,
-                lastIndex: lastIndex == -1 ? nil : lastIndex,
+                lastItem: lastItemToEmit,
+                lastIndex: lastIndexToEmit,
                 lastPosition: lastPosition
             )
         )
-        lastItem = currentItem
-        lastIndex = currentIndex
     }
 
-    func onSkippedToSameCurrentItem() {
+    func onSkippedToSameCurrentItem() async {
         if (wrapper.playbackActive) {
-            replay()
+            await replay()
         }
     }
 
-    func onReceivedFirstItem() {
-        try! queue.jump(to: 0)
+    func onReceivedFirstItem() async {
+        try! await queue.jump(to: 0)
     }
 }

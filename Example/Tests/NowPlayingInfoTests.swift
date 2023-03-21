@@ -29,20 +29,20 @@ class NowPlayingInfoTests: QuickSpec {
                     
                     beforeEach {
                         item = Source.getAudioItem()
-                        audioPlayer.load(item: item, playWhenReady: false)
+                        await audioPlayer.load(item: item, playWhenReady: false)
                     }
                     
                     it("should eventually be updated with meta data") {
-                        expect(nowPlayingController.getTitle()).toEventuallyNot(beNil())
-                        expect(nowPlayingController.getTitle()).toEventually(equal(item.getTitle()!))
+                        await expect(nowPlayingController.getTitle()).toEventuallyNot(beNil())
+                        await expect(nowPlayingController.getTitle()).toEventually(equal(item.getTitle()!))
                         
-                        expect(nowPlayingController.getArtist()).toEventuallyNot(beNil())
-                        expect(nowPlayingController.getArtist()).toEventually(equal(item.getArtist()!))
+                        await expect(nowPlayingController.getArtist()).toEventuallyNot(beNil())
+                        await expect(nowPlayingController.getArtist()).toEventually(equal(item.getArtist()!))
                         
-                        expect(nowPlayingController.getAlbumTitle()).toEventuallyNot(beNil())
-                        expect(nowPlayingController.getAlbumTitle()).toEventually(equal(item.getAlbumTitle()!))
+                        await expect(nowPlayingController.getAlbumTitle()).toEventuallyNot(beNil())
+                        await expect(nowPlayingController.getAlbumTitle()).toEventually(equal(item.getAlbumTitle()!))
                         
-                        expect(nowPlayingController.getArtwork()).toEventuallyNot(beNil())
+                        await expect(nowPlayingController.getArtwork()).toEventuallyNot(beNil())
                     }
                     
                 }
@@ -53,13 +53,13 @@ class NowPlayingInfoTests: QuickSpec {
                     
                     beforeEach {
                         item = LongSource.getAudioItem()
-                        audioPlayer.load(item: item, playWhenReady: true)
+                        await audioPlayer.load(item: item, playWhenReady: true)
                     }
                     
                     it("should eventually be updated with playback values") {
-                        expect(nowPlayingController.getRate()).toEventuallyNot(beNil())
-                        expect(nowPlayingController.getDuration()).toEventuallyNot(beNil())
-                        expect(nowPlayingController.getCurrentTime()).toEventuallyNot(beNil())
+                        await expect(nowPlayingController.getRate()).toEventuallyNot(beNil())
+                        await expect(nowPlayingController.getDuration()).toEventuallyNot(beNil())
+                        await expect(nowPlayingController.getCurrentTime()).toEventuallyNot(beNil())
                     }
                     
                 }

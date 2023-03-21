@@ -30,17 +30,17 @@ class AudioPlayerEventTests: QuickSpec {
                     }
                     
                     it("should have one element") {
-                        expect(event.invokers.count).toEventuallyNot(equal(0))
+                        await expect(event.invokers.count).toEventuallyNot(equal(0))
                     }
                     
                     context("then that listener is deinitialized and an an event is emitted") {
                         beforeEach {
                             listener = nil
-                            event.emit(data: ())
+                            await event.emit(data: ())
                         }
                         
                         it("should remove the invoker") {
-                            expect(event.invokers.count).toEventually(equal(0))
+                            await expect(event.invokers.count).toEventually(equal(0))
                         }
                         
                     }
@@ -58,7 +58,7 @@ class AudioPlayerEventTests: QuickSpec {
                     }
                     
                     it("should have several listeners") {
-                        expect(event.invokers.count).toEventually(equal(listeners.count))
+                        await expect(event.invokers.count).toEventually(equal(listeners.count))
                     }
                     
                     context("then removing one") {
@@ -67,7 +67,7 @@ class AudioPlayerEventTests: QuickSpec {
                         }
                         
                         it("should have one less invoker") {
-                            expect(event.invokers.count).toEventually(equal(listeners.count - 1))
+                            await expect(event.invokers.count).toEventually(equal(listeners.count - 1))
                         }
                     }
                     

@@ -10,16 +10,15 @@ import MediaPlayer
 
 
 protocol AVPlayerWrapperDelegate: AnyObject {
-    
-    func AVWrapper(didChangeState state: AVPlayerWrapperState)
-    func AVWrapper(secondsElapsed seconds: Double)
-    func AVWrapper(failedWithError error: Error?)
-    func AVWrapper(seekTo seconds: Double, didFinish: Bool)
-    func AVWrapper(didUpdateDuration duration: Double)
-    func AVWrapper(didReceiveMetadata metadata: [AVTimedMetadataGroup])
-    func AVWrapper(didChangePlayWhenReady playWhenReady: Bool)
-    func AVWrapperItemDidPlayToEndTime()
-    func AVWrapperItemFailedToPlayToEndTime()
-    func AVWrapperItemPlaybackStalled()
-    func AVWrapperDidRecreateAVPlayer()
+    func AVWrapper(didChangeState state: AVPlayerWrapperState) async
+    func AVWrapper(secondsElapsed seconds: Double) async
+    func AVWrapper(failedWithError error: Error?) async
+    func AVWrapper(seekTo seconds: Double, didFinish: Bool) async
+    func AVWrapper(didUpdateDuration duration: Double) async
+    func AVWrapper(didReceiveMetadata metadata: [AVTimedMetadataGroup]) async
+    func AVWrapper(didChangePlayWhenReady playWhenReady: Bool) async
+    func AVWrapperItemDidPlayToEndTime() async
+    func AVWrapperItemFailedToPlayToEndTime() async
+    func AVWrapperItemPlaybackStalled() async
+    func AVWrapperDidRecreateAVPlayer() async
 }

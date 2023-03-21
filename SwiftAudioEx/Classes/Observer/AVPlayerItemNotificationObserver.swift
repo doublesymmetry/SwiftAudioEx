@@ -9,9 +9,9 @@ import Foundation
 import AVFoundation
 
 protocol AVPlayerItemNotificationObserverDelegate: AnyObject {
-    func itemDidPlayToEndTime()
-    func itemFailedToPlayToEndTime()
-    func itemPlaybackStalled()
+    func itemDidPlayToEndTime() async
+    func itemFailedToPlayToEndTime() async
+    func itemPlaybackStalled() async
 }
 
 /**
@@ -19,6 +19,7 @@ protocol AVPlayerItemNotificationObserverDelegate: AnyObject {
  
  Currently only listening for the AVPlayerItemDidPlayToEndTime notification.
  */
+@available(iOS 13.0, *)
 class AVPlayerItemNotificationObserver {
     
     private let notificationCenter: NotificationCenter = NotificationCenter.default
@@ -89,14 +90,20 @@ class AVPlayerItemNotificationObserver {
     }
     
     @objc private func itemDidPlayToEndTime() {
-        delegate?.itemDidPlayToEndTime()
+        Task {
+            await delegate?.itemDidPlayToEndTime()
+        }
     }
 
     @objc private func itemFailedToPlayToEndTime() {
-        delegate?.itemFailedToPlayToEndTime()
+        Task {
+            await delegate?.itemFailedToPlayToEndTime()
+        }
     }
 
     @objc private func itemPlaybackStalled() {
-        delegate?.itemPlaybackStalled()
+        Task {
+            await delegate?.itemPlaybackStalled()
+        }
     }
 }

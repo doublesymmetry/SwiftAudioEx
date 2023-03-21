@@ -11,6 +11,7 @@ import MediaPlayer
 
 public typealias RemoteCommandHandler = (MPRemoteCommandEvent) -> MPRemoteCommandHandlerStatus
 
+@available(iOS 13.0, *)
 public protocol RemoteCommandProtocol {
     associatedtype Command: MPRemoteCommand
     
@@ -19,6 +20,7 @@ public protocol RemoteCommandProtocol {
     var handlerKeyPath: KeyPath<RemoteCommandController, RemoteCommandHandler> { get }
 }
 
+@available(iOS 13.0, *)
 public struct PlayBackCommand: RemoteCommandProtocol {
     
     public static let play = PlayBackCommand(id: "Play", commandKeyPath: \MPRemoteCommandCenter.playCommand, handlerKeyPath: \RemoteCommandController.handlePlayCommand)
@@ -44,6 +46,7 @@ public struct PlayBackCommand: RemoteCommandProtocol {
     
 }
 
+@available(iOS 13.0, *)
 public struct ChangePlaybackPositionCommand: RemoteCommandProtocol {
     
     public static let changePlaybackPosition = ChangePlaybackPositionCommand(id: "ChangePlaybackPosition", commandKeyPath: \MPRemoteCommandCenter.changePlaybackPositionCommand, handlerKeyPath: \RemoteCommandController.handleChangePlaybackPositionCommand)
@@ -58,6 +61,7 @@ public struct ChangePlaybackPositionCommand: RemoteCommandProtocol {
     
 }
 
+@available(iOS 13.0, *)
 public struct SkipIntervalCommand: RemoteCommandProtocol {
     
     public static let skipForward = SkipIntervalCommand(id: "SkipForward", commandKeyPath: \MPRemoteCommandCenter.skipForwardCommand, handlerKeyPath: \RemoteCommandController.handleSkipForwardCommand)
@@ -79,6 +83,7 @@ public struct SkipIntervalCommand: RemoteCommandProtocol {
     
 }
 
+@available(iOS 13.0, *)
 public struct FeedbackCommand: RemoteCommandProtocol {
     
     public static let like = FeedbackCommand(id: "Like", commandKeyPath: \MPRemoteCommandCenter.likeCommand, handlerKeyPath: \RemoteCommandController.handleLikeCommand)

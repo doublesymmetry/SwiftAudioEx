@@ -13,22 +13,23 @@ protocol AVPlayerItemObserverDelegate: AnyObject {
     /**
      Called when the duration of the observed item is updated.
      */
-    func item(didUpdateDuration duration: Double)
+    func item(didUpdateDuration duration: Double) async
 
     /**
      Called when the playback of the observed item is or is no longer likely to keep up.
      */
-    func item(didUpdatePlaybackLikelyToKeepUp playbackLikelyToKeepUp: Bool)
+    func item(didUpdatePlaybackLikelyToKeepUp playbackLikelyToKeepUp: Bool) async
     /**
      Called when the observed item receives metadata
      */
-    func item(didReceiveMetadata metadata: [AVTimedMetadataGroup])
+    func item(didReceiveMetadata metadata: [AVTimedMetadataGroup]) async
     
 }
 
 /**
  Observing an AVPlayers status changes.
  */
+@available(iOS 13.0, *)
 class AVPlayerItemObserver: NSObject {
     
     private static var context = 0
@@ -93,17 +94,23 @@ class AVPlayerItemObserver: NSObject {
         switch observedKeyPath {
         case AVPlayerItemKeyPath.duration:
             if let duration = change?[.newKey] as? CMTime {
-                delegate?.item(didUpdateDuration: duration.seconds)
+                Task {
+                    await delegate?.item(didUpdateDuration: duration.seconds)
+                }
             }
         
         case AVPlayerItemKeyPath.loadedTimeRanges:
             if let ranges = change?[.newKey] as? [NSValue], let duration = ranges.first?.timeRangeValue.duration {
-                delegate?.item(didUpdateDuration: duration.seconds)
+                Task {
+                    await delegate?.item(didUpdateDuration: duration.seconds)
+                }
             }
 
         case AVPlayerItemKeyPath.playbackLikelyToKeepUp:
             if let playbackLikelyToKeepUp = change?[.newKey] as? Bool {
-                delegate?.item(didUpdatePlaybackLikelyToKeepUp: playbackLikelyToKeepUp)
+                Task {
+                    await delegate?.item(didUpdatePlaybackLikelyToKeepUp: playbackLikelyToKeepUp)
+                }
             }
              
         default: break
@@ -112,8 +119,11 @@ class AVPlayerItemObserver: NSObject {
     }
 }
 
+@available(iOS 13.0, *)
 extension AVPlayerItemObserver: AVPlayerItemMetadataOutputPushDelegate {
     func metadataOutput(_ output: AVPlayerItemMetadataOutput, didOutputTimedMetadataGroups groups: [AVTimedMetadataGroup], from track: AVPlayerItemTrack?) {
-        delegate?.item(didReceiveMetadata: groups)
+        Task {
+            await delegate?.item(didReceiveMetadata: groups)
+        }
     }
 }

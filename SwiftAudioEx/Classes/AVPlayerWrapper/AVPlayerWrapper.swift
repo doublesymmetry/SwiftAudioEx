@@ -20,6 +20,7 @@ public enum PlaybackEndedReason: String {
     case failed
 }
 
+@available(iOS 13.0, *)
 class AVPlayerWrapper: AVPlayerWrapperProtocol {
     // MARK: - Properties
     
@@ -54,52 +55,68 @@ class AVPlayerWrapper: AVPlayerWrapperProtocol {
     fileprivate(set) var playbackError: AudioPlayerError.PlaybackError? = nil
     
     var _state: AVPlayerWrapperState = AVPlayerWrapperState.idle
-    var state: AVPlayerWrapperState {
-        get {
-            var state: AVPlayerWrapperState!
-            stateQueue.sync {
-                state = _state
-            }
 
-            return state
+    public func getState() -> AVPlayerWrapperState {
+        var state: AVPlayerWrapperState!
+        stateQueue.sync {
+            state = _state
         }
-        set {
-            stateQueue.async(flags: .barrier) { [weak self] in
-                guard let self = self else { return }
-                let currentState = self._state
-                if (currentState != newValue) {
-                    self._state = newValue
-                    self.delegate?.AVWrapper(didChangeState: newValue)
-                }
-            }
+
+        return state
+    }
+    
+    public func setState(state: AVPlayerWrapperState) async {
+        let currentState = _state
+        if (currentState != state) {
+            self._state = state
+            await self.delegate?.AVWrapper(didChangeState: state)
         }
     }
-
+    
     fileprivate(set) var lastPlayerTimeControlStatus: AVPlayer.TimeControlStatus = AVPlayer.TimeControlStatus.paused
 
     /**
      Whether AVPlayer should start playing automatically when the item is ready.
      */
-    public var playWhenReady: Bool = false {
-        didSet {
-            if (playWhenReady == true && (state == .failed || state == .stopped)) {
-                reload(startFromCurrentTime: state == .failed)
-            }
+    private var _playWhenReady: Bool = false
 
-            applyAVPlayerRate()
-            
-            if oldValue != playWhenReady {
-                delegate?.AVWrapper(didChangePlayWhenReady: playWhenReady)
-            }
+    public func getPlayWhenReady() -> Bool {
+        return _playWhenReady
+    }
+
+    public func setPlayWhenReady(_ playWhenReady: Bool) async {
+        let changed = self._playWhenReady != playWhenReady
+        self._playWhenReady = playWhenReady
+        let state = getState()
+        if (playWhenReady == true && (state == .failed || state == .stopped)) {
+            await reload(startFromCurrentTime: state == .failed)
+        }
+
+        applyAVPlayerRate()
+        
+        if changed {
+            await delegate?.AVWrapper(didChangePlayWhenReady: playWhenReady)
         }
     }
+
+    public func setPlayWhenReadyWithoutReloading(_ playWhenReady: Bool) async {
+        let changed = self._playWhenReady != playWhenReady
+        self._playWhenReady = playWhenReady
+
+        applyAVPlayerRate()
+        
+        if changed {
+            await delegate?.AVWrapper(didChangePlayWhenReady: playWhenReady)
+        }
+    }
+
     
     var currentItem: AVPlayerItem? {
         avPlayer.currentItem
     }
 
     var playbackActive: Bool {
-        switch state {
+        switch getState() {
         case .idle, .stopped, .ended, .failed:
             return false
         default: return true
@@ -167,50 +184,53 @@ class AVPlayerWrapper: AVPlayerWrapperProtocol {
         set { avPlayer.automaticallyWaitsToMinimizeStalling = newValue }
     }
     
-    func play() {
-        playWhenReady = true
+    func play() async {
+        await setPlayWhenReady(true)
     }
     
-    func pause() {
-        playWhenReady = false
+    func pause() async {
+        await setPlayWhenReady(false)
     }
     
-    func togglePlaying() {
+    func togglePlaying() async {
         switch avPlayer.timeControlStatus {
         case .playing, .waitingToPlayAtSpecifiedRate:
-            pause()
+            await pause()
         case .paused:
-            play()
+            await play()
         @unknown default:
             fatalError("Unknown AVPlayer.timeControlStatus")
         }
     }
     
-    func stop() {
-        state = .stopped
+    func stop() async {
+        await setState(state: .stopped)
         clearCurrentItem()
-        playWhenReady = false
+        await setPlayWhenReady(false)
     }
     
-    func seek(to seconds: TimeInterval) {
+    func seek(to seconds: TimeInterval) async {
        // if the player is loading then we need to defer seeking until it's ready.
         if (avPlayer.currentItem == nil) {
          timeToSeekToAfterLoading = seconds
        } else {
            let time = CMTimeMakeWithSeconds(seconds, preferredTimescale: 1000)
-           avPlayer.seek(to: time, toleranceBefore: CMTime.zero, toleranceAfter: CMTime.zero) { (finished) in
-             self.delegate?.AVWrapper(seekTo: Double(seconds), didFinish: finished)
-         }
+           let finished = await withCheckedContinuation { continuation in
+               avPlayer.seek(to: time, toleranceBefore: CMTime.zero, toleranceAfter: CMTime.zero) { (finished) in
+                   continuation.resume(returning: finished)
+               }
+           }
+           await self.delegate?.AVWrapper(seekTo: Double(seconds), didFinish: finished)
        }
      }
 
-    func seek(by seconds: TimeInterval) {
+    func seek(by seconds: TimeInterval) async {
         if let currentItem = avPlayer.currentItem {
-            let time = currentItem.currentTime().seconds + seconds
-            avPlayer.seek(
-                to: CMTimeMakeWithSeconds(time, preferredTimescale: 1000)
-            ) { (finished) in
-                  self.delegate?.AVWrapper(seekTo: Double(time), didFinish: finished)
+            let time = CMTimeMakeWithSeconds(currentItem.currentTime().seconds + seconds, preferredTimescale: 1000)
+            await withCheckedContinuation { continuation in
+                avPlayer.seek(to: time, toleranceBefore: CMTime.zero, toleranceAfter: CMTime.zero) {_ in
+                    continuation.resume()
+                }
             }
         } else {
             if let timeToSeekToAfterLoading = timeToSeekToAfterLoading {
@@ -221,15 +241,16 @@ class AVPlayerWrapper: AVPlayerWrapperProtocol {
         }
     }
     
-    private func playbackFailed(error: AudioPlayerError.PlaybackError) {
-        state = .failed
+    private func playbackFailed(error: AudioPlayerError.PlaybackError) async {
         self.playbackError = error
-        self.delegate?.AVWrapper(failedWithError: error)
+        await setState(state: .failed)
+        await self.delegate?.AVWrapper(failedWithError: error)
     }
     
-    func load() {
+    func load() async {
+        let state = getState()
         if (state == .failed) {
-            recreateAVPlayer()
+            await recreateAVPlayer()
         } else {
             clearCurrentItem()
         }
@@ -237,69 +258,68 @@ class AVPlayerWrapper: AVPlayerWrapperProtocol {
             let keys = ["playable"]
             let pendingAsset = AVURLAsset(url: url, options: urlOptions)
             asset = pendingAsset
-            state = .loading
-            pendingAsset.loadValuesAsynchronously(forKeys: keys, completionHandler: { [weak self] in
-                guard let self = self else { return }
-                
-                DispatchQueue.main.async {
-                    if (pendingAsset != self.asset) { return; }
-                    
-                    for key in keys {
-                        var error: NSError?
-                        let keyStatus = pendingAsset.statusOfValue(forKey: key, error: &error)
-                        switch keyStatus {
-                        case .failed:
-                            self.playbackFailed(error: AudioPlayerError.PlaybackError.failedToLoadKeyValue)
-                            return
-                        case .cancelled, .loading, .unknown:
-                            return
-                        case .loaded:
-                            break
-                        default: break
-                        }
-                    }
-                    
-                    if (!pendingAsset.isPlayable) {
-                        self.playbackFailed(error: AudioPlayerError.PlaybackError.itemWasUnplayable)
-                        return;
-                    }
-                    
-                    let item = AVPlayerItem(
-                        asset: pendingAsset,
-                        automaticallyLoadedAssetKeys: keys
-                    )
-                    self.item = item;
-                    item.preferredForwardBufferDuration = self.bufferDuration
-                    self.avPlayer.replaceCurrentItem(with: item)
-                    self.startObservingAVPlayer(item: item)
-                    self.applyAVPlayerRate()
-                    if pendingAsset.availableChapterLocales.count > 0 {
-                        for locale in pendingAsset.availableChapterLocales {
-                            let chapters = pendingAsset.chapterMetadataGroups(withTitleLocale: locale, containingItemsWithCommonKeys: nil)
-                            self.delegate?.AVWrapper(didReceiveMetadata: chapters)
-                        }
-                    } else {
-                        for format in pendingAsset.availableMetadataFormats {
-                            let timeRange = CMTimeRange(start: CMTime(seconds: 0, preferredTimescale: 1000), end: pendingAsset.duration)
-                            let group = AVTimedMetadataGroup(items: pendingAsset.metadata(forFormat: format), timeRange: timeRange)
-                            self.delegate?.AVWrapper(didReceiveMetadata: [group])
-                        }
-                    }
-                    
-                    if let initialTime = self.timeToSeekToAfterLoading {
-                        self.timeToSeekToAfterLoading = nil
-                        self.seek(to: initialTime)
-                    }
+            await setState(state: .loading)
+            await withCheckedContinuation { continuation in
+                pendingAsset.loadValuesAsynchronously(forKeys: keys, completionHandler: {
+                    continuation.resume()
+                })
+            }
+            if (pendingAsset != self.asset) { return; }
+            
+            for key in keys {
+                var error: NSError?
+                let keyStatus = pendingAsset.statusOfValue(forKey: key, error: &error)
+                switch keyStatus {
+                case .failed:
+                    await self.playbackFailed(error: AudioPlayerError.PlaybackError.failedToLoadKeyValue)
+                    return
+                case .cancelled, .loading, .unknown:
+                    return
+                case .loaded:
+                    break
+                default: break
                 }
-            })
+            }
+            
+            if (!pendingAsset.isPlayable) {
+                await self.playbackFailed(error: AudioPlayerError.PlaybackError.itemWasUnplayable)
+                return;
+            }
+            
+            let item = AVPlayerItem(
+                asset: pendingAsset,
+                automaticallyLoadedAssetKeys: keys
+            )
+            self.item = item;
+            item.preferredForwardBufferDuration = self.bufferDuration
+            self.avPlayer.replaceCurrentItem(with: item)
+            self.startObservingAVPlayer(item: item)
+            self.applyAVPlayerRate()
+            if pendingAsset.availableChapterLocales.count > 0 {
+                for locale in pendingAsset.availableChapterLocales {
+                    let chapters = pendingAsset.chapterMetadataGroups(withTitleLocale: locale, containingItemsWithCommonKeys: nil)
+                    await self.delegate?.AVWrapper(didReceiveMetadata: chapters)
+                }
+            } else {
+                for format in pendingAsset.availableMetadataFormats {
+                    let timeRange = CMTimeRange(start: CMTime(seconds: 0, preferredTimescale: 1000), end: pendingAsset.duration)
+                    let group = AVTimedMetadataGroup(items: pendingAsset.metadata(forFormat: format), timeRange: timeRange)
+                    await self.delegate?.AVWrapper(didReceiveMetadata: [group])
+                }
+            }
+            
+            if let initialTime = self.timeToSeekToAfterLoading {
+                self.timeToSeekToAfterLoading = nil
+                await self.seek(to: initialTime)
+            }
         }
     }
     
-    func load(from url: URL, playWhenReady: Bool, options: [String: Any]? = nil) {
-        self.playWhenReady = playWhenReady
+    func load(from url: URL, playWhenReady: Bool, options: [String: Any]? = nil) async {
         self.url = url
         self.urlOptions = options
-        self.load()
+        await setPlayWhenReadyWithoutReloading(playWhenReady)
+        await self.load()
     }
     
     func load(
@@ -307,10 +327,10 @@ class AVPlayerWrapper: AVPlayerWrapperProtocol {
         playWhenReady: Bool,
         initialTime: TimeInterval? = nil,
         options: [String : Any]? = nil
-    ) {
-        self.load(from: url, playWhenReady: playWhenReady, options: options)
+    ) async {
+        await self.load(from: url, playWhenReady: playWhenReady, options: options)
         if let initialTime = initialTime {
-            self.seek(to: initialTime)
+            await self.seek(to: initialTime)
         }
     }
 
@@ -320,27 +340,27 @@ class AVPlayerWrapper: AVPlayerWrapperProtocol {
         playWhenReady: Bool = false,
         initialTime: TimeInterval? = nil,
         options: [String : Any]? = nil
-    ) {
+    ) async {
         if let itemUrl = type == .file
             ? URL(fileURLWithPath: url)
             : URL(string: url)
         {
-            self.load(from: itemUrl, playWhenReady: playWhenReady, options: options)
+            await self.load(from: itemUrl, playWhenReady: playWhenReady, options: options)
             if let initialTime = initialTime {
-                self.seek(to: initialTime)
+                await self.seek(to: initialTime)
             }
         } else {
             clearCurrentItem()
-            playbackFailed(error: AudioPlayerError.PlaybackError.invalidSourceUrl(url))
+            await playbackFailed(error: AudioPlayerError.PlaybackError.invalidSourceUrl(url))
         }
     }
 
-    func unload() {
+    func unload() async {
         clearCurrentItem()
-        state = .idle
+        await setState(state: .idle)
     }
 
-    func reload(startFromCurrentTime: Bool) {
+    func reload(startFromCurrentTime: Bool) async {
         var time : Double? = nil
         if (startFromCurrentTime) {
             if let currentItem = currentItem {
@@ -349,9 +369,9 @@ class AVPlayerWrapper: AVPlayerWrapperProtocol {
                 }
             }
         }
-        load()
+        await load()
         if let time = time {
-            seek(to: time)
+            await seek(to: time)
         }
     }
     
@@ -377,7 +397,7 @@ class AVPlayerWrapper: AVPlayerWrapperProtocol {
         playerItemNotificationObserver.stopObservingCurrentItem()
     }
     
-    private func recreateAVPlayer() {
+    private func recreateAVPlayer() async {
         playbackError = nil
         playerTimeObserver.unregisterForBoundaryTimeEvents()
         playerTimeObserver.unregisterForPeriodicEvents()
@@ -388,7 +408,7 @@ class AVPlayerWrapper: AVPlayerWrapperProtocol {
         avPlayer = AVPlayer();
         setupAVPlayer()
 
-        delegate?.AVWrapperDidRecreateAVPlayer()
+        await delegate?.AVWrapperDidRecreateAVPlayer()
     }
     
     private func setupAVPlayer() {
@@ -406,46 +426,48 @@ class AVPlayerWrapper: AVPlayerWrapperProtocol {
     }
     
     private func applyAVPlayerRate() {
-        avPlayer.rate = playWhenReady ? _rate : 0
+        avPlayer.rate = getPlayWhenReady() ? _rate : 0
     }
 }
 
+@available(iOS 13.0, *)
 extension AVPlayerWrapper: AVPlayerObserverDelegate {
     
     // MARK: - AVPlayerObserverDelegate
     
-    func player(didChangeTimeControlStatus status: AVPlayer.TimeControlStatus) {
+    func player(didChangeTimeControlStatus status: AVPlayer.TimeControlStatus) async {
         switch status {
         case .paused:
-            let state = self.state
-            if self.asset == nil && state != .stopped {
-                self.state = .idle
+            let state = getState()
+            if self.asset == nil && state != .stopped && state != .failed {
+                await setState(state: .idle)
             } else if (state != .failed && state != .stopped && state != .loading) {
                 // Playback may have become paused externally for example due to a bluetooth device disconnecting:
-                if (self.playWhenReady) {
+                if (self.getPlayWhenReady()) {
                     // Only if we are not on the boundaries of the track, otherwise itemDidPlayToEndTime will handle it instead.
                     if (self.currentTime > 0 && self.currentTime < self.duration) {
-                        self.playWhenReady = false;
+                        await setPlayWhenReady(false)
                     }
                 } else {
-                    self.state = .paused
+                    await setState(state: .paused)
                 }
             }
         case .waitingToPlayAtSpecifiedRate:
-            if self.asset != nil {
-                self.state = .buffering
+            let state = getState()
+            if self.asset != nil && state != .failed {
+                await setState(state: .buffering)
             }
         case .playing:
-            self.state = .playing
+            await setState(state: .playing)
         @unknown default:
             break
         }
     }
     
-    func player(statusDidChange status: AVPlayer.Status) {
+    func player(statusDidChange status: AVPlayer.Status) async {
         if (status == .failed) {
             let error = item!.error as NSError?
-            playbackFailed(error: error?.code == URLError.notConnectedToInternet.rawValue
+            await playbackFailed(error: error?.code == URLError.notConnectedToInternet.rawValue
                  ? AudioPlayerError.PlaybackError.notConnectedToInternet
                  : AudioPlayerError.PlaybackError.playbackFailed
             )
@@ -453,52 +475,55 @@ extension AVPlayerWrapper: AVPlayerObserverDelegate {
     }
 }
 
+@available(iOS 13.0, *)
 extension AVPlayerWrapper: AVPlayerTimeObserverDelegate {
     
     // MARK: - AVPlayerTimeObserverDelegate
     
-    func audioDidStart() {
-        state = .playing
+    func audioDidStart() async {
+        await setState(state: .playing)
     }
     
-    func timeEvent(time: CMTime) {
-        delegate?.AVWrapper(secondsElapsed: time.seconds)
+    func timeEvent(time: CMTime) async {
+        await delegate?.AVWrapper(secondsElapsed: time.seconds)
     }
     
 }
 
+@available(iOS 13.0, *)
 extension AVPlayerWrapper: AVPlayerItemNotificationObserverDelegate {
     // MARK: - AVPlayerItemNotificationObserverDelegate
 
-    func itemFailedToPlayToEndTime() {
-        playbackFailed(error: AudioPlayerError.PlaybackError.playbackFailed)
-        delegate?.AVWrapperItemFailedToPlayToEndTime()
+    func itemFailedToPlayToEndTime() async {
+        await playbackFailed(error: AudioPlayerError.PlaybackError.playbackFailed)
+        await delegate?.AVWrapperItemFailedToPlayToEndTime()
     }
     
-    func itemPlaybackStalled() {
-        delegate?.AVWrapperItemPlaybackStalled()
+    func itemPlaybackStalled() async {
+        await delegate?.AVWrapperItemPlaybackStalled()
     }
     
-    func itemDidPlayToEndTime() {
-        delegate?.AVWrapperItemDidPlayToEndTime()
+    func itemDidPlayToEndTime() async {
+        await delegate?.AVWrapperItemDidPlayToEndTime()
     }
     
 }
 
+@available(iOS 13.0, *)
 extension AVPlayerWrapper: AVPlayerItemObserverDelegate {
     // MARK: - AVPlayerItemObserverDelegate
 
-    func item(didUpdatePlaybackLikelyToKeepUp playbackLikelyToKeepUp: Bool) {
-        if (playbackLikelyToKeepUp && state != .playing) {
-            state = .ready
+    func item(didUpdatePlaybackLikelyToKeepUp playbackLikelyToKeepUp: Bool) async {
+        if (playbackLikelyToKeepUp && getState() != .playing) {
+            await setState(state: .ready)
         }
     }
         
-    func item(didUpdateDuration duration: Double) {
-        delegate?.AVWrapper(didUpdateDuration: duration)
+    func item(didUpdateDuration duration: Double) async {
+        await delegate?.AVWrapper(didUpdateDuration: duration)
     }
     
-    func item(didReceiveMetadata metadata: [AVTimedMetadataGroup]) {
-        delegate?.AVWrapper(didReceiveMetadata: metadata)
+    func item(didReceiveMetadata metadata: [AVTimedMetadataGroup]) async {
+        await delegate?.AVWrapper(didReceiveMetadata: metadata)
     }
 }

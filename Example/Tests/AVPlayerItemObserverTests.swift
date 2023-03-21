@@ -22,14 +22,14 @@ class AVPlayerItemObserverTests: QuickSpec {
                     }
                     
                     it("should exist") {
-                        expect(observer.observingItem).toEventuallyNot(beNil())
+                        await expect(observer.observingItem).toEventuallyNot(beNil())
                     }
                 }
             }
             
             describe("observing status") {
                 it("should not be observing") {
-                    expect(observer.isObserving).toEventuallyNot(beTrue())
+                    await expect(observer.isObserving).toEventuallyNot(beTrue())
                 }
                 context("when observing") {
                     var item: AVPlayerItem!
@@ -38,7 +38,7 @@ class AVPlayerItemObserverTests: QuickSpec {
                         observer.startObserving(item: item)
                     }
                     it("should be observing") {
-                        expect(observer.isObserving).toEventually(beTrue())
+                        await expect(observer.isObserving).toEventually(beTrue())
                     }
                 }
             }

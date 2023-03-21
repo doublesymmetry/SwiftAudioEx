@@ -8,6 +8,7 @@
 import Foundation
 import MediaPlayer
 
+@available(iOS 13.0, *)
 extension AudioPlayer {
     
     public typealias PlayWhenReadyChangeData = Bool
@@ -27,6 +28,7 @@ extension AudioPlayer {
         lastPosition: Double?
     )
     
+    @available(iOS 13.0, *)
     public struct EventHolder {
         
         /**
@@ -93,64 +95,65 @@ extension AudioPlayer {
         public let currentItem: AudioPlayer.Event<CurrentItemEventData> = AudioPlayer.Event()
     }
     
-    public typealias EventClosure<EventData> = (EventData) -> Void
+    public typealias EventClosure<EventData> = (EventData) async -> Void
     
     class Invoker<EventData> {
         
         // Signals false if the listener object is nil
-        let invoke: (EventData) -> Bool
+        let invoke: (EventData) async -> Bool
         weak var listener: AnyObject?
         
         init<Listener: AnyObject>(listener: Listener, closure: @escaping EventClosure<EventData>) {
             self.listener = listener
-            invoke = { [weak listener] (data: EventData) in
+            invoke = { [weak listener] (data: EventData) async in
                 guard let _ = listener else {
                     return false
                 }
-                closure(data)
+                await closure(data)
                 return true
             }
         }
         
     }
     
+    @available(iOS 13.0, *)
     public class Event<EventData> {
-        
-        private let eventQueue: DispatchQueue = DispatchQueue.global(qos: DispatchQoS.QoSClass.utility)
-        private let actionQueue: DispatchQueue = DispatchQueue.global(qos: DispatchQoS.QoSClass.userInitiated)
-        private let invokersSemaphore: DispatchSemaphore = DispatchSemaphore(value: 1)
-        
         var invokers: [Invoker<EventData>] = []
-        
+        private let invokersSemaphore: DispatchSemaphore = DispatchSemaphore(value: 1)
+
         public func addListener<Listener: AnyObject>(_ listener: Listener, _ closure: @escaping EventClosure<EventData>) {
-            actionQueue.async {
-                self.invokersSemaphore.wait()
-                self.invokers.append(Invoker(listener: listener, closure: closure))
-                self.invokersSemaphore.signal()
-            }
+            self.invokersSemaphore.wait()
+            self.invokers.append(Invoker(listener: listener, closure: closure))
+            self.invokersSemaphore.signal()
         }
         
         public func removeListener(_ listener: AnyObject) {
-            actionQueue.async {
-                self.invokersSemaphore.wait()
-                self.invokers = self.invokers.filter({ (invoker) -> Bool in
-                    if let listenerToCheck = invoker.listener {
-                        return listenerToCheck !== listener
-                    }
-                    return true
-                })
-                self.invokersSemaphore.signal()
-            }
+            self.invokersSemaphore.wait()
+            let invokers = self.invokers;
+            self.invokers = invokers.filter({ (invoker) -> Bool in
+                if let listenerToCheck = invoker.listener {
+                    return listenerToCheck !== listener
+                }
+                return true
+            })
+            self.invokersSemaphore.signal()
         }
         
-        func emit(data: EventData) {
-            eventQueue.async {
-                self.invokersSemaphore.wait()
-                self.invokers = self.invokers.filter { $0.invoke(data) }
-                self.invokersSemaphore.signal()
-            }
+        private func setInvokers(_ invokers: [Invoker<EventData>]) {
+            self.invokersSemaphore.wait()
+            self.invokers = invokers
+            self.invokersSemaphore.signal()
         }
         
+        public func emit(data: EventData) async {
+            let invokersToInvoke = self.invokers
+            var filteredInvokers: [Invoker<EventData>] = []
+            for invoker in invokersToInvoke {
+                if(await invoker.invoke(data)) {
+                    filteredInvokers.append(invoker)
+                }
+            }
+            setInvokers(filteredInvokers)
+        }
     }
-    
 }

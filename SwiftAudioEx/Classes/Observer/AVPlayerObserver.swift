@@ -14,17 +14,18 @@ protocol AVPlayerObserverDelegate: AnyObject {
     /**
      Called when the AVPlayer.status changes.
      */
-    func player(statusDidChange status: AVPlayer.Status)
+    func player(statusDidChange status: AVPlayer.Status) async
     
     /**
      Called when the AVPlayer.timeControlStatus changes.
      */
-    func player(didChangeTimeControlStatus status: AVPlayer.TimeControlStatus)
+    func player(didChangeTimeControlStatus status: AVPlayer.TimeControlStatus) async
 }
 
 /**
  Observing an AVPlayers status changes.
  */
+@available(iOS 13.0, *)
 class AVPlayerObserver: NSObject {
 
     private static var context = 0
@@ -88,33 +89,35 @@ class AVPlayerObserver: NSObject {
             return
         }
 
-        switch observedKeyPath {
-        case AVPlayerKeyPath.status:
-            handleStatusChange(change)
-
-        case AVPlayerKeyPath.timeControlStatus:
-            handleTimeControlStatusChange(change)
-
-        default:
-            break
+        Task {
+            switch observedKeyPath {
+            case AVPlayerKeyPath.status:
+                await self.handleStatusChange(change)
+                
+            case AVPlayerKeyPath.timeControlStatus:
+                await self.handleTimeControlStatusChange(change)
+                
+            default:
+                break
+            }
         }
     }
 
-    private func handleStatusChange(_ change: [NSKeyValueChangeKey: Any]?) {
+    private func handleStatusChange(_ change: [NSKeyValueChangeKey: Any]?) async {
         let status: AVPlayer.Status
         if let statusNumber = change?[.newKey] as? NSNumber {
             status = AVPlayer.Status(rawValue: statusNumber.intValue)!
         } else {
             status = .unknown
         }
-        delegate?.player(statusDidChange: status)
+        await delegate?.player(statusDidChange: status)
     }
 
-    private func handleTimeControlStatusChange(_ change: [NSKeyValueChangeKey: Any]?) {
+    private func handleTimeControlStatusChange(_ change: [NSKeyValueChangeKey: Any]?) async {
         let status: AVPlayer.TimeControlStatus
         if let statusNumber = change?[.newKey] as? NSNumber {
             status = AVPlayer.TimeControlStatus(rawValue: statusNumber.intValue)!
-            delegate?.player(didChangeTimeControlStatus: status)
+            await delegate?.player(didChangeTimeControlStatus: status)
         }
     }
 }
