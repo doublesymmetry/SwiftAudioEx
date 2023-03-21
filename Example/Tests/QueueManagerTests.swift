@@ -149,8 +149,31 @@ class QueueManagerTests: QuickSpec {
                         queue.replaceCurrentItem(with: 1)
                     }
                     it("should have added an item and jumped to it") {
+                        expect(queue.items.count).to(equal(2))
                         expect(queue.current).to(equal(1))
                         expect(queue.currentIndex).to(equal(1))
+                    }
+
+                    context("then calling next") {
+                        var item: Int?
+                        beforeEach {
+                            item = queue.next()
+                        }
+                        
+                        it("should noop") {
+                            expect(item).to(equal(1))
+                        }
+                    }
+
+                    context("then calling previous") {
+                        var item: Int?
+                        beforeEach {
+                            item = queue.previous()
+                        }
+                        
+                        it("should go back to the first") {
+                            expect(item).to(equal(0))
+                        }
                     }
                 }
                 
@@ -161,7 +184,7 @@ class QueueManagerTests: QuickSpec {
                     }
                     
                     it("should noop") {
-                        expect(item).to(equal(0))
+                        expect(item).to(beNil())
                     }
                 }
 
@@ -172,7 +195,7 @@ class QueueManagerTests: QuickSpec {
                     }
                     
                     it("should noop") {
-                        expect(item).to(equal(0))
+                        expect(item).to(beNil())
                     }
                 }
                 
@@ -228,6 +251,7 @@ class QueueManagerTests: QuickSpec {
                     beforeEach {
                         try! queue.jump(to: 0)
                     }
+
                     context("then calling next") {
                         var nextItem: Int?
                         beforeEach {
@@ -352,12 +376,16 @@ class QueueManagerTests: QuickSpec {
                             removed = try? queue.removeItem(at: initialCurrentIndex - 1)
                         }
 
-                        it("should remove an item") {
-                            expect(removed).toNot(beNil())
+                        it("should remove the first item") {
+                            expect(removed).to(equal(0))
                         }
 
-                        it("should decrement the currentIndex") {
-                            expect(queue.currentIndex).to(equal(initialCurrentIndex - 1))
+                        it("should have set the initial current index to 1") {
+                            expect(initialCurrentIndex).to(equal(1))
+                        }
+                        
+                        it("should decremented the currentIndex from 1 to 0") {
+                            expect(queue.currentIndex).to(equal(0))
                         }
                     }
                     

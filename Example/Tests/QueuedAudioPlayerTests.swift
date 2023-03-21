@@ -264,10 +264,23 @@ class QueuedAudioPlayerTests: QuickSpec {
 
                 context("when adding multiple items") {
                     beforeEach {
-                        audioPlayer.add(items: [FiveSecondSource.getAudioItem(), FiveSecondSource.getAudioItem()], playWhenReady: false)
+                        audioPlayer.add(items: [FiveSecondSource.getAudioItem(), ShortSource.getAudioItem()], playWhenReady: false)
                     }
-                    it("should not be nil") {
+                    it("currentItem should not be nil") {
                         expect(audioPlayer.currentItem).toNot(beNil())
+                    }
+
+                    it("currentIndex should be 0") {
+                        expect(audioPlayer.currentIndex).to(equal(0))
+                    }
+
+                    context("then removing the first item") {
+                        it("the current item should now be what was previously the second item") {
+                            try? audioPlayer.removeItem(at: 0)
+                            expect (audioPlayer.items.count).to(equal(1))
+                            expect (audioPlayer.currentItem?.getSourceUrl()).to(equal(ShortSource.getAudioItem().getSourceUrl()))
+                            expect(audioPlayer.currentItem?.getSourceUrl()).to(equal(ShortSource.getAudioItem().getSourceUrl()))
+                        }
                     }
                 }
             }

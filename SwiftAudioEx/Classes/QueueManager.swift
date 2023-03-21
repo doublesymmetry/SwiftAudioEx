@@ -89,15 +89,6 @@ class QueueManager<T> {
         }
     }
 
-    private func mutateCurrentIndex(index: Int) {
-        if (index == currentIndex) {
-            delegate?.onSkippedToSameCurrentItem()
-            return
-        }
-        currentIndex = index
-        delegate?.onCurrentItemChanged()
-    }
-
     /**
      Add a single item to the queue.
 
@@ -141,14 +132,24 @@ class QueueManager<T> {
     }
 
     private func skip(direction: SkipDirection, wrap: Bool) -> T? {
-        if (items.count > 0) {
+        let count = items.count
+        if (current == nil || count == 0) {
+            return nil
+        }
+        if (count == 1) {
+            if (wrap) {
+                delegate?.onSkippedToSameCurrentItem()
+            }
+        } else {
             var index = currentIndex + direction.rawValue
             if (wrap) {
                 index = (items.count + index) % items.count;
             }
-            mutateCurrentIndex(
-                index: max(0, min(items.count - 1, index))
-            )
+            let oldIndex = currentIndex
+            currentIndex = max(0, min(items.count - 1, index))
+            if (oldIndex != currentIndex) {
+                delegate?.onCurrentItemChanged()
+            }
         }
         return current
     }
@@ -187,7 +188,12 @@ class QueueManager<T> {
         try throwIfQueueEmpty();
         try throwIfIndexInvalid(index: index)
 
-        mutateCurrentIndex(index: index)
+        if (index == currentIndex) {
+            delegate?.onSkippedToSameCurrentItem()
+        } else {
+            currentIndex = index
+            delegate?.onCurrentItemChanged()
+        }
         return current!
     }
 
@@ -217,16 +223,17 @@ class QueueManager<T> {
      - throws: AudioPlayerError.QueueError
      - returns: The removed item.
      */
-    @discardableResult
     public func removeItem(at index: Int) throws -> T {
         try throwIfQueueEmpty()
         try throwIfIndexInvalid(index: index)
         let result = items.remove(at: index)
-
         if index == currentIndex {
-            mutateCurrentIndex(index: items.count > 0 ? currentIndex % items.count : -1)
+            currentIndex = items.count > 0 ? currentIndex % items.count : -1
+            if let delegate = delegate {
+                delegate.onCurrentItemChanged()
+            }
         } else if index < currentIndex {
-            mutateCurrentIndex(index: currentIndex - 1)
+            currentIndex -= 1
         }
 
         return result;
@@ -241,7 +248,7 @@ class QueueManager<T> {
         if currentIndex == -1  {
             add(item)
             if (currentIndex == -1) {
-                mutateCurrentIndex(index: items.count - 1)
+                currentIndex = items.count - 1
             }
         } else {
             items[currentIndex] = item
