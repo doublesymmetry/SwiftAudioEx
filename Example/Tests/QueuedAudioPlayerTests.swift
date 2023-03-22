@@ -5,167 +5,13 @@ import Foundation
 @testable import SwiftAudioEx
 import AVFoundation
 
-extension QueuedAudioPlayer {
-
-    class SeekEventListener {
-        private let lockQueue = DispatchQueue(
-            label: "SeekEventListener.lockQueue",
-            target: .global()
-        )
-        var _eventResult: (Double, Bool) = (-1, false)
-        var eventResult: (Double, Bool) {
-            get {
-                return lockQueue.sync {
-                    _eventResult
-                }
-            }
-        }
-        func handleEvent(seconds: Double, didFinish: Bool) {
-            lockQueue.sync {
-                _eventResult = (seconds, didFinish)
-            }
-        }
-    }
-
-    class CurrentItemEventListener {
-        private let lockQueue = DispatchQueue(
-            label: "CurrentItemEventListener.lockQueue",
-            target: .global()
-        )
-        var _item: AudioItem? = nil
-        var _index: Int? = nil
-        var _lastItem: AudioItem? = nil
-        var _lastIndex: Int? = nil
-        var _lastPosition: Double? = nil
-
-        var item: AudioItem? {
-            get {
-                return lockQueue.sync {
-                    return _item
-                }
-            }
-        }
-        var index: Int? {
-            return lockQueue.sync {
-                return _index
-            }
-        }
-        var lastItem: AudioItem? {
-            return lockQueue.sync {
-                return _lastItem
-            }
-        }
-        var lastIndex: Int? {
-            return lockQueue.sync {
-                return _lastIndex
-            }
-        }
-        var lastPosition: Double? {
-            return lockQueue.sync {
-                return _lastPosition
-            }
-        }
-
-
-        func handleEvent(
-            item: AudioItem?,
-            index: Int?,
-            lastItem: AudioItem?,
-            lastIndex: Int?,
-            lastPosition: Double?
-        ) {
-            lockQueue.sync {
-                _item = item
-                _index = index
-                _lastItem = lastItem
-                _lastIndex = lastIndex
-                _lastPosition = lastPosition
-            }
-        }
-    }
-    
-    class PlaybackEndEventListener {
-        private let lockQueue = DispatchQueue(
-            label: "PlaybackEndEventListener.lockQueue",
-            target: .global()
-        )
-        var _lastReason: PlaybackEndedReason? = nil
-        var lastReason: PlaybackEndedReason? {
-            get {
-                return lockQueue.sync {
-                    return _lastReason
-                }
-            }
-        }
-        var _reasons: [PlaybackEndedReason] = []
-        var reasons: [PlaybackEndedReason] {
-            get {
-                return lockQueue.sync {
-                    return _reasons
-                }
-            }
-        }
-
-        func handleEvent(reason: PlaybackEndedReason) {
-            lockQueue.sync {
-                _lastReason = reason
-                _reasons.append(reason)
-            }
-        }
-    }
-
-    class PlayerStateEventListener {
-        private let lockQueue = DispatchQueue(
-            label: "PlayerStateEventListener.lockQueue",
-            target: .global()
-        )
-        var _states: [AudioPlayerState] = []
-        var states: [AudioPlayerState] {
-            get {
-                return lockQueue.sync {
-                    return _states
-                }
-            }
-
-            set {
-                lockQueue.sync {
-                    _states = newValue
-                }
-            }
-        }
-        private var _statesWithoutBuffering: [AudioPlayerState] = []
-        var statesWithoutBuffering: [AudioPlayerState] {
-            get {
-                return lockQueue.sync {
-                    return _statesWithoutBuffering
-                }
-            }
-
-            set {
-                lockQueue.sync {
-                    _statesWithoutBuffering = newValue
-                }
-            }
-        }
-        func handleEvent(state: AudioPlayerState) {
-            states.append(state)
-            if (state != .ready && state != .buffering && (statesWithoutBuffering.isEmpty || statesWithoutBuffering.last != state)) {
-                statesWithoutBuffering.append(state)
-            }
-        }
-    }
-    
-    func seekWithExpectation(to time: Double) {
-        let seekEventListener = SeekEventListener()
-        event.seek.addListener(seekEventListener, seekEventListener.handleEvent)
-
-        seek(to: time)
-        expect(seekEventListener.eventResult).toEventually(equal((time, true)))
-    }
-}
-
 class QueuedAudioPlayerTests: QuickSpec {
     override func spec() {
+        beforeSuite {
+            Nimble.AsyncDefaults.timeout = .seconds(10)
+            Nimble.AsyncDefaults.pollInterval = .milliseconds(100)
+        }
+
         describe("A QueuedAudioPlayer") {
             var audioPlayer: QueuedAudioPlayer!
             var currentItemEventListener: QueuedAudioPlayer.CurrentItemEventListener!
@@ -241,7 +87,10 @@ class QueuedAudioPlayerTests: QuickSpec {
                         }
 
                         it("should make the player be idle") {
-                            expect(audioPlayer.playerState).to(equal(AudioPlayerState.idle))
+                            expect(audioPlayer.playerState).toEventually(equal(AudioPlayerState.idle))
+                            expect(playerStateEventListener.statesWithoutBuffering).to(equal([
+                                .loading, .idle
+                            ]))
                         }
 
                         context("then loading a new item") {
@@ -252,10 +101,11 @@ class QueuedAudioPlayerTests: QuickSpec {
                             it("should have set the item") {
                                 expect(audioPlayer.currentItem?.getSourceUrl()).toNot(equal(fiveSecondItem.getSourceUrl()))
                             }
-                            it("should have started loading") {
-                                expect(audioPlayer.playerState).toEventually(equal(AudioPlayerState.loading))
-                            }
+
                             it("should have started playing") {
+                                expect(playerStateEventListener.statesWithoutBuffering).toEventually(equal([
+                                    .loading, .idle, .loading, .playing
+                                ]))
                                 expect(audioPlayer.playerState).toEventually(equal(AudioPlayerState.playing))
                             }
                         }
@@ -354,27 +204,21 @@ class QueuedAudioPlayerTests: QuickSpec {
                 context("when adding 2 items") {
                     beforeEach {
                         audioPlayer.add(items: [FiveSecondSource.getAudioItem(), FiveSecondSource.getAudioItem()])
-                        waitUntil { done in
-                            if (playerStateEventListener.states.count > 0) {
-                                done()
-                            }
-                        }
                     }
 
                     it("should be empty") {
+                        expect(playerStateEventListener.statesWithoutBuffering).toEventually(equal([.loading, .paused]))
                         expect(audioPlayer.previousItems.count).to(equal(0))
                     }
 
                     context("then calling next()") {
                         beforeEach {
                             audioPlayer.next()
-                            waitUntil { done in
-                                if (playerStateEventListener.states.count > 0) {
-                                    done()
-                                }
-                            }
                         }
                         it("should contain one item") {
+                            expect(playerStateEventListener.statesWithoutBuffering).toEventually(equal([
+                                .loading, .paused, .loading, .paused
+                            ]))
                             expect(audioPlayer.previousItems.count).to(equal(1))
                         }
 
@@ -464,7 +308,7 @@ class QueuedAudioPlayerTests: QuickSpec {
                         }
                         it("should have gone into .paused state from .loading and then into .ready because playback can be started") {
                             expect(playerStateEventListener.states).toEventually(equal([
-                                .loading, .ready
+                                .loading, .paused, .ready
                             ]))
                         }
                     }
@@ -478,7 +322,7 @@ class QueuedAudioPlayerTests: QuickSpec {
                         audioPlayer.stop()
                     }
                     it("should have mutated player state to .stopped") {
-                        expect(playerStateEventListener.states).to(equal([
+                        expect(playerStateEventListener.states).toEventually(equal([
                             .stopped
                         ]))
                     }
@@ -519,7 +363,7 @@ class QueuedAudioPlayerTests: QuickSpec {
                     }
                     it("should have started loading, but not playing yet") {
                         expect(playerStateEventListener.states).toEventually(equal([
-                            .loading, .ready
+                            .loading, .paused, .ready
                         ]))
                     }
                 }
@@ -979,5 +823,164 @@ class QueuedAudioPlayerTests: QuickSpec {
                 }
             }
         }
+    }
+}
+
+extension QueuedAudioPlayer {
+
+    class SeekEventListener {
+        private let lockQueue = DispatchQueue(
+            label: "SeekEventListener.lockQueue",
+            target: .global()
+        )
+        var _eventResult: (Double, Bool) = (-1, false)
+        var eventResult: (Double, Bool) {
+            get {
+                return lockQueue.sync {
+                    _eventResult
+                }
+            }
+        }
+        func handleEvent(seconds: Double, didFinish: Bool) {
+            lockQueue.sync {
+                _eventResult = (seconds, didFinish)
+            }
+        }
+    }
+
+    class CurrentItemEventListener {
+        private let lockQueue = DispatchQueue(
+            label: "CurrentItemEventListener.lockQueue",
+            target: .global()
+        )
+        var _item: AudioItem? = nil
+        var _index: Int? = nil
+        var _lastItem: AudioItem? = nil
+        var _lastIndex: Int? = nil
+        var _lastPosition: Double? = nil
+
+        var item: AudioItem? {
+            get {
+                return lockQueue.sync {
+                    return _item
+                }
+            }
+        }
+        var index: Int? {
+            return lockQueue.sync {
+                return _index
+            }
+        }
+        var lastItem: AudioItem? {
+            return lockQueue.sync {
+                return _lastItem
+            }
+        }
+        var lastIndex: Int? {
+            return lockQueue.sync {
+                return _lastIndex
+            }
+        }
+        var lastPosition: Double? {
+            return lockQueue.sync {
+                return _lastPosition
+            }
+        }
+
+
+        func handleEvent(
+            item: AudioItem?,
+            index: Int?,
+            lastItem: AudioItem?,
+            lastIndex: Int?,
+            lastPosition: Double?
+        ) {
+            lockQueue.sync {
+                _item = item
+                _index = index
+                _lastItem = lastItem
+                _lastIndex = lastIndex
+                _lastPosition = lastPosition
+            }
+        }
+    }
+    
+    class PlaybackEndEventListener {
+        private let lockQueue = DispatchQueue(
+            label: "PlaybackEndEventListener.lockQueue",
+            target: .global()
+        )
+        var _lastReason: PlaybackEndedReason? = nil
+        var lastReason: PlaybackEndedReason? {
+            get {
+                return lockQueue.sync {
+                    return _lastReason
+                }
+            }
+        }
+        var _reasons: [PlaybackEndedReason] = []
+        var reasons: [PlaybackEndedReason] {
+            get {
+                return lockQueue.sync {
+                    return _reasons
+                }
+            }
+        }
+
+        func handleEvent(reason: PlaybackEndedReason) {
+            lockQueue.sync {
+                _lastReason = reason
+                _reasons.append(reason)
+            }
+        }
+    }
+
+    class PlayerStateEventListener {
+        private let lockQueue = DispatchQueue(
+            label: "PlayerStateEventListener.lockQueue",
+            target: .global()
+        )
+        var _states: [AudioPlayerState] = []
+        var states: [AudioPlayerState] {
+            get {
+                return lockQueue.sync {
+                    return _states
+                }
+            }
+
+            set {
+                lockQueue.sync {
+                    _states = newValue
+                }
+            }
+        }
+        private var _statesWithoutBuffering: [AudioPlayerState] = []
+        var statesWithoutBuffering: [AudioPlayerState] {
+            get {
+                return lockQueue.sync {
+                    return _statesWithoutBuffering
+                }
+            }
+
+            set {
+                lockQueue.sync {
+                    _statesWithoutBuffering = newValue
+                }
+            }
+        }
+        func handleEvent(state: AudioPlayerState) {
+            states.append(state)
+            if (state != .ready && state != .buffering && (statesWithoutBuffering.isEmpty || statesWithoutBuffering.last != state)) {
+                statesWithoutBuffering.append(state)
+            }
+        }
+    }
+    
+    func seekWithExpectation(to time: Double) {
+        let seekEventListener = SeekEventListener()
+        event.seek.addListener(seekEventListener, seekEventListener.handleEvent)
+
+        seek(to: time)
+        expect(seekEventListener.eventResult).toEventually(equal((time, true)))
     }
 }

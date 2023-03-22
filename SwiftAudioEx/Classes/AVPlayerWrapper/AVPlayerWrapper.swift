@@ -420,7 +420,7 @@ extension AVPlayerWrapper: AVPlayerObserverDelegate {
             let state = self.state
             if self.asset == nil && state != .stopped {
                 self.state = .idle
-            } else if (state != .failed && state != .stopped && state != .loading) {
+            } else if (state != .failed && state != .stopped) {
                 // Playback may have become paused externally for example due to a bluetooth device disconnecting:
                 if (self.playWhenReady) {
                     // Only if we are not on the boundaries of the track, otherwise itemDidPlayToEndTime will handle it instead.
