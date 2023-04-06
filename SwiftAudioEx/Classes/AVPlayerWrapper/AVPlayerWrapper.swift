@@ -20,7 +20,16 @@ public enum PlaybackEndedReason: String {
     case failed
 }
 
-class AVPlayerWrapper: AVPlayerWrapperProtocol {
+public enum StreamResponseError: Error {
+    case invalidContentLength
+}
+
+class AVPlayerWrapper: NSObject, AVPlayerWrapperProtocol {
+    struct Constants {
+        // taken from BIT_RATE constant  https://github.com/readwiseio/rekindled/blob/a42c661869905504618b423fc472b3f4b829a720/reader/integrations/azure_v2.py#L24
+        static let streamBitrate = 48_000
+    }
+    
     // MARK: - Properties
     
     fileprivate var avPlayer = AVPlayer()
@@ -37,9 +46,12 @@ class AVPlayerWrapper: AVPlayerWrapperProtocol {
         label: "AVPlayerWrapper.stateQueue",
         attributes: .concurrent
     )
+    fileprivate let loadingQueue = DispatchQueue(label: "io.readwise.readermobile.loadingQueue")
 
-    public init() {
+    public override init() {
         playerTimeObserver = AVPlayerTimeObserver(periodicObserverTimeInterval: timeEventFrequency.getTime())
+        
+        super.init()
 
         playerObserver.delegate = self
         playerTimeObserver.delegate = self
@@ -145,6 +157,8 @@ class AVPlayerWrapper: AVPlayerWrapperProtocol {
     weak var delegate: AVPlayerWrapperDelegate? = nil
     
     var bufferDuration: TimeInterval = 0
+    
+    var maxBufferDuration: TimeInterval = 20
 
     var timeEventFrequency: TimeEventFrequency = .everySecond {
         didSet {
@@ -235,7 +249,12 @@ class AVPlayerWrapper: AVPlayerWrapperProtocol {
         }
         if let url = url {
             let keys = ["playable"]
-            let pendingAsset = AVURLAsset(url: url, options: urlOptions)
+            // Modify the URL scheme to trigger a call to our delegate method resourceLoader(shouldWaitForLoadingOfRequestedResource:)
+            // That way we can intercept the request and ensure only small parts of the stream are loaded at a time, saving Azure API costs
+            var url = URLComponents(url: url, resolvingAgainstBaseURL: false)!
+            url.scheme = "https-partial"
+
+            let pendingAsset = AVURLAsset(url: url.url!, options: urlOptions)
             asset = pendingAsset
             state = .loading
             pendingAsset.loadValuesAsynchronously(forKeys: keys, completionHandler: { [weak self] in
@@ -500,5 +519,71 @@ extension AVPlayerWrapper: AVPlayerItemObserverDelegate {
     
     func item(didReceiveMetadata metadata: [AVTimedMetadataGroup]) {
         delegate?.AVWrapper(didReceiveMetadata: metadata)
+    }
+
+}
+
+extension AVPlayerWrapper: AVAssetResourceLoaderDelegate {
+    func resourceLoader(_ resourceLoader: AVAssetResourceLoader, shouldWaitForLoadingOfRequestedResource loadingRequest: AVAssetResourceLoadingRequest) -> Bool {
+        // Revert custom URL scheme used to trigger this delegate call
+        var components = URLComponents(url: loadingRequest.request.url!, resolvingAgainstBaseURL: false)!
+        components.scheme = "https"
+        var request = URLRequest(url: components.url!)
+        // Copy all headers, including authentication header
+        request.allHTTPHeaderFields = loadingRequest.request.allHTTPHeaderFields
+        // Test whether this is a real request for stream data
+        if loadingRequest.contentInformationRequest == nil, let dataRequest = loadingRequest.dataRequest {
+            let start = dataRequest.requestedOffset
+            var end = start + Int64(dataRequest.requestedLength)
+            let maxLength = Int64(self.maxBufferDuration * Double(Constants.streamBitrate / 8))
+            let maxEnd = Int64(self.currentTime * Double(Constants.streamBitrate / 8)) + maxLength
+            if end > maxEnd {
+                end = maxEnd
+            }
+            let length = end - start
+            // block petty requests lest we overload the server
+            if length < maxLength / 4 {
+                // delay the next request by at least a second
+                self.loadingQueue.asyncAfter(deadline: .now() + 1.0, execute: {
+                    loadingRequest.finishLoading()
+                })
+                return true
+            }
+            // Overwrite Range header with custom header
+            let newRangeHeader = "bytes=\(start)-\(end)"
+            request.setValue(newRangeHeader, forHTTPHeaderField: "Range")
+        }
+        // Fire the modified request
+        let task = URLSession.shared.dataTask(with: request) { data, response, error in
+            self.loadingQueue.async {
+                if error != nil {
+                    loadingRequest.finishLoading(with: error)
+                    return
+                }
+                let response = response! as! HTTPURLResponse
+                if let contentInfo = loadingRequest.contentInformationRequest {
+                    // Fill contentInfo with stream metadata, most notably the length of the entire stream
+                    let contentRange = response.allHeaderFields["content-range"] as? String
+                    // Content-Range looks like "bytes=0-1000/2000" where "2000" is the total stream length in bytes
+                    guard let contentLengthString = contentRange?.split(separator: "/")[1] else {
+                        loadingRequest.finishLoading(with: StreamResponseError.invalidContentLength)
+                        return
+                    }
+                    guard let contentLength = Int64(contentLengthString) else {
+                        loadingRequest.finishLoading(with: StreamResponseError.invalidContentLength)
+                        return
+                    }
+                    contentInfo.contentLength = contentLength
+                    contentInfo.contentType = "public.mp3"
+                    contentInfo.isByteRangeAccessSupported = true
+                } else if let dataRequest = loadingRequest.dataRequest {
+                    // This was a real request for stream data, so just pipe the data through
+                    dataRequest.respond(with: data!)
+                }
+                loadingRequest.finishLoading()
+            }
+        }
+        task.resume()
+        return true // meaning "the delegate (we) will handle the request"
     }
 }
