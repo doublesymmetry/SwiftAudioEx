@@ -65,7 +65,7 @@ class QueueManager<T> {
      */
     public var current: T? {
         get {
-            return currentIndex == -1 ? nil : items[currentIndex]
+            return 0 <= currentIndex && currentIndex < items.count ? items[currentIndex] : nil
         }
     }
 
