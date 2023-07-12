@@ -115,42 +115,28 @@ extension AudioPlayer {
     }
     
     public class Event<EventData> {
-        
-        private let eventQueue: DispatchQueue = DispatchQueue.global(qos: DispatchQoS.QoSClass.utility)
-        private let actionQueue: DispatchQueue = DispatchQueue.global(qos: DispatchQoS.QoSClass.userInitiated)
-        private let invokersSemaphore: DispatchSemaphore = DispatchSemaphore(value: 1)
-        
-        var invokers: [Invoker<EventData>] = []
+        private let queue: DispatchQueue = DispatchQueue(label: "com.swiftAudioEx.eventQueue")
+        private var invokers: [Invoker<EventData>] = []
         
         public func addListener<Listener: AnyObject>(_ listener: Listener, _ closure: @escaping EventClosure<EventData>) {
-            actionQueue.async {
-                self.invokersSemaphore.wait()
+            queue.async {
                 self.invokers.append(Invoker(listener: listener, closure: closure))
-                self.invokersSemaphore.signal()
             }
         }
         
         public func removeListener(_ listener: AnyObject) {
-            actionQueue.async {
-                self.invokersSemaphore.wait()
+            queue.async {
                 self.invokers = self.invokers.filter({ (invoker) -> Bool in
-                    if let listenerToCheck = invoker.listener {
-                        return listenerToCheck !== listener
-                    }
-                    return true
+                    return invoker.listener !== listener
                 })
-                self.invokersSemaphore.signal()
             }
         }
         
         func emit(data: EventData) {
-            eventQueue.async {
-                self.invokersSemaphore.wait()
+            queue.async {
                 self.invokers = self.invokers.filter { $0.invoke(data) }
-                self.invokersSemaphore.signal()
             }
         }
-        
     }
     
 }
