@@ -116,7 +116,7 @@ extension AudioPlayer {
     
     public class Event<EventData> {
         private let queue: DispatchQueue = DispatchQueue(label: "com.swiftAudioEx.eventQueue")
-        private var invokers: [Invoker<EventData>] = []
+        var invokers: [Invoker<EventData>] = []
         
         public func addListener<Listener: AnyObject>(_ listener: Listener, _ closure: @escaping EventClosure<EventData>) {
             queue.async {
