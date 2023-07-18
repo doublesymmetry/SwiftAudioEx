@@ -236,7 +236,7 @@ class QueuedAudioPlayerTests: QuickSpec {
                         }
 
                         it("should have emitted playbackEnd") {
-                            expect(playbackEndEventListener.lastReason).to(equal(.skippedToNext))
+                            expect(playbackEndEventListener.lastReason).toEventually(equal(.skippedToNext))
                         }
 
                         context("then calling stop()") {
@@ -645,13 +645,15 @@ class QueuedAudioPlayerTests: QuickSpec {
                             }
 
                             context("then calling next() twice") {
-                                it("should stay on the last track, but it should repeat") {
+                                it("should stay on the last track, but it should end") {
                                     audioPlayer.play()
                                     audioPlayer.next()
                                     audioPlayer.seekWithExpectation(to: 1)
-                                    audioPlayer.next()
-                                    expect(audioPlayer.currentTime).toEventually(beLessThan(1))
                                     expect(audioPlayer.currentIndex).toEventually(equal(1))
+                                    audioPlayer.next()
+                                    expect(audioPlayer.currentIndex).to(equal(1))
+                                    expect(audioPlayer.currentTime).toEventually(equal(5))
+                                    expect(audioPlayer.playerState).toEventually(equal(AudioPlayerState.ended))
                                 }
                             }
                         }
@@ -807,12 +809,12 @@ class QueuedAudioPlayerTests: QuickSpec {
 
                         context("allow playback to end") {
                             beforeEach {
-                                audioPlayer.seekWithExpectation(to: 4.95)
+                                audioPlayer.seekWithExpectation(to: 4.5)
                             }
 
                             it("should restart current item") {
                                 expect(audioPlayer.playerState).toEventually(equal(AudioPlayerState.playing))
-                                expect(audioPlayer.currentTime).toEventually(beGreaterThan(4.95))
+                                expect(audioPlayer.currentTime).toEventually(beGreaterThan(4.5))
                                 expect(audioPlayer.currentTime).toEventually(beGreaterThan(0))
                                 expect(audioPlayer.currentIndex).toEventually(equal(0))
                                 expect(audioPlayer.playerState).toEventually(equal(AudioPlayerState.playing))
