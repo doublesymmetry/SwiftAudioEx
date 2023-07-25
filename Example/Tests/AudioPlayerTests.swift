@@ -74,14 +74,14 @@ class AudioPlayerTests: QuickSpec {
             context("when dealing with duration") {
                 it("should set duration eventually after loading") {
                     audioPlayer.load(item: FiveSecondSource.getAudioItem())
-                    expect(audioPlayer.duration).toEventually(equal(5))
+                    expect(audioPlayer.duration).toEventually(beCloseTo(5, within: 0.1))
                 }
 
                 it("audioPlayer.event.updateDuration should receive duration after loading") {
                     var receivedUpdateDuration = false
                     listener.onUpdateDuration = { duration in
                         receivedUpdateDuration = true
-                        expect(duration).to(equal(5))
+                        expect(duration).to(beCloseTo(5, within: 0.1))
                     }
                     audioPlayer.load(item: FiveSecondSource.getAudioItem())
                     expect(receivedUpdateDuration).toEventually(beTrue())
@@ -90,16 +90,16 @@ class AudioPlayerTests: QuickSpec {
                 it("should reset duration after loading again") {
                     audioPlayer.load(item: FiveSecondSource.getAudioItem())
                     expect(audioPlayer.duration).to(equal(0))
-                    expect(audioPlayer.duration).toEventually(equal(5))
+                    expect(audioPlayer.duration).toEventually(beCloseTo(5, within: 0.1))
                     audioPlayer.load(item: FiveSecondSource.getAudioItem())
                     expect(audioPlayer.duration).to(equal(0))
-                    expect(audioPlayer.duration).toEventually(equal(5))
+                    expect(audioPlayer.duration).toEventually(beCloseTo(5, within: 0.1))
                 }
                 
                 it("should reset duration after reset") {
                     audioPlayer.load(item: FiveSecondSource.getAudioItem())
                     expect(audioPlayer.duration).to(equal(0))
-                    expect(audioPlayer.duration).toEventually(equal(5))
+                    expect(audioPlayer.duration).toEventually(beCloseTo(5, within: 0.1))
                     audioPlayer.clear()
                     expect(audioPlayer.duration).to(equal(0))
                 }

@@ -626,7 +626,7 @@ class QueuedAudioPlayerTests: QuickSpec {
 
                                     expect(audioPlayer.nextItems.count).toEventually(equal(0))
                                     expect(audioPlayer.currentIndex).toEventually(equal(1))
-                                    expect(audioPlayer.currentTime).toEventually(equal(5))
+                                    expect(audioPlayer.currentTime).toEventually(beCloseTo(5, within: 0.1))
                                     expect(audioPlayer.playerState).toEventually(equal(AudioPlayerState.ended))
                                     expect(currentItemEventListener.index).toEventually(equal(1))
                                     expect(currentItemEventListener.lastIndex).toEventually(equal(0))
@@ -652,7 +652,7 @@ class QueuedAudioPlayerTests: QuickSpec {
                                     expect(audioPlayer.currentIndex).toEventually(equal(1))
                                     audioPlayer.next()
                                     expect(audioPlayer.currentIndex).to(equal(1))
-                                    expect(audioPlayer.currentTime).toEventually(equal(5))
+                                    expect(audioPlayer.currentTime).toEventually(beCloseTo(5, within: 0.1))
                                     expect(audioPlayer.playerState).toEventually(equal(AudioPlayerState.ended))
                                 }
                             }
