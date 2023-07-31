@@ -137,6 +137,11 @@ public class AudioPlayer: AVPlayerWrapperDelegate {
         get { wrapper.rate }
         set { wrapper.rate = newValue }
     }
+  
+    public var rampSecs: Double {
+        get { wrapper.rampSecs }
+        set { wrapper.rampSecs = newValue }
+    }
 
     // MARK: - Init
 
