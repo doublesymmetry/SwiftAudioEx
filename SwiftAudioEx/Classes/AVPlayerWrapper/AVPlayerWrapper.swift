@@ -273,16 +273,20 @@ class AVPlayerWrapper: AVPlayerWrapperProtocol {
                     self.avPlayer.replaceCurrentItem(with: item)
                     self.startObservingAVPlayer(item: item)
                     self.applyAVPlayerRate()
+                    
+                    let commonData = pendingAsset.commonMetadata
+                    self.delegate?.AVWrapper(didReceiveCommonMetadata: commonData)
+                    
                     if pendingAsset.availableChapterLocales.count > 0 {
                         for locale in pendingAsset.availableChapterLocales {
                             let chapters = pendingAsset.chapterMetadataGroups(withTitleLocale: locale, containingItemsWithCommonKeys: nil)
-                            self.delegate?.AVWrapper(didReceiveMetadata: chapters)
+                            self.delegate?.AVWrapper(didReceiveChapterMetadata: chapters)
                         }
                     } else {
                         for format in pendingAsset.availableMetadataFormats {
                             let timeRange = CMTimeRange(start: CMTime(seconds: 0, preferredTimescale: 1000), end: pendingAsset.duration)
                             let group = AVTimedMetadataGroup(items: pendingAsset.metadata(forFormat: format), timeRange: timeRange)
-                            self.delegate?.AVWrapper(didReceiveMetadata: [group])
+                            self.delegate?.AVWrapper(didReceiveTimedMetadata: [group])
                         }
                     }
                     
@@ -498,7 +502,7 @@ extension AVPlayerWrapper: AVPlayerItemObserverDelegate {
         delegate?.AVWrapper(didUpdateDuration: duration)
     }
     
-    func item(didReceiveMetadata metadata: [AVTimedMetadataGroup]) {
-        delegate?.AVWrapper(didReceiveMetadata: metadata)
+    func item(didReceiveTimedMetadata metadata: [AVTimedMetadataGroup]) {
+        delegate?.AVWrapper(didReceiveTimedMetadata: metadata)
     }
 }

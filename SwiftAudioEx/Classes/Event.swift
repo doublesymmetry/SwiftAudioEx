@@ -17,7 +17,8 @@ extension AudioPlayer {
     public typealias FailEventData = Error?
     public typealias SeekEventData = (seconds: Double, didFinish: Bool)
     public typealias UpdateDurationEventData = Double
-    public typealias MetadataEventData = [AVTimedMetadataGroup]
+    public typealias MetadataCommonEventData = [AVMetadataItem]
+    public typealias MetadataTimedEventData = [AVTimedMetadataGroup]
     public typealias DidRecreateAVPlayerEventData = ()
     public typealias CurrentItemEventData = (
         item: AudioItem?,
@@ -73,10 +74,22 @@ extension AudioPlayer {
         public let updateDuration: AudioPlayer.Event<UpdateDurationEventData> = AudioPlayer.Event()
 
         /**
-         Emitted when the player receives metadata.
+         Emitted when the player receives common metadata.
          - Important: Remember to dispatch to the main queue if any UI is updated in the event handler.
          */
-        public let receiveMetadata: AudioPlayer.Event<MetadataEventData> = AudioPlayer.Event()
+        public let receiveCommonMetadata: AudioPlayer.Event<MetadataCommonEventData> = AudioPlayer.Event()
+        
+        /**
+         Emitted when the player receives timed metadata.
+         - Important: Remember to dispatch to the main queue if any UI is updated in the event handler.
+         */
+        public let receiveTimedMetadata: AudioPlayer.Event<MetadataTimedEventData> = AudioPlayer.Event()
+        
+        /**
+         Emitted when the player receives chapter metadata.
+         - Important: Remember to dispatch to the main queue if any UI is updated in the event handler.
+         */
+        public let receiveChapterMetadata: AudioPlayer.Event<MetadataTimedEventData> = AudioPlayer.Event()
         
         /**
          Emitted when the underlying AVPlayer instance is recreated. Recreation happens if the current player fails.
