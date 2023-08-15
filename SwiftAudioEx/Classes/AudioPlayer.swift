@@ -381,9 +381,17 @@ public class AudioPlayer: AVPlayerWrapperDelegate {
     func AVWrapper(didUpdateDuration duration: Double) {
         event.updateDuration.emit(data: duration)
     }
-
-    func AVWrapper(didReceiveMetadata metadata: [AVTimedMetadataGroup]) {
-        event.receiveMetadata.emit(data: metadata)
+    
+    func AVWrapper(didReceiveCommonMetadata metadata: [AVMetadataItem]) {
+        event.receiveCommonMetadata.emit(data: metadata)
+    }
+    
+    func AVWrapper(didReceiveChapterMetadata metadata: [AVTimedMetadataGroup]) {
+        event.receiveChapterMetadata.emit(data: metadata)
+    }
+    
+    func AVWrapper(didReceiveTimedMetadata metadata: [AVTimedMetadataGroup]) {
+        event.receiveTimedMetadata.emit(data: metadata)
     }
 
     func AVWrapper(didChangePlayWhenReady playWhenReady: Bool) {

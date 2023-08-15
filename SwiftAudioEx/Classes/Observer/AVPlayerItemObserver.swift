@@ -22,7 +22,7 @@ protocol AVPlayerItemObserverDelegate: AnyObject {
     /**
      Called when the observed item receives metadata
      */
-    func item(didReceiveMetadata metadata: [AVTimedMetadataGroup])
+    func item(didReceiveTimedMetadata metadata: [AVTimedMetadataGroup])
     
 }
 
@@ -114,6 +114,6 @@ class AVPlayerItemObserver: NSObject {
 
 extension AVPlayerItemObserver: AVPlayerItemMetadataOutputPushDelegate {
     func metadataOutput(_ output: AVPlayerItemMetadataOutput, didOutputTimedMetadataGroups groups: [AVTimedMetadataGroup], from track: AVPlayerItemTrack?) {
-        delegate?.item(didReceiveMetadata: groups)
+        delegate?.item(didReceiveTimedMetadata: groups)
     }
 }

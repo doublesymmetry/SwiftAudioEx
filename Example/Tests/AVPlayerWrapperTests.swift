@@ -223,7 +223,15 @@ class AVPlayerWrapperDelegateHolder: AVPlayerWrapperDelegate {
 
     }
     
-    func AVWrapper(didReceiveMetadata metadata: [AVTimedMetadataGroup]) {
+    func AVWrapper(didReceiveTimedMetadata metadata: [AVTimedMetadataGroup]) {
+        
+    }
+    
+    func AVWrapper(didReceiveCommonMetadata metadata: [AVMetadataItem]) {
+        
+    }
+    
+    func AVWrapper(didReceiveChapterMetadata metadata: [AVTimedMetadataGroup]) {
         
     }
 
