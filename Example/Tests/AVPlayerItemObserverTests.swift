@@ -51,12 +51,26 @@ class AVPlayerItemObserverDelegateHolder: AVPlayerItemObserverDelegate {
 
     }
     
-    var receivedMetadata: ((_ metadata: [AVTimedMetadataGroup]) -> Void)?
+    var receivedCommonMetadata: ((_ metadata: [AVMetadataItem]) -> Void)?
     
-    func item(didReceiveMetadata metadata: [AVTimedMetadataGroup]) {
-        receivedMetadata?(metadata)
+    func item(didReceiveCommonMetadata metadata: [AVMetadataItem]) {
+        receivedCommonMetadata?(metadata)
     }
-
+    
+    
+    var receivedTimedMetadata: ((_ metadata: [AVTimedMetadataGroup]) -> Void)?
+    
+    func item(didReceiveTimedMetadata metadata: [AVTimedMetadataGroup]) {
+        receivedTimedMetadata?(metadata)
+    }
+    
+    
+    var receivedChapterMetadata: ((_ metadata: [AVTimedMetadataGroup]) -> Void)?
+    
+    func item(didReceiveChapterMetadata metadata: [AVTimedMetadataGroup]) {
+        receivedChapterMetadata?(metadata)
+    }
+    
     
     var updateDuration: ((_ duration: Double) -> Void)?
     
