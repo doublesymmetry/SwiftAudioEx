@@ -85,7 +85,6 @@ public class AudioPlayer: AVPlayerWrapperDelegate {
     public var playWhenReady: Bool {
         get { wrapper.playWhenReady }
         set {
-            wrapper.rate = newValue ? 1 : 0
             wrapper.playWhenReady = newValue
         }
     }
@@ -205,7 +204,6 @@ public class AudioPlayer: AVPlayerWrapperDelegate {
      Start playback
      */
     public func play() {
-        wrapper.rate = 1
         wrapper.play()
     }
 
@@ -213,7 +211,6 @@ public class AudioPlayer: AVPlayerWrapperDelegate {
      Pause playback
      */
     public func pause() {
-        wrapper.rate = 0
         wrapper.pause()
     }
 
@@ -306,7 +303,7 @@ public class AudioPlayer: AVPlayerWrapperDelegate {
     func updateNowPlayingPlaybackValues() {
         nowPlayingInfoController.set(keyValues: [
             MediaItemProperty.duration(wrapper.duration),
-            NowPlayingInfoProperty.playbackRate(Double(wrapper.rate)),
+            NowPlayingInfoProperty.playbackRate(wrapper.playWhenReady ? Double(wrapper.rate) : 0),
             NowPlayingInfoProperty.elapsedPlaybackTime(wrapper.currentTime)
         ])
     }
