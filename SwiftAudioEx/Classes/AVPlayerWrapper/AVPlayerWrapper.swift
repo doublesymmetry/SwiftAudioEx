@@ -234,17 +234,42 @@ class AVPlayerWrapper: AVPlayerWrapperProtocol {
             clearCurrentItem()
         }
         if let url = url {
-            let keys = ["playable"]
             let pendingAsset = AVURLAsset(url: url, options: urlOptions)
             asset = pendingAsset
             state = .loading
-            pendingAsset.loadValuesAsynchronously(forKeys: keys, completionHandler: { [weak self] in
+            
+            // Load metadata keys asynchronously and separate from playable, to allow that to execute as quickly as it can
+            let metdataKeys = ["commonMetadata", "availableChapterLocales", "availableMetadataFormats"]
+            pendingAsset.loadValuesAsynchronously(forKeys: metdataKeys, completionHandler: { [weak self] in
+                guard let self = self else { return }
+                if (pendingAsset != self.asset) { return; }
+                
+                let commonData = pendingAsset.commonMetadata
+                self.delegate?.AVWrapper(didReceiveCommonMetadata: commonData)
+                
+                if pendingAsset.availableChapterLocales.count > 0 {
+                    for locale in pendingAsset.availableChapterLocales {
+                        let chapters = pendingAsset.chapterMetadataGroups(withTitleLocale: locale, containingItemsWithCommonKeys: nil)
+                        self.delegate?.AVWrapper(didReceiveChapterMetadata: chapters)
+                    }
+                } else {
+                    for format in pendingAsset.availableMetadataFormats {
+                        let timeRange = CMTimeRange(start: CMTime(seconds: 0, preferredTimescale: 1000), end: pendingAsset.duration)
+                        let group = AVTimedMetadataGroup(items: pendingAsset.metadata(forFormat: format), timeRange: timeRange)
+                        self.delegate?.AVWrapper(didReceiveTimedMetadata: [group])
+                    }
+                }
+            })
+            
+            // Load playable portion of the track and commence when ready
+            let playableKeys = ["playable"]
+            pendingAsset.loadValuesAsynchronously(forKeys: playableKeys, completionHandler: { [weak self] in
                 guard let self = self else { return }
                 
                 DispatchQueue.main.async {
                     if (pendingAsset != self.asset) { return; }
                     
-                    for key in keys {
+                    for key in playableKeys {
                         var error: NSError?
                         let keyStatus = pendingAsset.statusOfValue(forKey: key, error: &error)
                         switch keyStatus {
@@ -266,29 +291,13 @@ class AVPlayerWrapper: AVPlayerWrapperProtocol {
                     
                     let item = AVPlayerItem(
                         asset: pendingAsset,
-                        automaticallyLoadedAssetKeys: keys
+                        automaticallyLoadedAssetKeys: playableKeys
                     )
                     self.item = item;
                     item.preferredForwardBufferDuration = self.bufferDuration
                     self.avPlayer.replaceCurrentItem(with: item)
                     self.startObservingAVPlayer(item: item)
                     self.applyAVPlayerRate()
-                    
-                    let commonData = pendingAsset.commonMetadata
-                    self.delegate?.AVWrapper(didReceiveCommonMetadata: commonData)
-                    
-                    if pendingAsset.availableChapterLocales.count > 0 {
-                        for locale in pendingAsset.availableChapterLocales {
-                            let chapters = pendingAsset.chapterMetadataGroups(withTitleLocale: locale, containingItemsWithCommonKeys: nil)
-                            self.delegate?.AVWrapper(didReceiveChapterMetadata: chapters)
-                        }
-                    } else {
-                        for format in pendingAsset.availableMetadataFormats {
-                            let timeRange = CMTimeRange(start: CMTime(seconds: 0, preferredTimescale: 1000), end: pendingAsset.duration)
-                            let group = AVTimedMetadataGroup(items: pendingAsset.metadata(forFormat: format), timeRange: timeRange)
-                            self.delegate?.AVWrapper(didReceiveTimedMetadata: [group])
-                        }
-                    }
                     
                     if let initialTime = self.timeToSeekToAfterLoading {
                         self.timeToSeekToAfterLoading = nil
