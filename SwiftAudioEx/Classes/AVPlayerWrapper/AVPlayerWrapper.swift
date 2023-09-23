@@ -141,6 +141,15 @@ class AVPlayerWrapper: AVPlayerWrapperProtocol {
             applyAVPlayerRate()
         }
     }
+  
+    private var _rampSecs: Double = 0.0;
+    var rampSecs: Double {
+        get { _rampSecs }
+        set {
+            _rampSecs = newValue
+            applyRampSecs()
+        }
+    }
 
     weak var delegate: AVPlayerWrapperDelegate? = nil
     
@@ -419,7 +428,30 @@ class AVPlayerWrapper: AVPlayerWrapperProtocol {
     }
     
     private func applyAVPlayerRate() {
+        if (playWhenReady) {
+            applyRampSecs()
+        }
         avPlayer.rate = playWhenReady ? _rate : 0
+    }
+  
+    private func applyRampSecs() {
+        if let item = self.item {
+            let currentTime = item.currentTime()
+            let params = AVMutableAudioMixInputParameters(track: item.asset.tracks(withMediaType: .audio).first)
+            
+            if (self._rampSecs > 0.0) {
+                let rampDuration = CMTime(seconds: self._rampSecs, preferredTimescale: 1)
+                
+                params.setVolumeRamp(fromStartVolume: 0.0, toEndVolume: avPlayer.volume, timeRange: CMTimeRange(start: currentTime, duration: rampDuration))
+            } else {
+                params.setVolume(avPlayer.volume, at: currentTime)
+            }
+            
+            let audioMix = AVMutableAudioMix()
+            audioMix.inputParameters = [params]
+            
+            item.audioMix = audioMix
+        }
     }
 }
 

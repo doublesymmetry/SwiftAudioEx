@@ -30,6 +30,8 @@ protocol AVPlayerWrapperProtocol: AnyObject {
     var playbackError: AudioPlayerError.PlaybackError? { get }
     
     var rate: Float { get set }
+  
+    var rampSecs: Double { get set }
     
     var delegate: AVPlayerWrapperDelegate? { get set }
     
