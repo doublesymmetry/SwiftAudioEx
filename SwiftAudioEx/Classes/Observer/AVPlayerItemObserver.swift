@@ -114,6 +114,9 @@ class AVPlayerItemObserver: NSObject {
 
 extension AVPlayerItemObserver: AVPlayerItemMetadataOutputPushDelegate {
     func metadataOutput(_ output: AVPlayerItemMetadataOutput, didOutputTimedMetadataGroups groups: [AVTimedMetadataGroup], from track: AVPlayerItemTrack?) {
-        delegate?.item(didReceiveTimedMetadata: groups)
+        let groupsWithMetadata = groups.filter { !$0.items.isEmpty }
+        if !groupsWithMetadata.isEmpty {
+            delegate?.item(didReceiveTimedMetadata: groupsWithMetadata)
+        }
     }
 }
