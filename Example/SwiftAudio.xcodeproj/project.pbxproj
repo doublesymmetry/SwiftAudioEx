@@ -42,11 +42,10 @@
 		607FACDD1AFB9204008FA782 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 607FACDC1AFB9204008FA782 /* Images.xcassets */; };
 		607FACE01AFB9204008FA782 /* LaunchScreen.xib in Resources */ = {isa = PBXBuildFile; fileRef = 607FACDE1AFB9204008FA782 /* LaunchScreen.xib */; };
 		607FACEC1AFB9204008FA782 /* AVPlayerObserverTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 607FACEB1AFB9204008FA782 /* AVPlayerObserverTests.swift */; };
-		9B05AA312660276400C7A389 /* Quick in Frameworks */ = {isa = PBXBuildFile; productRef = 9B05AA302660276400C7A389 /* Quick */; };
-		9B05AA332660276400C7A389 /* Nimble in Frameworks */ = {isa = PBXBuildFile; productRef = 9B05AA322660276400C7A389 /* Nimble */; };
 		9B1D5E1E27C76F5C004CA883 /* SwiftAudioEx in Frameworks */ = {isa = PBXBuildFile; productRef = 9B1D5E1D27C76F5C004CA883 /* SwiftAudioEx */; };
 		9B1D5E2027C76F6F004CA883 /* SwiftAudioEx in Frameworks */ = {isa = PBXBuildFile; productRef = 9B1D5E1F27C76F6F004CA883 /* SwiftAudioEx */; };
 		9B521D0E2662937600EF0C3A /* MockDispatchQueue.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B521D0D2662937600EF0C3A /* MockDispatchQueue.swift */; };
+		9B737A202AE1246A00D81CBB /* Helpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B737A1E2AE1246600D81CBB /* Helpers.swift */; };
 		F048FE7728D215A9001AA2AB /* five_seconds.m4a in Resources */ = {isa = PBXBuildFile; fileRef = F048FE7628D215A9001AA2AB /* five_seconds.m4a */; };
 		F048FE7828D215A9001AA2AB /* five_seconds.m4a in Resources */ = {isa = PBXBuildFile; fileRef = F048FE7628D215A9001AA2AB /* five_seconds.m4a */; };
 /* End PBXBuildFile section */
@@ -98,6 +97,7 @@
 		607FACEB1AFB9204008FA782 /* AVPlayerObserverTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AVPlayerObserverTests.swift; sourceTree = "<group>"; };
 		9B1D5E1C27C76F49004CA883 /* SwiftAudioEx */ = {isa = PBXFileReference; lastKnownFileType = wrapper; name = SwiftAudioEx; path = ..; sourceTree = "<group>"; };
 		9B521D0D2662937600EF0C3A /* MockDispatchQueue.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockDispatchQueue.swift; sourceTree = "<group>"; };
+		9B737A1E2AE1246600D81CBB /* Helpers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Helpers.swift; sourceTree = "<group>"; };
 		F048FE7628D215A9001AA2AB /* five_seconds.m4a */ = {isa = PBXFileReference; lastKnownFileType = file; path = five_seconds.m4a; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -115,8 +115,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				9B1D5E1E27C76F5C004CA883 /* SwiftAudioEx in Frameworks */,
-				9B05AA312660276400C7A389 /* Quick in Frameworks */,
-				9B05AA332660276400C7A389 /* Nimble in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -196,6 +194,7 @@
 		607FACE81AFB9204008FA782 /* Tests */ = {
 			isa = PBXGroup;
 			children = (
+				9B737A1D2AE1244000D81CBB /* Utils */,
 				07756B67218A4E640023935E /* Mocks */,
 				0708ED732116EE0100EB29BD /* AudioPlayerTests.swift */,
 				607FACEB1AFB9204008FA782 /* AVPlayerObserverTests.swift */,
@@ -229,6 +228,14 @@
 				9B1D5E1C27C76F49004CA883 /* SwiftAudioEx */,
 			);
 			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		9B737A1D2AE1244000D81CBB /* Utils */ = {
+			isa = PBXGroup;
+			children = (
+				9B737A1E2AE1246600D81CBB /* Helpers.swift */,
+			);
+			path = Utils;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -269,8 +276,6 @@
 			);
 			name = SwiftAudio_Tests;
 			packageProductDependencies = (
-				9B05AA302660276400C7A389 /* Quick */,
-				9B05AA322660276400C7A389 /* Nimble */,
 				9B1D5E1D27C76F5C004CA883 /* SwiftAudioEx */,
 			);
 			productName = Tests;
@@ -313,8 +318,6 @@
 			);
 			mainGroup = 607FACC71AFB9204008FA782;
 			packageReferences = (
-				9B05AA292660273200C7A389 /* XCRemoteSwiftPackageReference "Quick" */,
-				9B05AA2C2660274F00C7A389 /* XCRemoteSwiftPackageReference "Nimble" */,
 			);
 			productRefGroup = 607FACD11AFB9204008FA782 /* Products */;
 			projectDirPath = "";
@@ -389,6 +392,7 @@
 				07DBB1E1212C17E600BB4278 /* QueuedAudioPlayerTests.swift in Sources */,
 				076DFC5F22345EAF00A8D163 /* AudioPlayerEventTests.swift in Sources */,
 				074B0D6D222C24DE001A45A9 /* NowPlayingInfoController.swift in Sources */,
+				9B737A202AE1246A00D81CBB /* Helpers.swift in Sources */,
 				074A6485205C29920083D868 /* AVPlayerItemNotificationObserverTests.swift in Sources */,
 				607FACEC1AFB9204008FA782 /* AVPlayerObserverTests.swift in Sources */,
 				074A6487205E59B60083D868 /* AVPlayerWrapperTests.swift in Sources */,
@@ -648,36 +652,7 @@
 		};
 /* End XCConfigurationList section */
 
-/* Begin XCRemoteSwiftPackageReference section */
-		9B05AA292660273200C7A389 /* XCRemoteSwiftPackageReference "Quick" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/Quick/Quick";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 4.0.0;
-			};
-		};
-		9B05AA2C2660274F00C7A389 /* XCRemoteSwiftPackageReference "Nimble" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/Quick/Nimble";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 9.2.0;
-			};
-		};
-/* End XCRemoteSwiftPackageReference section */
-
 /* Begin XCSwiftPackageProductDependency section */
-		9B05AA302660276400C7A389 /* Quick */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 9B05AA292660273200C7A389 /* XCRemoteSwiftPackageReference "Quick" */;
-			productName = Quick;
-		};
-		9B05AA322660276400C7A389 /* Nimble */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 9B05AA2C2660274F00C7A389 /* XCRemoteSwiftPackageReference "Nimble" */;
-			productName = Nimble;
-		};
 		9B1D5E1D27C76F5C004CA883 /* SwiftAudioEx */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = SwiftAudioEx;

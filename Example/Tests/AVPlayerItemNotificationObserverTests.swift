@@ -1,48 +1,32 @@
-import Quick
-import Nimble
+import XCTest
 import AVFoundation
-
 @testable import SwiftAudioEx
 
+class AVPlayerItemNotificationObserverTests: XCTestCase {
 
-class AVPlayerItemNotificationObserverTests: QuickSpec {
-    
-    override func spec() {
-        
-        describe("A notification observer") {
-            
-            var item: AVPlayerItem!
-            var observer: AVPlayerItemNotificationObserver!
-        
-            beforeEach {
-                item = AVPlayerItem(url: URL(fileURLWithPath: Source.path))
-                observer = AVPlayerItemNotificationObserver()
-            }
-            
-            context("when started observing") {
-                beforeEach {
-                    observer.startObserving(item: item)
-                }
-                
-                it("should have an observed item") {
-                    expect(observer.observingItem).toNot(beNil())
-                }
-                
-                context("when ended observing") {
-                    
-                    beforeEach {
-                        observer.stopObservingCurrentItem()
-                    }
-                    
-                    it("should have no observed item") {
-                        expect(observer.observingItem).to(beNil())
-                    }
-                    
-                }
-            }
-            
-        }
+    var item: AVPlayerItem!
+    var observer: AVPlayerItemNotificationObserver!
 
+    override func setUp() {
+        super.setUp()
+        item = AVPlayerItem(url: URL(fileURLWithPath: Source.path))
+        observer = AVPlayerItemNotificationObserver()
     }
-    
+
+    override func tearDown() {
+        item = nil
+        observer = nil
+        super.tearDown()
+    }
+
+    func testObserverHasObservedItemWhenStartedObserving() {
+        observer.startObserving(item: item)
+        XCTAssertNotNil(observer.observingItem)
+    }
+
+    func testObserverHasNoObservedItemWhenEndedObserving() {
+        observer.startObserving(item: item)
+        observer.stopObservingCurrentItem()
+        XCTAssertNil(observer.observingItem)
+    }
 }

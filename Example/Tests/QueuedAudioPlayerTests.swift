@@ -1,843 +1,588 @@
-import Quick
-import Nimble
-import Foundation
-
+import XCTest
 @testable import SwiftAudioEx
-import AVFoundation
 
-class QueuedAudioPlayerTests: QuickSpec {
-    override func spec() {
-        beforeSuite {
-            Nimble.AsyncDefaults.timeout = .seconds(10)
-            Nimble.AsyncDefaults.pollInterval = .milliseconds(100)
-        }
+class QueuedAudioPlayerTests: XCTestCase {
+    
+    var audioPlayer: QueuedAudioPlayer!
+    var currentItemEventListener: QueuedAudioPlayer.CurrentItemEventListener!
+    var playbackEndEventListener: QueuedAudioPlayer.PlaybackEndEventListener!
+    var playerStateEventListener: QueuedAudioPlayer.PlayerStateEventListener!
 
-        describe("A QueuedAudioPlayer") {
-            var audioPlayer: QueuedAudioPlayer!
-            var currentItemEventListener: QueuedAudioPlayer.CurrentItemEventListener!
-            var playbackEndEventListener: QueuedAudioPlayer.PlaybackEndEventListener!
-            var playerStateEventListener: QueuedAudioPlayer.PlayerStateEventListener!
+    override func setUp() {
+        super.setUp()
+        audioPlayer = QueuedAudioPlayer()
 
-            beforeEach {
-                audioPlayer = QueuedAudioPlayer()
+        currentItemEventListener = QueuedAudioPlayer.CurrentItemEventListener()
+        audioPlayer.event.currentItem.addListener(
+            currentItemEventListener,
+            currentItemEventListener.handleEvent
+        )
 
-                currentItemEventListener = QueuedAudioPlayer.CurrentItemEventListener()
-                audioPlayer.event.currentItem.addListener(
-                    currentItemEventListener,
-                    currentItemEventListener.handleEvent
-                )
+        playbackEndEventListener = QueuedAudioPlayer.PlaybackEndEventListener()
+        audioPlayer.event.playbackEnd.addListener(
+            playbackEndEventListener,
+            playbackEndEventListener.handleEvent
+        )
 
-                playbackEndEventListener = QueuedAudioPlayer.PlaybackEndEventListener()
-                audioPlayer.event.playbackEnd.addListener(
-                    playbackEndEventListener,
-                    playbackEndEventListener.handleEvent
-                )
+        playerStateEventListener = QueuedAudioPlayer.PlayerStateEventListener()
+        audioPlayer.event.stateChange.addListener(
+            playerStateEventListener,
+            playerStateEventListener.handleEvent
+        )
 
-                playerStateEventListener = QueuedAudioPlayer.PlayerStateEventListener()
-                audioPlayer.event.stateChange.addListener(
-                    playerStateEventListener,
-                    playerStateEventListener.handleEvent
-                )
-                
-                audioPlayer.volume = 0.0
-            }
+        audioPlayer.volume = 0.0
+    }
 
-            // MARK: currentItem
-            describe("its current item") {
-                it("should be nil") {
-                    expect(audioPlayer.currentItem).to(beNil())
-                }
+    override func tearDown() {
+        audioPlayer.event.currentItem.removeListener(currentItemEventListener)
+        currentItemEventListener = nil
+        
+        audioPlayer.event.playbackEnd.removeListener(playbackEndEventListener)
+        playbackEndEventListener = nil
+        
+        audioPlayer.event.stateChange.removeListener(playerStateEventListener)
+        playerStateEventListener = nil
+        
+        audioPlayer = nil
+        super.tearDown()
+    }
+    
+    // MARK: - Current Item
 
-                context("when adding one item") {
-                    var fiveSecondItem: AudioItem!
-                    var item: AudioItem!
-                    beforeEach {
-                        fiveSecondItem = FiveSecondSource.getAudioItem()
-                        item = Source.getAudioItem()
-                        audioPlayer.add(item: fiveSecondItem)
-                    }
-                    it("should not be nil") {
-                        expect(audioPlayer.currentItem).toNot(beNil())
-                    }
+    func testCurrentItemOnCreate() {
+        XCTAssertNil(audioPlayer.currentItem)
+    }
 
-                    context("then loading a new item") {
-                        beforeEach {
-                            audioPlayer.load(item: item)
-                        }
+    func testAddingOneItem() {
+        audioPlayer.add(item: FiveSecondSource.getAudioItem())
+        XCTAssertNotNil(audioPlayer.currentItem)
+    }
+    
+    func testLoadItemAfterAdding() {
+        testAddingOneItem()
+        let item = Source.getAudioItem()
+        audioPlayer.load(item: item)
 
-                        it("should have replaced the item") {
-                            expect(
-                                audioPlayer.currentItem?.getSourceUrl()
-                            ).to(
-                                equal(item.getSourceUrl())
-                            )
-                        }
-                    }
+        XCTAssertEqual(audioPlayer.currentItem?.getSourceUrl(), item.getSourceUrl())
+    }
 
-                    context("then removing it again") {
-                        beforeEach {
-                            audioPlayer.repeatMode = RepeatMode.track;
-                            audioPlayer.play();
-                            audioPlayer.seek(to: 4);
-                            try? audioPlayer.removeItem(at: audioPlayer.currentIndex);
-                        }
-                        
-                        it("should have made the currentItem nil") {
-                            expect(audioPlayer.currentItem).to(beNil())
-                        }
+    func testRemovingItemAfterAdding() {
+        audioPlayer.add(item: FiveSecondSource.getAudioItem())
+        audioPlayer.repeatMode = RepeatMode.track
+        audioPlayer.play()
+        audioPlayer.seek(to: 4)
+        try? audioPlayer.removeItem(at: audioPlayer.currentIndex)
+        
+        XCTAssertNil(audioPlayer.currentItem)
+        XCTAssertEqual(audioPlayer.playerState, AudioPlayerState.idle)
+        waitEqual(self.playerStateEventListener.statesWithoutBuffering, [.loading, .idle], timeout: 5)
+    }
+    
+    func testLoadAfterRemoval() {
+        testRemovingItemAfterAdding()
+        
+        audioPlayer.load(item: Source.getAudioItem())
+        XCTAssertNotEqual(audioPlayer.currentItem?.getSourceUrl(), FiveSecondSource.getAudioItem().getSourceUrl())
+        waitEqual(self.playerStateEventListener.statesWithoutBuffering, [.loading, .idle, .loading, .playing], timeout: 5)
+        XCTAssertEqual(audioPlayer.playerState, AudioPlayerState.playing)
+    }
 
-                        it("should make the player be idle") {
-                            expect(audioPlayer.playerState).toEventually(equal(AudioPlayerState.idle))
-                            expect(playerStateEventListener.statesWithoutBuffering).to(equal([
-                                .loading, .idle
-                            ]))
-                        }
+    func testAddingMultipleItems() {
+        audioPlayer.add(items: [FiveSecondSource.getAudioItem(), ShortSource.getAudioItem()], playWhenReady: false)
+        XCTAssertNotNil(audioPlayer.currentItem)
+        XCTAssertEqual(audioPlayer.currentIndex, 0)
+    }
+    
+    func testRemoveItemAfterAddingMultiple() {
+        testAddingMultipleItems()
+        
+        try? audioPlayer.removeItem(at: 0)
+        XCTAssertEqual(audioPlayer.items.count, 1)
+        XCTAssertEqual(audioPlayer.currentItem?.getSourceUrl(), ShortSource.getAudioItem().getSourceUrl())
+    }
+    
+    // MARK: - Next Items
 
-                        context("then loading a new item") {
-                            beforeEach {
-                                audioPlayer.load(item: Source.getAudioItem())
-                            }
-                            
-                            it("should have set the item") {
-                                expect(audioPlayer.currentItem?.getSourceUrl()).toNot(equal(fiveSecondItem.getSourceUrl()))
-                            }
+    func testNextItemsEmptyOnCreate() {
+        XCTAssertTrue(audioPlayer.nextItems.isEmpty)
+    }
 
-                            it("should have started playing") {
-                                expect(playerStateEventListener.statesWithoutBuffering).toEventually(equal([
-                                    .loading, .idle, .loading, .playing
-                                ]))
-                                expect(audioPlayer.playerState).toEventually(equal(AudioPlayerState.playing))
-                            }
-                        }
-                    }
-                }
+    func testNextItemsAfterAddingTwoItems() {
+        audioPlayer.add(items: [Source.getAudioItem(), Source.getAudioItem()])
+        XCTAssertEqual(audioPlayer.nextItems.count, 1)
+    }
+    
+    func testNextItemsWhileNavigationAfterAddingTwoItems() {
+        testNextItemsAfterAddingTwoItems()
+        
+        // Test next
+        audioPlayer.next()
+        XCTAssertEqual(audioPlayer.nextItems.count, 0)
+        
+        // Test previous
+        audioPlayer.previous()
+        XCTAssertEqual(audioPlayer.nextItems.count, 1)
+    }
 
-                context("when adding multiple items") {
-                    beforeEach {
-                        audioPlayer.add(items: [FiveSecondSource.getAudioItem(), ShortSource.getAudioItem()], playWhenReady: false)
-                    }
-                    it("currentItem should not be nil") {
-                        expect(audioPlayer.currentItem).toNot(beNil())
-                    }
+    func testRemovingOneItem() {
+        let queue = [Source.getAudioItem(), Source.getAudioItem()]
+        audioPlayer.add(items: queue)
+        try? audioPlayer.removeItem(at: queue.count - 1)
+        XCTAssertEqual(audioPlayer.nextItems.count, queue.count - 2)
+    }
 
-                    it("currentIndex should be 0") {
-                        expect(audioPlayer.currentIndex).to(equal(0))
-                    }
+    func testJumpingToLastItem() {
+        let queue = [Source.getAudioItem(), Source.getAudioItem()]
+        audioPlayer.add(items: queue)
+        try? audioPlayer.jumpToItem(atIndex: queue.count - 1)
+        XCTAssertTrue(audioPlayer.nextItems.isEmpty)
+    }
 
-                    context("then removing the first item") {
-                        it("the current item should now be what was previously the second item") {
-                            try? audioPlayer.removeItem(at: 0)
-                            expect (audioPlayer.items.count).to(equal(1))
-                            expect (audioPlayer.currentItem?.getSourceUrl()).to(equal(ShortSource.getAudioItem().getSourceUrl()))
-                            expect(audioPlayer.currentItem?.getSourceUrl()).to(equal(ShortSource.getAudioItem().getSourceUrl()))
-                        }
-                    }
-                }
-            }
+    func testRemovingUpcomingItems() {
+        audioPlayer.add(items: [Source.getAudioItem(), Source.getAudioItem()])
+        audioPlayer.removeUpcomingItems()
+        XCTAssertTrue(audioPlayer.nextItems.isEmpty)
+    }
 
-            // MARK: nextItems
-            describe("its next items") {
-                it("should be empty") {
-                    expect(audioPlayer.nextItems.count).to(equal(0))
-                }
+    func testStopping() {
+        audioPlayer.add(items: [Source.getAudioItem(), Source.getAudioItem()])
+        audioPlayer.stop()
+        XCTAssertEqual(audioPlayer.nextItems.count, 1)
+    }
+    
+    // MARK: - Previous Items
+    
+    func testPreviousItemsEmptyOnCreate() {
+        XCTAssertTrue(audioPlayer.previousItems.isEmpty)
+    }
 
-                context("when adding 2 items") {
-                    beforeEach {
-                        audioPlayer.add(items: [Source.getAudioItem(), Source.getAudioItem()])
-                    }
-                    it("should contain 1 item") {
-                        expect(audioPlayer.nextItems.count).to(equal(1))
-                    }
+    func testPreviousItemsAfterAddingTwoItems() {
+        audioPlayer.add(items: [FiveSecondSource.getAudioItem(), FiveSecondSource.getAudioItem()])
+        XCTAssertTrue(audioPlayer.previousItems.isEmpty)
+    }
 
-                    context("then calling next()") {
-                        beforeEach {
-                            audioPlayer.next()
-                        }
-                        it("should contain 0 items") {
-                            expect(audioPlayer.nextItems.count).to(equal(0))
-                        }
+    func testPreviousItemsWhileNavigationAfterAddingTwoItems() {
+        testPreviousItemsAfterAddingTwoItems()
+        
+        // Test next
+        audioPlayer.next()
+        waitEqual(self.playerStateEventListener.statesWithoutBuffering, [.loading, .paused, .loading, .paused], timeout: 5)
+        XCTAssertEqual(audioPlayer.previousItems.count, 1)
+        waitEqual(self.playbackEndEventListener.lastReason, .skippedToNext, timeout: 5)
+        
+        // Test stop
+        audioPlayer.stop()
+        waitEqual(self.audioPlayer.playerState, .stopped, timeout: 5)
+        waitEqual(self.playbackEndEventListener.reasons, [.skippedToNext, .playerStopped], timeout: 5)
+        
+        // Test stop again
+        audioPlayer.stop()
+        waitEqual(self.audioPlayer.playerState, .stopped, timeout: 5)
+        waitEqual(self.playbackEndEventListener.reasons, [.skippedToNext, .playerStopped], timeout: 5)
+        
+        // Test previous
+        audioPlayer.previous()
+        waitEqual(self.audioPlayer.playerState, .loading, timeout: 5)
+        // should not have emitted playbackEnd .skippedToPrevious because playback was already stopped previously
+        waitEqual(self.playbackEndEventListener.reasons, [.skippedToNext, .playerStopped], timeout: 5)
+        
+    }
 
-                        context("then calling previous()") {
-                            beforeEach {
-                                audioPlayer.previous()
-                            }
-                            it("should contain 1 item") {
-                                expect(audioPlayer.nextItems.count).to(equal(1))
-                            }
-                        }
-                    }
+    func testRemoveAllPreviousItems() {
+        testPreviousItemsAfterAddingTwoItems()
+        audioPlayer.removePreviousItems()
+        XCTAssertEqual(audioPlayer.previousItems.count, 0)
+    }
+    
+    // MARK: - Pause
+    
+    func testPauseWithPlayWhenReadyTrue() {
+        audioPlayer.playWhenReady = true
+        XCTAssertTrue(audioPlayer.playWhenReady)
+    }
 
-                    context("then removing one item") {
-                        beforeEach {
-                            try? audioPlayer.removeItem(at: 1)
-                        }
+    func testPauseOnEmptyQueue() {
+        audioPlayer.playWhenReady = true
+        audioPlayer.pause()
+        XCTAssertFalse(audioPlayer.playWhenReady)
+        
+        // It should not have mutated player state to .paused because playback was already idle
+        XCTAssertEqual(playerStateEventListener.states, [])
+    }
 
-                        it("should be empty") {
-                            expect(audioPlayer.nextItems.count).to(equal(0))
-                        }
-                    }
+    func testPauseWithItemAndPausingDirectly() {
+        audioPlayer.playWhenReady = true
+        
+        // Adding an item and pausing directly
+        audioPlayer.add(items: [FiveSecondSource.getAudioItem()])
+        audioPlayer.pause()
+        
+        // It should have gone into .paused state from .loading and then into .ready because playback can be started
+        waitEqual(self.playerStateEventListener.states, [.loading, .paused, .ready], timeout: 5)
+    }
 
-                    context("then jumping to the last item") {
-                        beforeEach {
-                            try? audioPlayer.jumpToItem(atIndex: 1)
-                        }
-                        it("should be empty") {
-                            expect(audioPlayer.nextItems.count).to(equal(0))
-                        }
-                    }
+    // MARK: - Stop
+    
+    func testStopOnEmptyQueue() {
+        audioPlayer.stop()
+        waitEqual(self.playerStateEventListener.states, [.stopped], timeout: 5)
+        
+        // It should not have emitted a playbackEnd event
+        XCTAssertNil(playbackEndEventListener.lastReason)
+    }
 
-                    context("then removing upcoming items") {
-                        beforeEach {
-                            audioPlayer.removeUpcomingItems()
-                        }
+    func testStopWithTwoItems() {
+        audioPlayer.add(items: [
+            FiveSecondSource.getAudioItem(),
+            FiveSecondSource.getAudioItem()
+        ])
+        audioPlayer.stop()
+        
+        // It should have emitted a playbackEnd .playerStopped event
+        waitEqual(self.playbackEndEventListener.lastReason, .playerStopped, timeout: 5)
+        
+        // It should have mutated player state from .loading to .stopped
+        waitEqual(self.playerStateEventListener.states, [.loading, .stopped], timeout: 5)
+    }
 
-                        it("should be empty") {
-                            expect(audioPlayer.nextItems.count).to(equal(0))
-                        }
-                    }
+    // MARK: - Load
+    
+    func testLoadItemOnEmptyQueue() {
+        // Calling load(item) on an empty queue should set currentItem
+        audioPlayer.load(item: FiveSecondSource.getAudioItem())
+        XCTAssertNotNil(audioPlayer.currentItem)
+        
+        // It should have started loading, but not playing yet
+        waitEqual(self.playerStateEventListener.states, [.loading, .paused, .ready], timeout: 5)
+    }
 
-                    context("then stopping") {
-                        beforeEach {
-                            audioPlayer.stop()
-                        }
+    func testLoadItemAfterPlaying() {
+        audioPlayer.play()
+        audioPlayer.load(item: FiveSecondSource.getAudioItem())
+        XCTAssertNotNil(audioPlayer.currentItem)
+        
+        // It should have started playing
+        waitEqual(self.playerStateEventListener.statesWithoutBuffering, [.loading, .playing], timeout: 5)
+        audioPlayer.load(item: Source.getAudioItem())
+        
+        XCTAssertEqual(audioPlayer.items.count, 1)
+        XCTAssertEqual(audioPlayer.currentItem?.getSourceUrl(), Source.getAudioItem().getSourceUrl())
+        waitEqual(self.playerStateEventListener.statesWithoutBuffering.prefix(4), [.loading, .playing, .loading, .playing], timeout: 5)
+    }
+    
+    // MARK: - Next
+    
+    func testNextOnEmptyQueue() {
+        audioPlayer.next()
+        // should not have emitted a playbackEnd event
+        XCTAssertNil(playbackEndEventListener.lastReason)
+    }
 
-                        it("should not be empty") {
-                            expect(audioPlayer.nextItems.count).to(equal(1))
-                        }
-                    }
-                }
-            }
+    func testNextWhenPaused() {
+        audioPlayer.add(items: [FiveSecondSource.getAudioItem(), FiveSecondSource.getAudioItem()])
+        audioPlayer.next()
+        
+        waitEqual(self.audioPlayer.nextItems.count, 0, timeout: 5)
+        waitEqual(self.audioPlayer.currentIndex, 1, timeout: 5)
+        // should go to previous item and not play
+        waitEqual(self.audioPlayer.playerState, AudioPlayerState.ready, timeout: 5)
+    }
 
-            // MARK: previousItems
-            describe("its previous items") {
-                it("should be empty") {
-                    expect(audioPlayer.previousItems.count).to(equal(0))
-                }
+    func testNextWhenPausedWithoutPlaying() {
+        audioPlayer.add(items: [FiveSecondSource.getAudioItem(), FiveSecondSource.getAudioItem()])
+        audioPlayer.pause()
+        audioPlayer.next()
+        
+        waitEqual(self.audioPlayer.nextItems.count, 0, timeout: 5)
+        waitEqual(self.audioPlayer.currentIndex, 1, timeout: 5)
+        // should go to previous item and not play
+        waitEqual(self.audioPlayer.playerState, AudioPlayerState.ready, timeout: 5)
+    }
 
-                context("when adding 2 items") {
-                    beforeEach {
-                        audioPlayer.add(items: [FiveSecondSource.getAudioItem(), FiveSecondSource.getAudioItem()])
-                    }
+    func testNextWhenPlaying() {
+        audioPlayer.play()
+        audioPlayer.add(items: [FiveSecondSource.getAudioItem(), FiveSecondSource.getAudioItem()])
+        audioPlayer.next()
+        
+        waitEqual(self.audioPlayer.nextItems.count, 0, timeout: 5)
+        waitEqual(self.audioPlayer.currentIndex, 1, timeout: 5)
+        // should go to previous item and play
+        waitEqual(self.audioPlayer.playerState, AudioPlayerState.playing, timeout: 5)
+    }
+    
+    // MARK: - Previous
+    
+    func testPreviousOnEmptyQueue() {
+        audioPlayer.previous()
+        // should not have emitted a playbackEnd event
+        XCTAssertNil(playbackEndEventListener.lastReason)
+    }
 
-                    it("should be empty") {
-                        expect(playerStateEventListener.statesWithoutBuffering).toEventually(equal([.loading, .paused]))
-                        expect(audioPlayer.previousItems.count).to(equal(0))
-                    }
+    func testPreviousWhenPlaying() {
+        audioPlayer.add(items: [FiveSecondSource.getAudioItem(), FiveSecondSource.getAudioItem()], playWhenReady: true)
+        audioPlayer.next()
+        audioPlayer.previous()
+        
+        waitEqual(self.audioPlayer.nextItems.count, 1, timeout: 5)
+        waitEqual(self.audioPlayer.previousItems.count, 0, timeout: 5)
+        waitEqual(self.audioPlayer.currentIndex, 0, timeout: 5)
+        // should go to previous item and play
+        waitEqual(self.audioPlayer.playerState, AudioPlayerState.playing, timeout: 5)
+    }
 
-                    context("then calling next()") {
-                        beforeEach {
-                            audioPlayer.next()
-                        }
-                        it("should contain one item") {
-                            expect(playerStateEventListener.statesWithoutBuffering).toEventually(equal([
-                                .loading, .paused, .loading, .paused
-                            ]))
-                            expect(audioPlayer.previousItems.count).to(equal(1))
-                        }
+    func testPreviousWhenPaused() {
+        audioPlayer.add(items: [FiveSecondSource.getAudioItem(), FiveSecondSource.getAudioItem()])
+        audioPlayer.next()
+        audioPlayer.pause()
+        audioPlayer.previous()
+        
+        waitEqual(self.audioPlayer.nextItems.count, 1, timeout: 5)
+        waitEqual(self.audioPlayer.previousItems.count, 0, timeout: 5)
+        waitEqual(self.audioPlayer.currentIndex, 0, timeout: 5)
+        // should go to previous item and not play
+        waitEqual(self.audioPlayer.playerState, AudioPlayerState.ready, timeout: 5)
+    }
 
-                        it("should have emitted playbackEnd") {
-                            expect(playbackEndEventListener.lastReason).toEventually(equal(.skippedToNext))
-                        }
+    // MARK: - Move
+    
+    func testMoveItemsRepeatModeOff() {
+        audioPlayer.play()
+        audioPlayer.add(items: [FiveSecondSource.getAudioItem(), FiveSecondSource.getAudioItem()])
+        
+        // Move the first (currently playing track) above the second and seek to near the end of the track
+        try? audioPlayer.moveItem(fromIndex: 0, toIndex: 1)
+        audioPlayer.repeatMode = RepeatMode.off
+        waitForSeek(audioPlayer, to: 4.6)
 
-                        context("then calling stop()") {
-                            beforeEach {
-                                audioPlayer.stop()
-                            }
-                            it("should have emitted playbackEnd .playerStopped") {
-                                expect(audioPlayer.playerState).toEventually(equal(.stopped))
-                                expect(playbackEndEventListener.reasons).toEventually(
-                                    equal([.skippedToNext, .playerStopped])
-                                )
-                            }
+        waitEqual(self.audioPlayer.playerState, AudioPlayerState.ended, timeout: 5)
+    }
+    
+    func testMoveItemsRepeatModeQueue() {
+        audioPlayer.play()
+        audioPlayer.add(items: [FiveSecondSource.getAudioItem(), FiveSecondSource.getAudioItem()])
+        
+        // Move the first (currently playing track) above the second and seek to near the end of the track
+        try? audioPlayer.moveItem(fromIndex: 0, toIndex: 1)
+        audioPlayer.repeatMode = RepeatMode.queue
+        waitForSeek(audioPlayer, to: 4.6)
+    
+        waitEqual(self.audioPlayer.currentIndex, 0, timeout: 5)
+        waitTrue(self.audioPlayer.currentTime > 0, timeout: 5)
+        waitEqual(self.audioPlayer.playerState, AudioPlayerState.playing, timeout: 5)
+    }
+    
+    func testMoveItemsRepeatModeTrack() {
+        audioPlayer.play()
+        audioPlayer.add(items: [FiveSecondSource.getAudioItem(), FiveSecondSource.getAudioItem()])
+        
+        // Move the first (currently playing track) above the second and seek to near the end of the track
+        try? audioPlayer.moveItem(fromIndex: 0, toIndex: 1)
+        audioPlayer.repeatMode = RepeatMode.track
+        waitForSeek(audioPlayer, to: 4.6)
+        
+        waitTrue(self.audioPlayer.currentTime < 4.6, timeout: 5)
+        waitTrue(self.audioPlayer.currentTime > 0, timeout: 5)
+        XCTAssertEqual(audioPlayer.currentIndex, 1)
+        waitEqual(self.audioPlayer.playerState, .playing, timeout: 5)
+    }
+    
+    // MARK: - Repeat Mode (Off - Two Items)
+        
+    func setupRepeatModeOffTests() {
+        audioPlayer.play()
+        audioPlayer.add(items: [FiveSecondSource.getAudioItem(), FiveSecondSource.getAudioItem()])
+        audioPlayer.repeatMode = .off
+    }
+    
+    func testTrackEndWhenRepeatModeOff() {
+        setupRepeatModeOffTests()
+        waitForSeek(audioPlayer, to: 4.6)
 
-                            context("then calling stop() again") {
-                                beforeEach {
-                                    audioPlayer.stop()
-                                }
+        waitEqual(self.audioPlayer.nextItems.count, 0, timeout: 5)
+        waitEqual(self.audioPlayer.currentIndex, 1, timeout: 5)
+        waitEqual(self.audioPlayer.playerState, .playing, timeout: 5)
+        waitEqual(self.currentItemEventListener.lastIndex, 0, timeout: 5)
+        
+        // Allow final track to end
+        waitForSeek(audioPlayer, to: 4.6)
+        waitEqual(self.audioPlayer.currentTime, 5, accuracy: 0.1, timeout: 5)
+        waitEqual(self.audioPlayer.playerState, .ended, timeout: 5)
+        waitEqual(self.currentItemEventListener.index, 1, timeout: 5)
+    }
+    
+    func testNextWhenRepeatModeOff() {
+        setupRepeatModeOffTests()
+        audioPlayer.play()
+        audioPlayer.next()
+        
+        waitEqual(self.audioPlayer.nextItems.count, 0, timeout: 5)
+        waitEqual(self.audioPlayer.currentIndex, 1, timeout: 5)
+        waitEqual(self.audioPlayer.playerState, .playing, timeout: 5)
+        waitEqual(self.currentItemEventListener.lastIndex, 0, timeout: 5)
+        
+        // Calling next on the final track
+        audioPlayer.next()
+        waitEqual(self.audioPlayer.currentIndex, 1, timeout: 5)
+        waitEqual(self.audioPlayer.currentTime, 5, accuracy: 0.1, timeout: 5)
+        waitEqual(self.audioPlayer.playerState, .ended, timeout: 5)
+    }
+    
+    // MARK: - Repeat Mode (Track - Two Items)
 
-                                it("should not have emitted playbackEnd .playerStopped because the player was already stopped") {
-                                    expect(audioPlayer.playerState).toEventually(equal(.stopped))
-                                    expect(playbackEndEventListener.reasons).toEventually(
-                                        equal([.skippedToNext, .playerStopped])
-                                    )
-                                }
-                            }
-                        }
+    func setupRepeatModeTrackTests() {
+        audioPlayer.play()
+        audioPlayer.add(items: [FiveSecondSource.getAudioItem(), FiveSecondSource.getAudioItem()])
+        audioPlayer.repeatMode = .track
+    }
 
-                        context("then calling previous() after stop()") {
-                            beforeEach {
-                                audioPlayer.stop()
-                                audioPlayer.previous()
-                            }
-                            it("should not have emitted playbackEnd .skippedToPrevious because playback was already stopped previously") {
-                                expect(audioPlayer.playerState).toEventually(equal(.loading))
-                                expect(playbackEndEventListener.reasons).to(
-                                    equal([.skippedToNext, .playerStopped])
-                                )
-                            }
-                        }
-                    }
+    func testRestartTrackWhenRepeatModeTrack() {
+        setupRepeatModeTrackTests()
+        waitForSeek(audioPlayer, to: 4.6)
+        
+        waitEqual(self.audioPlayer.currentTime, 0, timeout: 5)
+        waitEqual(self.audioPlayer.nextItems.count, 1, timeout: 5)
+        waitEqual(self.audioPlayer.currentIndex, 0, timeout: 5)
+        waitEqual(self.audioPlayer.playerState, .playing, timeout: 5)
+    }
 
-                    context("then removing all previous items") {
-                        beforeEach {
-                            audioPlayer.removePreviousItems()
-                        }
+    func testNextWhenRepeatModeTrack() {
+        setupRepeatModeTrackTests()
+        audioPlayer.next()
+        
+        waitEqual(self.audioPlayer.nextItems.count, 0, timeout: 5)
+        waitEqual(self.audioPlayer.playerState, .playing, timeout: 5)
+        waitEqual(self.currentItemEventListener.lastIndex, 0, timeout: 5)
+    }
 
-                        it("should be empty") {
-                            expect(audioPlayer.previousItems.count).to(equal(0))
-                        }
-                    }
-                }
-            }
 
-            // MARK: pause()
-            describe("pause") {
-                context("with playWhenReady == true") {
-                    beforeEach {
-                        audioPlayer.playWhenReady = true
-                    }
+    // MARK: - Repeat Mode (Queue - Two Items)
 
-                    it("should have mutated playWhenReady to true") {
-                        expect(audioPlayer.playWhenReady).to(beTrue())
-                    }
+    func setupRepeatModeQueueTests() {
+        audioPlayer.play()
+        audioPlayer.add(items: [FiveSecondSource.getAudioItem(), FiveSecondSource.getAudioItem()])
+        audioPlayer.repeatMode = .queue
+    }
+    
+    func testSeekToEndWhenRepeatModeQueue() {
+        setupRepeatModeQueueTests()
+        waitForSeek(audioPlayer, to: 4.6)
+        
+        waitEqual(self.audioPlayer.nextItems.count, 0, timeout: 5)
+        waitEqual(self.audioPlayer.currentIndex, 1, timeout: 5)
+        waitEqual(self.audioPlayer.playerState, .playing, timeout: 5)
+        waitEqual(self.currentItemEventListener.lastIndex, 0, timeout: 5)
+        
+        // Allow the final track to end
+        waitEqual(self.audioPlayer.currentIndex, 1, timeout: 5)
+        waitForSeek(audioPlayer, to: 4.6)
+        waitEqual(self.audioPlayer.nextItems.count, 1, timeout: 5)
+        waitEqual(self.audioPlayer.currentIndex, 0, timeout: 5)
+        waitEqual(self.audioPlayer.playerState, .playing, timeout: 5)
+        waitEqual(self.currentItemEventListener.lastIndex, 1, timeout: 5)
+    }
 
-                    context("calling pause() on empty queue") {
-                        beforeEach {
-                            audioPlayer.pause()
-                        }
-                        it("should have mutated playWhenReady to false") {
-                            expect(audioPlayer.playWhenReady).to(beFalse())
-                        }
-                        it("should not have mutated player state to .paused because playback was already idle") {
-                            expect(playerStateEventListener.states).toEventually(equal([]))
-                        }
-                    }
-                    context("adding an item and pausing directly") {
-                        beforeEach {
-                            audioPlayer.add(items: [
-                                FiveSecondSource.getAudioItem()
-                            ])
-                            audioPlayer.pause()
-                        }
-                        it("should have gone into .paused state from .loading and then into .ready because playback can be started") {
-                            expect(playerStateEventListener.states).toEventually(equal([
-                                .loading, .paused, .ready
-                            ]))
-                        }
-                    }
-                }
-            }
+    func testNextWhenRepeatModeQueue() {
+        setupRepeatModeQueueTests()
+        audioPlayer.next()
+        
+        waitEqual(self.audioPlayer.nextItems.count, 0, timeout: 5)
+        waitEqual(self.audioPlayer.currentIndex, 1, timeout: 5)
+        waitEqual(self.audioPlayer.playerState, .playing, timeout: 5)
+        waitEqual(self.currentItemEventListener.lastIndex, 0, timeout: 5)
+    }
+
+    func testNextTwiceWhenRepeatModeQueue() {
+        setupRepeatModeQueueTests()
+        XCTAssertEqual(audioPlayer.currentIndex, 0)
+        XCTAssertNil(currentItemEventListener.lastIndex)
+        
+        audioPlayer.next()
+        XCTAssertEqual(audioPlayer.currentIndex, 1)
+        waitEqual(self.currentItemEventListener.lastIndex, 0, timeout: 5)
+        
+        audioPlayer.next()
+        XCTAssertEqual(audioPlayer.currentIndex, 0)
+        waitEqual(self.currentItemEventListener.lastIndex, 1, timeout: 5)
+        waitEqual(self.audioPlayer.nextItems.count, 1, timeout: 5)
+        waitEqual(self.audioPlayer.playerState, .playing, timeout: 5)
+    }
+    
+    // MARK: - Repeat Mode (Off - One Item)
             
-            // MARK: stop()
-            describe("stop") {
-                context("calling stop() on empty queue") {
-                    beforeEach {
-                        audioPlayer.stop()
-                    }
-                    it("should have mutated player state to .stopped") {
-                        expect(playerStateEventListener.states).toEventually(equal([
-                            .stopped
-                        ]))
-                    }
-                    it("should not have emitted a playbackEnd event") {
-                        expect(playbackEndEventListener.lastReason).to(beNil())
-                    }
-                }
-                context("when adding 2 items and calling stop()") {
-                    beforeEach {
-                        audioPlayer.add(items: [
-                            FiveSecondSource.getAudioItem(),
-                            FiveSecondSource.getAudioItem()
-                        ])
-                        audioPlayer.stop()
-                    }
-                    it("should have emitted a playbackEnd .playerStopped event") {
-                        expect(playbackEndEventListener.lastReason).toEventually(
-                            equal(.playerStopped)
-                        )
-                    }
-                    it("should have mutated player state from .loading to .stopped") {
-                        expect(playerStateEventListener.states).toEventually(equal([
-                            .loading,
-                            .stopped
-                        ]))
-                    }
-                }
-            }
+    func setupRepeatModeOffOneItemTests() {
+        audioPlayer.add(item: FiveSecondSource.getAudioItem(), playWhenReady: true)
+        audioPlayer.repeatMode = .off
+    }
 
-            // MARK: load(item)
-            describe("load") {
-                context("calling load(item) on empty queue") {
-                    beforeEach {
-                        audioPlayer.load(item: FiveSecondSource.getAudioItem())
-                    }
-                    it("should have set currentItem") {
-                        expect(audioPlayer.currentItem).toNot((beNil()))
-                    }
-                    it("should have started loading, but not playing yet") {
-                        expect(playerStateEventListener.states).toEventually(equal([
-                            .loading, .paused, .ready
-                        ]))
-                    }
-                }
-                context("calling play() then load(item) on empty queue") {
-                    beforeEach {
-                        audioPlayer.play()
-                        audioPlayer.load(item: FiveSecondSource.getAudioItem())
-                    }
-                    it("should have set currentItem") {
-                        expect(audioPlayer.currentItem).toNot((beNil()))
-                    }
-                    it("should have started playing") {
-                        expect(playerStateEventListener.statesWithoutBuffering).toEventually(equal([
-                            .loading, .playing
-                        ]))
-                    }
+    func testTrackEndWhenRepeatModeOffOneItem() {
+        setupRepeatModeOffOneItemTests()
+        waitForSeek(audioPlayer, to: 4.6)
 
-                    context("waiting for the track to start playing, then loading another track") {
-                        it("should start playing the second track") {
-                            expect(playerStateEventListener.statesWithoutBuffering).toEventually(equal([
-                                .loading, .playing
-                            ]))
-                            audioPlayer.load(item: Source.getAudioItem())
-                            expect(audioPlayer.items.count).to(equal(1))
-                            expect(audioPlayer.currentItem?.getSourceUrl())
-                                .to(equal(Source.getAudioItem().getSourceUrl()))
-                            expect(playerStateEventListener.statesWithoutBuffering.prefix(4)).toEventually(equal([
-                                .loading, .playing, .loading, .playing
-                            ]))
-                        }
-                    }
-                }
-            }
+        waitEqual(self.audioPlayer.nextItems.count, 0, timeout: 5)
+        waitEqual(self.audioPlayer.playerState, .ended, timeout: 5)
+    }
 
-            
-            // MARK: next()
-            describe("next") {
-                context("calling next() on empty queue") {
-                    beforeEach {
-                        audioPlayer.next()
-                    }
-                    it("should not have emitted a playbackEnd event") {
-                        expect(playbackEndEventListener.lastReason).to(beNil())
-                    }
-                }
+    func testNextWhenRepeatModeOffOneItem() {
+        setupRepeatModeOffOneItemTests()
+        audioPlayer.next()
 
-                context("player was paused") {
-                    beforeEach {
-                        audioPlayer.add(items: [FiveSecondSource.getAudioItem(), FiveSecondSource.getAudioItem()])
-                    }
+        waitEqual(self.audioPlayer.currentIndex, 0, timeout: 5)
+        // TODO: Test this more thoroughly?
+    }
 
-                    context("then calling next()") {
-                        beforeEach {
-                            audioPlayer.next()
-                        }
+    // MARK: - Repeat Mode (Track - One Item)
 
-                        it("should go to next item and play") {
-                            expect(audioPlayer.nextItems.count).toEventually(equal(0))
-                            expect(audioPlayer.currentIndex).toEventually(equal(1))
-                            expect(audioPlayer.playerState).toEventually(equal(AudioPlayerState.ready))
-                        }
-                    }
-                }
-                context("player was paused") {
-                    beforeEach {
-                        audioPlayer.add(items: [FiveSecondSource.getAudioItem(), FiveSecondSource.getAudioItem()])
-                        audioPlayer.pause()
+    func setupRepeatModeTrackOneItemTests() {
+        audioPlayer.add(item: FiveSecondSource.getAudioItem(), playWhenReady: true)
+        audioPlayer.repeatMode = .track
+    }
 
-                    }
+    func testRestartTrackWhenRepeatModeTrackOneItem() {
+        setupRepeatModeTrackOneItemTests()
+        waitForSeek(audioPlayer, to: 4.6)
+        
+        waitEqual(self.audioPlayer.currentTime, 0, timeout: 5)
+        waitEqual(self.audioPlayer.currentIndex, 0, timeout: 5)
+        waitEqual(self.audioPlayer.playerState, .playing, timeout: 5)
+        waitEqual(self.currentItemEventListener.lastIndex, nil, timeout: 5)
+    }
 
-                    context("then calling next()") {
-                        beforeEach {
-                            audioPlayer.next()
-                        }
+    func testNextWhenRepeatModeTrackOneItem() {
+        setupRepeatModeTrackOneItemTests()
+        audioPlayer.next()
+        
+        waitEqual(self.audioPlayer.currentTime, 0, timeout: 5)
+        waitEqual(self.audioPlayer.nextItems.count, 0, timeout: 5)
+        waitEqual(self.audioPlayer.playerState, .playing, timeout: 5)
+    }
 
-                        it("should go to next item and not play") {
-                            expect(audioPlayer.nextItems.count).toEventually(equal(0))
-                            expect(audioPlayer.currentIndex).toEventually(equal(1))
-                            expect(audioPlayer.playerState).toEventually(equal(AudioPlayerState.ready))
-                        }
-                    }
-                }
-                context("player was playing") {
-                    beforeEach {
-                        audioPlayer.play()
-                        audioPlayer.add(items: [FiveSecondSource.getAudioItem(), FiveSecondSource.getAudioItem()])
-                    }
+    // MARK: - Repeat Mode (Queue - One Item)
 
-                    context("then calling next()") {
-                        beforeEach {
-                            audioPlayer.next()
-                        }
+    func setupRepeatModeQueueOneItemTests() {
+        audioPlayer.add(item: FiveSecondSource.getAudioItem(), playWhenReady: true)
+        audioPlayer.repeatMode = .queue
+    }
 
-                        it("should go to next item and play") {
-                            expect(audioPlayer.nextItems.count).toEventually(equal(0))
-                            expect(audioPlayer.currentIndex).toEventually(equal(1))
-                            expect(audioPlayer.playerState).toEventually(equal(AudioPlayerState.playing))
-                        }
-                    }
-                }
-            }
+    func testSeekToEndWhenRepeatModeQueueOneItem() {
+        setupRepeatModeQueueOneItemTests()
+        waitForSeek(audioPlayer, to: 4.6)
+        
+        waitEqual(self.audioPlayer.playerState, .playing, timeout: 5)
+        waitTrue(self.audioPlayer.currentTime > 4.5, timeout: 5)
+        waitTrue(self.audioPlayer.currentTime < 1, timeout: 5)
+        waitEqual(self.audioPlayer.currentIndex, 0, timeout: 5)
+        waitEqual(self.audioPlayer.playerState, .playing, timeout: 5)
+    }
 
-            // MARK: previous()
-            describe("onPrevious") {
-                context("calling previous() on empty queue") {
-                    beforeEach {
-                        audioPlayer.previous()
-                    }
-                    it("should not have emitted a playbackEnd event") {
-                        expect(playbackEndEventListener.lastReason).to(beNil())
-                    }
-                }
-
-                context("player was playing") {
-                    beforeEach {
-                        audioPlayer.add(items: [FiveSecondSource.getAudioItem(), FiveSecondSource.getAudioItem()], playWhenReady: true)
-                        audioPlayer.next()
-                    }
-
-                    context("then calling previous()") {
-                        beforeEach {
-                            audioPlayer.previous()
-                        }
-
-                        it("should go to previous item and play") {
-                            expect(audioPlayer.nextItems.count).toEventually(equal(1))
-                            expect(audioPlayer.previousItems.count).toEventually(equal(0))
-                            expect(audioPlayer.currentIndex).toEventually(equal(0))
-                            expect(audioPlayer.playerState).toEventually(equal(AudioPlayerState.playing))
-                        }
-                    }
-                }
-                context("player was paused") {
-                    beforeEach {
-                        audioPlayer.add(items: [FiveSecondSource.getAudioItem(), FiveSecondSource.getAudioItem()])
-                        audioPlayer.next()
-                        audioPlayer.pause()
-
-                    }
-
-                    context("then calling previous()") {
-                        beforeEach {
-                            audioPlayer.previous()
-                        }
-
-                        it("should go to previous item and not play") {
-                            expect(audioPlayer.nextItems.count).toEventually(equal(1))
-                            expect(audioPlayer.previousItems.count).toEventually(equal(0))
-                            expect(audioPlayer.currentIndex).toEventually(equal(0))
-                            expect(audioPlayer.playerState).toEventually(equal(AudioPlayerState.ready))
-                        }
-                    }
-                }
-            }
-
-            // MARK: moveItem()
-            describe("moving items") {
-                context("when adding 2 items") {
-                    beforeEach {
-                        audioPlayer.play()
-                        audioPlayer.add(items: [
-                            FiveSecondSource.getAudioItem(),
-                            FiveSecondSource.getAudioItem()
-                        ])
-                    }
-                    
-                    context("moving the first (currently playing track) above the second and seek to near the end of the track") {
-                        beforeEach {
-                            try? audioPlayer.moveItem(fromIndex: 0, toIndex: 1)
-                            audioPlayer.seekWithExpectation(to: 4.95)
-                        }
-                        
-                        context("whith no repeat mode none") {
-                            beforeEach {
-                                audioPlayer.repeatMode = .off
-                            }
-
-                            it("should end playback") {
-                                expect(audioPlayer.playerState).toEventually(equal(AudioPlayerState.ended))
-                            }
-                        }
-
-                        context("whith repeat mode queue") {
-                            beforeEach {
-                                audioPlayer.repeatMode = .queue
-                            }
-
-                            it("should start playing the first track") {
-                                expect(audioPlayer.currentIndex).toEventually(equal(0))
-                                expect(audioPlayer.currentTime).toEventually(beGreaterThan(0))
-                                expect(audioPlayer.playerState).toEventually(equal(AudioPlayerState.playing))
-                            }
-                        }
-
-                        context("whith repeat mode track") {
-                            beforeEach {
-                                audioPlayer.repeatMode = .track
-                            }
-
-                            it("should start playing the current track again") {
-                                expect(audioPlayer.currentTime).toEventually(beLessThan(4.95))
-                                expect(audioPlayer.currentTime).toEventually(beGreaterThan(0))
-                                expect(audioPlayer.currentIndex).to(equal(1))
-                                expect(audioPlayer.playerState).toEventually(equal(AudioPlayerState.playing))
-                            }
-                        }
-                    }
-                }
-            }
-
-            // MARK: repeatMode
-            describe("its repeat mode") {
-                context("when adding 2 items") {
-                    beforeEach {
-                        audioPlayer.play()
-                        audioPlayer.add(
-                            items: [
-                                FiveSecondSource.getAudioItem(),
-                                FiveSecondSource.getAudioItem()
-                            ]
-                        )
-                    }
-
-                    context("then setting repeat mode off") {
-                        beforeEach {
-                            audioPlayer.repeatMode = .off
-                        }
-
-                        context("allow playback to end normally") {
-                            beforeEach {
-                                audioPlayer.seekWithExpectation(to: 4.95)
-                            }
-
-                            it("should move to next item") {
-                                expect(audioPlayer.nextItems.count).toEventually(equal(0))
-                                expect(audioPlayer.currentIndex).toEventually(equal(1))
-                                expect(audioPlayer.playerState).toEventually(equal(AudioPlayerState.playing))
-                                expect(currentItemEventListener.lastIndex).toEventually(equal(0))
-                            }
-
-                            context("allow playback to end again") {
-                                it("should stop playback normally") {
-                                    // Wait for track to move to next:
-                                    expect(audioPlayer.currentIndex).toEventually(equal(1))
-                                    // Seek to close to the end of the track
-                                    audioPlayer.seekWithExpectation(to: 4.95)
-
-                                    expect(audioPlayer.nextItems.count).toEventually(equal(0))
-                                    expect(audioPlayer.currentIndex).toEventually(equal(1))
-                                    expect(audioPlayer.currentTime).toEventually(beCloseTo(5, within: 0.1))
-                                    expect(audioPlayer.playerState).toEventually(equal(AudioPlayerState.ended))
-                                    expect(currentItemEventListener.index).toEventually(equal(1))
-                                    expect(currentItemEventListener.lastIndex).toEventually(equal(0))
-                                }
-                            }
-                        }
-
-                        context("then calling next()") {
-                            it("should move to next item") {
-
-                                audioPlayer.next()
-                                expect(audioPlayer.nextItems.count).toEventually(equal(0))
-                                expect(audioPlayer.currentIndex).toEventually(equal(1))
-                                expect(audioPlayer.playerState).toEventually(equal(AudioPlayerState.playing))
-                                expect(currentItemEventListener.lastIndex).toEventually(equal(0))
-                            }
-
-                            context("then calling next() twice") {
-                                it("should stay on the last track, but it should end") {
-                                    audioPlayer.play()
-                                    audioPlayer.next()
-                                    audioPlayer.seekWithExpectation(to: 1)
-                                    expect(audioPlayer.currentIndex).toEventually(equal(1))
-                                    audioPlayer.next()
-                                    expect(audioPlayer.currentIndex).to(equal(1))
-                                    expect(audioPlayer.currentTime).toEventually(beCloseTo(5, within: 0.1))
-                                    expect(audioPlayer.playerState).toEventually(equal(AudioPlayerState.ended))
-                                }
-                            }
-                        }
-                    }
-
-                    context("then setting repeat mode track") {
-                        beforeEach {
-                            audioPlayer.repeatMode = .track
-                        }
-
-                        context("allow playback to end") {
-                            beforeEach {
-                                audioPlayer.seekWithExpectation(to: 4.95)
-                            }
-
-                            it("should restart current item") {
-
-                                expect(audioPlayer.currentTime).toEventually(equal(0))
-                                expect(audioPlayer.nextItems.count).toEventually(equal(1))
-                                expect(audioPlayer.currentIndex).toEventually(equal(0))
-                                expect(audioPlayer.playerState).toEventually(equal(AudioPlayerState.playing))
-                            }
-                        }
-
-                        context("then calling next()") {
-                            it("should move to next item and should play") {
-                                audioPlayer.next()
-                                expect(audioPlayer.nextItems.count).to(equal(0))
-                                expect(audioPlayer.playerState).toEventually(equal(AudioPlayerState.playing))
-                                expect(currentItemEventListener.lastIndex).toEventually(equal(0))
-                            }
-                        }
-                    }
-
-                    context("then setting repeat mode queue") {
-                        beforeEach {
-                            audioPlayer.repeatMode = .queue
-                        }
-
-                        context("seek to close to the end of the track") {
-                            beforeEach {
-                                audioPlayer.seekWithExpectation(to: 4.95)
-                            }
-
-                            it("should move to next item and should play") {
-                                expect(audioPlayer.nextItems.count).toEventually(equal(0))
-                                expect(audioPlayer.currentIndex).toEventually(equal(1))
-                                expect(audioPlayer.playerState).toEventually(equal(AudioPlayerState.playing))
-                                expect(currentItemEventListener.lastIndex).toEventually(equal(0))
-                            }
-
-                            context("allow playback to end again") {
-                                it("it should move to first track and should play") {
-                                    expect(audioPlayer.currentIndex).toEventually(equal(1))
-                                    audioPlayer.seekWithExpectation(to: 4.95)
-                                    expect(audioPlayer.nextItems.count).toEventually(equal(1))
-                                    expect(audioPlayer.currentIndex).toEventually(equal(0))
-                                    expect(audioPlayer.playerState).toEventually(equal(AudioPlayerState.playing))
-                                    expect(currentItemEventListener.lastIndex).toEventually(equal(1))
-                                }
-                            }
-                        }
-
-                        context("then calling next()") {
-                            it("should move to next item and should play") {
-                                audioPlayer.next()
-                                expect(audioPlayer.nextItems.count).to(equal(0))
-                                expect(audioPlayer.currentIndex).to(equal(1))
-                                expect(audioPlayer.playerState).toEventually(equal(AudioPlayerState.playing))
-                                expect(currentItemEventListener.lastIndex).toEventually(equal(0))
-                            }
-                        }
-                        context("then calling next() twice") {
-                            it("should move to first track and should play") {
-                                expect(audioPlayer.currentIndex).to(equal(0))
-                                expect(currentItemEventListener.lastIndex).to(beNil())
-
-                                audioPlayer.next()
-                                expect(audioPlayer.currentIndex).to(equal(1))
-                                expect(currentItemEventListener.lastIndex).toEventually(equal(0))
-
-                                audioPlayer.next()
-                                expect(audioPlayer.currentIndex).to(equal(0))
-                                expect(currentItemEventListener.lastIndex).toEventually(equal(1))
-
-                                expect(audioPlayer.nextItems.count).to(equal(1))
-                                expect(audioPlayer.playerState).toEventually(equal(AudioPlayerState.playing))
-                            }
-                        }
-                    }
-                }
-
-                context("when adding 1 items") {
-                    beforeEach {
-                        audioPlayer.add(item: FiveSecondSource.getAudioItem(), playWhenReady: true)
-                    }
-
-                    context("then setting repeat mode off") {
-                        beforeEach {
-                            audioPlayer.repeatMode = .off
-                        }
-
-                        context("allow playback to end normally") {
-                            beforeEach {
-                                audioPlayer.seekWithExpectation(to: 4.95)
-                            }
-
-                            it("should stop playback normally") {
-                                expect(audioPlayer.nextItems.count).toEventually(equal(0))
-                                expect(audioPlayer.playerState).toEventually(equal(AudioPlayerState.ended))
-                            }
-                        }
-
-                        context("then calling next()") {
-                            it("should noop") {
-                                audioPlayer.next()
-                                expect(audioPlayer.currentIndex).to(equal(0))
-                            }
-                        }
-                    }
-
-                    context("then setting repeat mode track") {
-                        beforeEach {
-                            audioPlayer.repeatMode = .track
-                        }
-
-                        context("allow playback to end") {
-                            beforeEach {
-                                audioPlayer.seekWithExpectation(to: 4.95)
-                            }
-
-                            it("should restart current item") {
-                                expect(audioPlayer.currentTime).toEventually(equal(0))
-                                expect(audioPlayer.currentIndex).toEventually(equal(0))
-                                expect(audioPlayer.playerState).toEventually(equal(AudioPlayerState.playing))
-                                expect(currentItemEventListener.lastIndex).toEventually(beNil())
-                            }
-                        }
-
-                        context("then calling next()") {
-                            it("should restart current item") {
-                                expect(audioPlayer.currentTime).toEventually(equal(0))
-                                expect(audioPlayer.currentIndex).toEventually(equal(0))
-                                expect(audioPlayer.playerState).toEventually(equal(AudioPlayerState.playing))
-                            }
-                        }
-                    }
-
-                    context("then setting repeat mode queue") {
-                        beforeEach {
-                            audioPlayer.repeatMode = .queue
-                        }
-
-                        context("allow playback to end") {
-                            beforeEach {
-                                audioPlayer.seekWithExpectation(to: 4.5)
-                            }
-
-                            it("should restart current item") {
-                                expect(audioPlayer.playerState).toEventually(equal(AudioPlayerState.playing))
-                                expect(audioPlayer.currentTime).toEventually(beGreaterThan(4.5))
-                                expect(audioPlayer.currentTime).toEventually(beGreaterThan(0))
-                                expect(audioPlayer.currentIndex).toEventually(equal(0))
-                                expect(audioPlayer.playerState).toEventually(equal(AudioPlayerState.playing))
-                            }
-                        }
-
-                        context("then calling next()") {
-                            beforeEach {
-                                audioPlayer.seekWithExpectation(to: 2)
-                                audioPlayer.next()
-                            }
-                            it("should restart current item") {
-                                expect(audioPlayer.playerState).toEventually(equal(AudioPlayerState.playing))
-                                expect(audioPlayer.currentTime).toEventually(beLessThan(2))
-                                expect(audioPlayer.currentTime).toEventually(beGreaterThan(0))
-                                expect(audioPlayer.currentIndex).toEventually(equal(0))
-                                expect(audioPlayer.playerState).toEventually(equal(AudioPlayerState.playing))
-                            }
-                        }
-                    }
-                }
-            }
-        }
+    func testNextWhenRepeatModeQueueOneItem() {
+        setupRepeatModeQueueOneItemTests()
+        waitForSeek(audioPlayer, to: 2)
+        audioPlayer.next()
+        
+        waitEqual(self.audioPlayer.playerState, .playing, timeout: 5)
+        waitTrue(self.audioPlayer.currentTime < 1.9, timeout: 5)
+        waitEqual(self.audioPlayer.currentIndex, 0, timeout: 5)
+        waitEqual(self.audioPlayer.playerState, .playing, timeout: 5)
     }
 }
 
@@ -989,13 +734,5 @@ extension QueuedAudioPlayer {
                 statesWithoutBuffering.append(state)
             }
         }
-    }
-    
-    func seekWithExpectation(to time: Double) {
-        let seekEventListener = SeekEventListener()
-        event.seek.addListener(seekEventListener, seekEventListener.handleEvent)
-
-        seek(to: time)
-        expect(seekEventListener.eventResult).toEventually(equal((time, true)))
     }
 }

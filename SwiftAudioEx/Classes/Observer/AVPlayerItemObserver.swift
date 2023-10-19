@@ -32,8 +32,7 @@ protocol AVPlayerItemObserverDelegate: AnyObject {
 class AVPlayerItemObserver: NSObject {
     
     private static var context = 0
-    private let main: DispatchQueue = .main
-    private let metadataOutput: AVPlayerItemMetadataOutput
+    private let metadataOutput = AVPlayerItemMetadataOutput()
     
     private struct AVPlayerItemKeyPath {
         static let duration = #keyPath(AVPlayerItem.duration)
@@ -47,10 +46,8 @@ class AVPlayerItemObserver: NSObject {
     weak var delegate: AVPlayerItemObserverDelegate?
     
     override init() {
-        metadataOutput = AVPlayerItemMetadataOutput()
         super.init()
-        
-        metadataOutput.setDelegate(self, queue: main)
+        metadataOutput.setDelegate(self, queue: .main)
     }
     
     deinit {

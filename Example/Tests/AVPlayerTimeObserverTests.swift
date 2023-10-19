@@ -1,76 +1,46 @@
-import Quick
-import Nimble
+import XCTest
 import AVFoundation
-
 @testable import SwiftAudioEx
 
-class AVPlayerTimeObserverTests: QuickSpec {
-  
-    override func spec() {
-        
-        describe("AVPlayerTimeObserver") {
-            
-            var player: AVPlayer!
-            var observer: AVPlayerTimeObserver!
-            
-            beforeEach {
-                player = AVPlayer()
-                player.automaticallyWaitsToMinimizeStalling = false
-                player.volume = 0
-                observer = AVPlayerTimeObserver(periodicObserverTimeInterval: TimeEventFrequency.everyQuarterSecond.getTime())
-                observer.player = player
-            }
-            
-            context("has started boundary time observing") {
-                
-                beforeEach {
-                    observer.registerForBoundaryTimeEvents()
-                }
-                
-                it("should have a boundary token") {
-                    expect(observer.boundaryTimeStartObserverToken).toNot(beNil())
-                }
-                
-                context("has ended boundary time observing") {
-                    
-                    beforeEach {
-                        observer.unregisterForBoundaryTimeEvents()
-                    }
-                    
-                    it("should have no boundary token") {
-                        expect(observer.boundaryTimeStartObserverToken).to(beNil())
-                    }
-                    
-                }
-                
-            }
-            
-            context("has started periodic time observing") {
-                
-                beforeEach {
-                    observer.registerForPeriodicTimeEvents()
-                }
-                
-                it("should have a periodic token") {
-                    expect(observer.periodicTimeObserverToken).toNot(beNil())
-                }
-                
-                context("ended periodic time observing") {
-                    
-                    beforeEach {
-                        observer.unregisterForPeriodicEvents()
-                    }
-                    
-                    it("should have no periodic token") {
-                        expect(observer.periodicTimeObserverToken).to(beNil())
-                    }
-                    
-                }
-                
-            }
-            
-        }
-        
+class AVPlayerTimeObserverTests: XCTestCase {
+
+    var player: AVPlayer!
+    var observer: AVPlayerTimeObserver!
+
+    override func setUp() {
+        super.setUp()
+        player = AVPlayer()
+        player.automaticallyWaitsToMinimizeStalling = false
+        player.volume = 0
+        observer = AVPlayerTimeObserver(periodicObserverTimeInterval: TimeEventFrequency.everyQuarterSecond.getTime())
+        observer.player = player
     }
-    
+
+    override func tearDown() {
+        player = nil
+        observer = nil
+        super.tearDown()
+    }
+
+    func testObserverHasBoundaryTokenWhenStartedBoundaryTimeObserving() {
+        observer.registerForBoundaryTimeEvents()
+        XCTAssertNotNil(observer.boundaryTimeStartObserverToken)
+    }
+
+    func testObserverHasNoBoundaryTokenWhenEndedBoundaryTimeObserving() {
+        observer.registerForBoundaryTimeEvents()
+        observer.unregisterForBoundaryTimeEvents()
+        XCTAssertNil(observer.boundaryTimeStartObserverToken)
+    }
+
+    func testObserverHasPeriodicTokenWhenStartedPeriodicTimeObserving() {
+        observer.registerForPeriodicTimeEvents()
+        XCTAssertNotNil(observer.periodicTimeObserverToken)
+    }
+
+    func testObserverHasNoPeriodicTokenWhenEndedPeriodicTimeObserving() {
+        observer.registerForPeriodicTimeEvents()
+        observer.unregisterForPeriodicEvents()
+        XCTAssertNil(observer.periodicTimeObserverToken)
+    }
 }

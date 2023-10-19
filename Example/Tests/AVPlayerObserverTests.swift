@@ -1,86 +1,68 @@
-import Quick
-import Nimble
+import XCTest
 import AVFoundation
-
 @testable import SwiftAudioEx
 
+class AVPlayerObserverTests: XCTestCase, AVPlayerObserverDelegate {
 
-class AVPlayerObserverTests: QuickSpec, AVPlayerObserverDelegate {
-    
     var status: AVPlayer.Status?
     var timeControlStatus: AVPlayer.TimeControlStatus?
-    
-    override func spec() {
+
+    var player: AVPlayer!
+    var observer: AVPlayerObserver!
+
+    override func setUp() {
+        super.setUp()
+        player = AVPlayer()
+        player.volume = 0.0
+        observer = AVPlayerObserver()
+        observer.player = player
+        observer.delegate = self
+    }
+
+    override func tearDown() {
+        player = nil
+        observer = nil
+        super.tearDown()
+    }
+
+    func testObserverIsNotObserving() {
+        XCTAssertFalse(observer.isObserving)
+    }
+
+    func testObserverIsObservingWhenObservingStarted() {
+        observer.startObserving()
+        XCTAssertTrue(observer.isObserving)
+    }
+
+    func testObserverUpdatesDelegateWhenPlayerStarted() {
+        observer.startObserving()
+        player.replaceCurrentItem(with: AVPlayerItem(url: URL(fileURLWithPath: Source.path)))
+        player.play()
         
-        describe("A player observer") {
-            
-            var player: AVPlayer!
-            var observer: AVPlayerObserver!
-            
-            beforeEach {
-                player = AVPlayer()
-                player.volume = 0.0
-                observer = AVPlayerObserver()
-                observer.player = player
-                observer.delegate = self
-            }
-            
-            it("should not be observing") {
-                expect(observer.isObserving).to(beFalse())
-            }
-            
-            context("when observing has started") {
-                beforeEach {
-                    observer.startObserving()
-                }
-                
-                it("should be observing") {
-                    expect(observer.isObserving).toEventually(beTrue())
-                }
-                
-                context("when player has started") {
-                    beforeEach {
-                        player.replaceCurrentItem(with: AVPlayerItem(url: URL(fileURLWithPath: Source.path)))
-                        player.play()
-                    }
-                    
-                    it("it should update the delegate") {
-                        expect(self.status).toEventuallyNot(beNil())
-                        expect(self.timeControlStatus).toEventuallyNot(beNil())
-                    }
-                }
-                
-                context("when observing again") {
-                    beforeEach {
-                        observer.startObserving()
-                    }
-                    
-                    it("should be observing") {
-                        expect(observer.isObserving).toEventually(beTrue())
-                    }
-                }
-                
-                context("when stopping observing") {
-                    
-                    beforeEach {
-                        observer.stopObserving()
-                    }
-                    
-                    it("should not be observing") {
-                        expect(observer.isObserving).to(beFalse())
-                    }
-                }
-            }
-            
-        }
+        XCTAssertNotNil(self.status)
+        XCTAssertNotNil(self.timeControlStatus)
+    }
+
+    func testObserverIsObservingWhenObservingAgain() {
+        observer.startObserving()
+        observer.startObserving()
+        XCTAssertTrue(observer.isObserving)
+    }
+
+    func testObserverIsNotObservingWhenObservingStopped() {
+        observer.startObserving()
+        observer.stopObserving()
+        XCTAssertFalse(observer.isObserving)
     }
     
+    // MARK: - AVPlayerObserverDelegate
+
     func player(statusDidChange status: AVPlayer.Status) {
         self.status = status
     }
-    
+
     func player(didChangeTimeControlStatus status: AVPlayer.TimeControlStatus) {
         self.timeControlStatus = status
     }
-    
 }
+

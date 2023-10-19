@@ -1,72 +1,48 @@
-import Quick
-import Nimble
+import XCTest
 import MediaPlayer
-
 @testable import SwiftAudioEx
 
-class NowPlayingInfoControllerTests: QuickSpec {
+class NowPlayingInfoControllerTests: XCTestCase {
     
-    override func spec() {
-        describe("An NowPlayingInfoController") {
-            
-            var nowPlayingController: NowPlayingInfoController!
-            
-            beforeEach {
-                nowPlayingController = NowPlayingInfoController(dispatchQueue: MockDispatchQueue(), infoCenter: NowPlayingInfoCenter_Mock())
-            }
-            
-            describe("its info dictionary") {
-                
-                context("when setting a value") {
-                    beforeEach {
-                        nowPlayingController.set(keyValue: MediaItemProperty.title("Some title"))
-                    }
-                    
-                    it("should not be empty") {
-                        expect(nowPlayingController.info.count).toNot(equal(0))
-                    }
-                    
-                    context("then calling clear()") {
-                        beforeEach {
-                            nowPlayingController.clear()
-                        }
-                        
-                        it("should be empty") {
-                            expect(nowPlayingController.info.count).to(equal(0))
-                        }
-                    }
-                }
-            }
-            
-            describe("its info center") {
-                
-                context("when setting a value") {
-                    
-                    beforeEach {
-                        nowPlayingController.set(keyValue: MediaItemProperty.title("Some title"))
-                    }
-                    
-                    it("should not be nil") {
-                        expect(nowPlayingController.infoCenter.nowPlayingInfo).toNot(beNil())
-                    }
-                    
-                    it("should not be empty") {
-                        expect(nowPlayingController.infoCenter.nowPlayingInfo?.count).toNot(equal(0))
-                    }
-                    
-                    context("then calling clear()") {
-                        
-                        beforeEach {
-                            nowPlayingController.clear()
-                        }
-                        
-                        it("should be empty") {
-                            expect(nowPlayingController.infoCenter.nowPlayingInfo?.count).to(beNil())
-                        }
-                    }
-                }
-            }
-        }
+    var nowPlayingController: NowPlayingInfoController!
+    var infoCenter: NowPlayingInfoCenter_Mock!
+    
+    override func setUp() {
+        super.setUp()
+        infoCenter = NowPlayingInfoCenter_Mock()
+        nowPlayingController = NowPlayingInfoController(dispatchQueue: MockDispatchQueue(), infoCenter: infoCenter)
     }
     
+    override func tearDown() {
+        infoCenter = nil
+        nowPlayingController = nil
+        super.tearDown()
+    }
+    
+    func testInfoDictionaryNotEmpty() {
+        nowPlayingController.set(keyValue: MediaItemProperty.title("Some title"))
+        XCTAssertGreaterThan(nowPlayingController.info.count, 0)
+    }
+    
+    func testInfoDictionaryEmptyAfterClear() {
+        nowPlayingController.set(keyValue: MediaItemProperty.title("Some title"))
+        nowPlayingController.clear()
+        XCTAssertEqual(nowPlayingController.info.count, 0)
+    }
+    
+    func testInfoCenterNotNil() {
+        nowPlayingController.set(keyValue: MediaItemProperty.title("Some title"))
+        XCTAssertNotNil(nowPlayingController.infoCenter.nowPlayingInfo)
+    }
+    
+    func testInfoCenterNotEmpty() {
+        nowPlayingController.set(keyValue: MediaItemProperty.title("Some title"))
+        XCTAssertGreaterThan(nowPlayingController.infoCenter.nowPlayingInfo?.count ?? 0, 0)
+    }
+    
+    func testInfoCenterEmptyAfterClear() {
+        nowPlayingController.set(keyValue: MediaItemProperty.title("Some title"))
+        nowPlayingController.clear()
+        XCTAssertNil(nowPlayingController.infoCenter.nowPlayingInfo)
+    }
 }
