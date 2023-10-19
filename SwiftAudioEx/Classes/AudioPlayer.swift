@@ -137,7 +137,12 @@ public class AudioPlayer: AVPlayerWrapperDelegate {
 
     public var rate: Float {
         get { wrapper.rate }
-        set { wrapper.rate = newValue }
+        set {
+            wrapper.rate = newValue
+            if (automaticallyUpdateNowPlayingInfo) {
+                updateNowPlayingPlaybackValues()
+            }
+        }
     }
 
     // MARK: - Init
