@@ -1,12 +1,11 @@
 ![logo](Images/original-horizontal.png)
 
-# SwiftAudio
+# SwiftAudioEx
 
-[![codecov](https://codecov.io/gh/DoubleSymmetry/SwiftAudio/branch/master/graph/badge.svg?token=FD5THGSHM5)](https://codecov.io/gh/DoubleSymmetry/SwiftAudio)
-[![License](https://img.shields.io/cocoapods/l/SwiftAudio.svg?style=flat)](http://cocoapods.org/pods/SwiftAudio)
-[![Platform](https://img.shields.io/cocoapods/p/SwiftAudio.svg?style=flat)](http://cocoapods.org/pods/SwiftAudio)
+[![License](https://img.shields.io/cocoapods/l/SwiftAudioEx.svg?style=flat)](http://cocoapods.org/pods/SwiftAudioEx)
+[![Platform](https://img.shields.io/cocoapods/p/SwiftAudioEx.svg?style=flat)](http://cocoapods.org/pods/SwiftAudioEx)
 
-SwiftAudio is an audio player written in Swift, making it simpler to work with audio playback from streams and files.
+SwiftAudioEx is an audio player written in Swift, making it simpler to work with audio playback from streams and files.
 
 ## Example
 
@@ -24,34 +23,34 @@ iOS 11.0+
 ### Swift Package Manager
 [Swift Package Manager](https://swift.org/package-manager/) (SwiftPM) is a tool for managing the distribution of Swift code as well as C-family dependency. From Xcode 11, SwiftPM got natively integrated with Xcode.
 
-SwiftAudio supports SwiftPM from version 0.12.0. To use SwiftPM, you should use Xcode 11 to open your project. Click `File` -> `Swift Packages` -> `Add Package Dependency`, enter [SwiftAudio repo's URL](https://github.com/DoubleSymmetry/SwiftAudio.git). Or you can login Xcode with your GitHub account and just type `SwiftAudio` to search.
+SwiftAudioEx supports SwiftPM from version 0.12.0. To use SwiftPM, you should use Xcode 11 to open your project. Click `File` -> `Swift Packages` -> `Add Package Dependency`, enter [SwiftAudioEx repo's URL](https://github.com/doublesymmetry/SwiftAudio.git). Or you can login Xcode with your GitHub account and just type `SwiftAudioEx` to search.
 
 After select the package, you can choose the dependency type (tagged version, branch or commit). Then Xcode will setup all the stuff for you.
 
-If you're a framework author and use SwiftAudio as a dependency, update your `Package.swift` file:
+If you're a framework author and use SwiftAudioEx as a dependency, update your `Package.swift` file:
 
 ```swift
 let package = Package(
     // 0.12.0 ..< 1.0.0
     dependencies: [
-        .package(url: "https://github.com/DoubleSymmetry/SwiftAudio.git", from: "0.12.0")
+        .package(url: "https://github.com/doublesymmetry/SwiftAudio.git", from: "1.0.0")
     ],
     // ...
 )
 ```
 
 ### CocoaPods
-SwiftAudio is available through [CocoaPods](http://cocoapods.org). To install
+SwiftAudioEx is available through [CocoaPods](http://cocoapods.org). To install
 it, simply add the following line to your Podfile:
 
 ```ruby
-pod 'SwiftAudioEx', '~> 0.15.3'
+pod 'SwiftAudioEx', '~> 1.0.0'
 ```
 
 ### Carthage
-SwiftAudio supports [Carthage](https://github.com/Carthage/Carthage). Add this to your Cartfile:
+SwiftAudioEx supports [Carthage](https://github.com/Carthage/Carthage). Add this to your Cartfile:
 ```ruby
-github "jorgenhenrichsen/SwiftAudio" ~> 0.11.2
+github "doublesymmetry/SwiftAudioEx" ~> 1.0.0
 ```
 Then follow the rest of Carthage instructions on [adding a framework](https://github.com/Carthage/Carthage#adding-frameworks-to-an-application).
 
@@ -187,8 +186,8 @@ Make your `AudioItem`-subclass conform to `InitialTiming` to be able to start pl
 
 ## Author
 
-Jørgen Henrichsen
+Originally: Jørgen Henrichsen now extended by David Chavez and other contributors.
 
 ## License
 
-SwiftAudio is available under the MIT license. See the LICENSE file for more info.
+SwiftAudioEx is available under the MIT license. See the LICENSE file for more info.
