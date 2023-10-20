@@ -21,7 +21,6 @@ jobs:
         uses: actions/checkout@v2
       - name: Run Tests
         run: |-
-          cd Example
-          xcodebuild test -scheme SwiftAudio-Example -destination "${destination}" -enableCodeCoverage YES
+          xcodebuild test -scheme SwiftAudioEx -destination "${destination}" -enableCodeCoverage YES
         env:
           destination: ${{ matrix.destination }}
