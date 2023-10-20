@@ -61,22 +61,32 @@ class AVPlayerItemObserver: NSObject {
      */
     func startObserving(item: AVPlayerItem) {
         stopObservingCurrentItem()
-        isObserving = true
-        observingItem = item
+        
+        self.isObserving = true
+        self.observingItem = item
         item.addObserver(self, forKeyPath: AVPlayerItemKeyPath.duration, options: [.new], context: &AVPlayerItemObserver.context)
         item.addObserver(self, forKeyPath: AVPlayerItemKeyPath.loadedTimeRanges, options: [.new], context: &AVPlayerItemObserver.context)
         item.addObserver(self, forKeyPath: AVPlayerItemKeyPath.playbackLikelyToKeepUp, options: [.new], context: &AVPlayerItemObserver.context)
-        item.add(metadataOutput)
+        
+        // We must slightly delay adding the metadata output due to the fact that
+        // stop observation is not a synchronous action and metadataOutput may not
+        // be removed from last item before we try to attach it to a new one.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.001) { [weak self] in
+            guard let `self` = self else { return }
+            item.add(self.metadataOutput)
+        }
     }
-    
+        
     func stopObservingCurrentItem() {
         guard let observingItem = observingItem, isObserving else {
             return
         }
+        
         observingItem.removeObserver(self, forKeyPath: AVPlayerItemKeyPath.duration, context: &AVPlayerItemObserver.context)
         observingItem.removeObserver(self, forKeyPath: AVPlayerItemKeyPath.loadedTimeRanges, context: &AVPlayerItemObserver.context)
         observingItem.removeObserver(self, forKeyPath: AVPlayerItemKeyPath.playbackLikelyToKeepUp, context: &AVPlayerItemObserver.context)
         observingItem.remove(metadataOutput)
+        
         isObserving = false
         self.observingItem = nil
     }

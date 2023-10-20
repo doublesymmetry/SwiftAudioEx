@@ -28,4 +28,11 @@ class AVPlayerItemObserverTests: XCTestCase {
         observer.startObserving(item: item)
         XCTAssertTrue(observer.isObserving)
     }
+    
+    func testObservingInQuickSucccession() {
+        for _ in 0...1000 {
+            let item = AVPlayerItem(url: URL(fileURLWithPath: Source.path))
+            observer.startObserving(item: item)
+        }
+    }
 }
