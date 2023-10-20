@@ -22,5 +22,5 @@ DESC
 
   s.ios.deployment_target = '11.0'
   s.swift_version = '5.0'
-  s.source_files = 'SwiftAudioEx/Classes/**/*'
+  s.source_files = 'Sources/SwiftAudioEx/**/*'
 end
