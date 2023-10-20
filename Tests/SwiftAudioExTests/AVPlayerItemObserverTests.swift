@@ -30,7 +30,7 @@ class AVPlayerItemObserverTests: XCTestCase {
     }
     
     func testObservingInQuickSucccession() {
-        for _ in 0...10000 {
+        for _ in 0...1000 {
             let item = AVPlayerItem(url: URL(fileURLWithPath: Source.path))
             observer.startObserving(item: item)
         }

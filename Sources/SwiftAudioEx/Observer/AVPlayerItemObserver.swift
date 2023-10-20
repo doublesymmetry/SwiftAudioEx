@@ -76,9 +76,7 @@ class AVPlayerItemObserver: NSObject {
             item.add(self.metadataOutput)
         }
     }
-    
-    let removalQueue = DispatchQueue(label: "com.myapp.removal.queue")
-    
+        
     func stopObservingCurrentItem() {
         guard let observingItem = observingItem, isObserving else {
             return
