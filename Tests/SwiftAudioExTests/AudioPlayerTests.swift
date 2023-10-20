@@ -209,8 +209,6 @@ class AudioPlayerTests: XCTestCase {
     }
 
     func testLoadResourceSucceedsAfterPreviousFailure() {
-        let expectation = XCTestExpectation(description: "Load resource succeeds after previous failure")
-        
         var didReceiveFail = false
         listener.onReceiveFail = { error in
             didReceiveFail = true
@@ -230,8 +228,6 @@ class AudioPlayerTests: XCTestCase {
     }
 
     func testLoadResourceSucceedsAfterPreviousFailureWithPlayWhenReady() {
-        let expectation = XCTestExpectation(description: "Load resource with playWhenReady succeeds after previous failure")
-        
         var didReceiveFail = false
         listener.onReceiveFail = { error in
             didReceiveFail = true
