@@ -68,10 +68,9 @@ public class QueuedAudioPlayer: AudioPlayer, QueueManagerDelegate {
      - parameter playWhenReady: Optional, whether to start playback when the item is ready.
      */
     public override func load(item: AudioItem, playWhenReady: Bool? = nil) {
-        if let playWhenReady = playWhenReady {
-            self.playWhenReady = playWhenReady
+        handlePlayWhenReady(playWhenReady) {
+            queue.replaceCurrentItem(with: item)
         }
-        queue.replaceCurrentItem(with: item)
     }
 
     /**
@@ -81,10 +80,9 @@ public class QueuedAudioPlayer: AudioPlayer, QueueManagerDelegate {
      - parameter playWhenReady: Optional, whether to start playback when the item is ready.
      */
     public func add(item: AudioItem, playWhenReady: Bool? = nil) {
-        if let playWhenReady = playWhenReady {
-            self.playWhenReady = playWhenReady
+        handlePlayWhenReady(playWhenReady) {
+            queue.add(item)
         }
-        queue.add(item)
     }
 
     /**
@@ -94,10 +92,9 @@ public class QueuedAudioPlayer: AudioPlayer, QueueManagerDelegate {
      - parameter playWhenReady: Optional, whether to start playback when the item is ready.
      */
     public func add(items: [AudioItem], playWhenReady: Bool? = nil) {
-        if let playWhenReady = playWhenReady {
-            self.playWhenReady = playWhenReady
+        handlePlayWhenReady(playWhenReady) {
+            queue.add(items)
         }
-        queue.add(items)
     }
 
     public func add(items: [AudioItem], at index: Int) throws {
@@ -147,15 +144,14 @@ public class QueuedAudioPlayer: AudioPlayer, QueueManagerDelegate {
      - throws: `AudioPlayerError`
      */
     public func jumpToItem(atIndex index: Int, playWhenReady: Bool? = nil) throws {
-        if let playWhenReady = playWhenReady {
-            self.playWhenReady = playWhenReady
+        try handlePlayWhenReady(playWhenReady) {
+            if (index == currentIndex) {
+                seek(to: 0)
+            } else {
+                _ = try queue.jump(to: index)
+            }
+            event.playbackEnd.emit(data: .jumpedToIndex)
         }
-        if (index == currentIndex) {
-            seek(to: 0)
-        } else {
-            _ = try queue.jump(to: index)
-        }
-        event.playbackEnd.emit(data: .jumpedToIndex)
     }
 
     /**
