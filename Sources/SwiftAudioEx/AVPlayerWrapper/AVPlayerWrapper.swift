@@ -245,7 +245,9 @@ class AVPlayerWrapper: AVPlayerWrapperProtocol {
                 if (pendingAsset != self.asset) { return; }
                 
                 let commonData = pendingAsset.commonMetadata
-                self.delegate?.AVWrapper(didReceiveCommonMetadata: commonData)
+                if (!commonData.isEmpty) {
+                    self.delegate?.AVWrapper(didReceiveCommonMetadata: commonData)
+                }
                 
                 if pendingAsset.availableChapterLocales.count > 0 {
                     for locale in pendingAsset.availableChapterLocales {
