@@ -47,7 +47,6 @@ class AVPlayerItemObserver: NSObject {
     
     override init() {
         super.init()
-        metadataOutput.setDelegate(self, queue: .main)
     }
     
     deinit {
@@ -68,13 +67,10 @@ class AVPlayerItemObserver: NSObject {
         item.addObserver(self, forKeyPath: AVPlayerItemKeyPath.loadedTimeRanges, options: [.new], context: &AVPlayerItemObserver.context)
         item.addObserver(self, forKeyPath: AVPlayerItemKeyPath.playbackLikelyToKeepUp, options: [.new], context: &AVPlayerItemObserver.context)
         
-        // We must slightly delay adding the metadata output due to the fact that
-        // stop observation is not a synchronous action and metadataOutput may not
-        // be removed from last item before we try to attach it to a new one.
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1) { [weak self] in
-            guard let `self` = self else { return }
-            item.add(self.metadataOutput)
-        }
+        // Create and add a new metadata output to the item.
+        let metadataOutput = AVPlayerItemMetadataOutput()
+        metadataOutput.setDelegate(self, queue: .main)
+        item.add(metadataOutput)
     }
         
     func stopObservingCurrentItem() {
@@ -85,7 +81,11 @@ class AVPlayerItemObserver: NSObject {
         observingItem.removeObserver(self, forKeyPath: AVPlayerItemKeyPath.duration, context: &AVPlayerItemObserver.context)
         observingItem.removeObserver(self, forKeyPath: AVPlayerItemKeyPath.loadedTimeRanges, context: &AVPlayerItemObserver.context)
         observingItem.removeObserver(self, forKeyPath: AVPlayerItemKeyPath.playbackLikelyToKeepUp, context: &AVPlayerItemObserver.context)
-        observingItem.remove(metadataOutput)
+        
+        // Remove metadata output if it's attached.
+        if let metadataOutput = observingItem.outputs.first(where: { $0 is AVPlayerItemMetadataOutput }) {
+            observingItem.remove(metadataOutput)
+        }
         
         isObserving = false
         self.observingItem = nil
