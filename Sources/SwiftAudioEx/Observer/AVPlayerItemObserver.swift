@@ -71,7 +71,7 @@ class AVPlayerItemObserver: NSObject {
         // We must slightly delay adding the metadata output due to the fact that
         // stop observation is not a synchronous action and metadataOutput may not
         // be removed from last item before we try to attach it to a new one.
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.001) { [weak self] in
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1) { [weak self] in
             guard let `self` = self else { return }
             item.add(self.metadataOutput)
         }
