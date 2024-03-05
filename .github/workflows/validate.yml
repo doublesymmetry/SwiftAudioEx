@@ -16,10 +16,8 @@ jobs:
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v2
-      - name: Set up build tools
-        run: brew install xcbeautify
       - name: Run Tests
         run: |-
-          set -o pipefail && xcodebuild test -scheme SwiftAudioEx -destination "${destination}" -enableCodeCoverage YES | xcbeautify --renderer github-actions
+          xcodebuild test -scheme SwiftAudioEx -destination "${destination}" -enableCodeCoverage YES
         env:
           destination: ${{ matrix.destination }}
