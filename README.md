@@ -7,7 +7,19 @@
 
 SwiftAudioEx is an audio player written in Swift, making it simpler to work with audio playback from streams and files.
 
+<div align="left" valign="middle">
+<a href="https://runblaze.dev">
+ <picture>
+   <source media="(prefers-color-scheme: dark)" srcset="https://www.runblaze.dev/logo_dark.png">
+   <img align="right" src="https://www.runblaze.dev/logo_light.png" height="102px"/>
+ </picture>
+</a>
+
+<br style="display: none;"/>
+
 _[Blaze](https://runblaze.dev) sponsors SwiftAudioEx by providing super fast Apple Silicon based macOS Github Action Runners. Use the discount code `RNTP50` at checkout to get 50% off your first year._
+
+</div>
 
 ## Example
 
