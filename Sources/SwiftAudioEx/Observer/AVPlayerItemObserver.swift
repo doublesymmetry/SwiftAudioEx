@@ -14,7 +14,7 @@ protocol AVPlayerItemObserverDelegate: AnyObject {
      Called when the duration of the observed item is updated.
      */
     func item(didUpdateDuration duration: Double)
-
+    
     /**
      Called when the playback of the observed item is or is no longer likely to keep up.
      */
@@ -32,7 +32,7 @@ protocol AVPlayerItemObserverDelegate: AnyObject {
 class AVPlayerItemObserver: NSObject {
     
     private static var context = 0
-    private let metadataOutput = AVPlayerItemMetadataOutput()
+    private var currentMetadataOutput: AVPlayerItemMetadataOutput?
     
     private struct AVPlayerItemKeyPath {
         static let duration = #keyPath(AVPlayerItem.duration)
@@ -47,7 +47,6 @@ class AVPlayerItemObserver: NSObject {
     
     override init() {
         super.init()
-        metadataOutput.setDelegate(self, queue: .main)
     }
     
     deinit {
@@ -68,15 +67,13 @@ class AVPlayerItemObserver: NSObject {
         item.addObserver(self, forKeyPath: AVPlayerItemKeyPath.loadedTimeRanges, options: [.new], context: &AVPlayerItemObserver.context)
         item.addObserver(self, forKeyPath: AVPlayerItemKeyPath.playbackLikelyToKeepUp, options: [.new], context: &AVPlayerItemObserver.context)
         
-        // We must slightly delay adding the metadata output due to the fact that
-        // stop observation is not a synchronous action and metadataOutput may not
-        // be removed from last item before we try to attach it to a new one.
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.001) { [weak self] in
-            guard let `self` = self else { return }
-            item.add(self.metadataOutput)
-        }
+        // Create and add a new metadata output to the item.
+        let metadataOutput = AVPlayerItemMetadataOutput()
+        metadataOutput.setDelegate(self, queue: .main)
+        item.add(metadataOutput)
+        self.currentMetadataOutput = metadataOutput
     }
-        
+    
     func stopObservingCurrentItem() {
         guard let observingItem = observingItem, isObserving else {
             return
@@ -85,10 +82,13 @@ class AVPlayerItemObserver: NSObject {
         observingItem.removeObserver(self, forKeyPath: AVPlayerItemKeyPath.duration, context: &AVPlayerItemObserver.context)
         observingItem.removeObserver(self, forKeyPath: AVPlayerItemKeyPath.loadedTimeRanges, context: &AVPlayerItemObserver.context)
         observingItem.removeObserver(self, forKeyPath: AVPlayerItemKeyPath.playbackLikelyToKeepUp, context: &AVPlayerItemObserver.context)
-        observingItem.remove(metadataOutput)
+        
+        // Remove all metadata outputs from the item.
+        observingItem.removeAllMetadataOutputs()
         
         isObserving = false
         self.observingItem = nil
+        self.currentMetadataOutput = nil
     }
     
     override func observeValue(forKeyPath keyPath: String?, of object: Any?, change: [NSKeyValueChangeKey : Any]?, context: UnsafeMutableRawPointer?) {
@@ -102,17 +102,17 @@ class AVPlayerItemObserver: NSObject {
             if let duration = change?[.newKey] as? CMTime {
                 delegate?.item(didUpdateDuration: duration.seconds)
             }
-        
+            
         case AVPlayerItemKeyPath.loadedTimeRanges:
             if let ranges = change?[.newKey] as? [NSValue], let duration = ranges.first?.timeRangeValue.duration {
                 delegate?.item(didUpdateDuration: duration.seconds)
             }
-
+            
         case AVPlayerItemKeyPath.playbackLikelyToKeepUp:
             if let playbackLikelyToKeepUp = change?[.newKey] as? Bool {
                 delegate?.item(didUpdatePlaybackLikelyToKeepUp: playbackLikelyToKeepUp)
             }
-             
+            
         default: break
             
         }
@@ -121,6 +121,16 @@ class AVPlayerItemObserver: NSObject {
 
 extension AVPlayerItemObserver: AVPlayerItemMetadataOutputPushDelegate {
     func metadataOutput(_ output: AVPlayerItemMetadataOutput, didOutputTimedMetadataGroups groups: [AVTimedMetadataGroup], from track: AVPlayerItemTrack?) {
-        delegate?.item(didReceiveTimedMetadata: groups)
+        if output == currentMetadataOutput {
+            delegate?.item(didReceiveTimedMetadata: groups)
+        }
+    }
+}
+
+extension AVPlayerItem {
+    func removeAllMetadataOutputs() {
+        for output in self.outputs.filter({ $0 is AVPlayerItemMetadataOutput }) {
+            self.remove(output)
+        }
     }
 }
