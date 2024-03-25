@@ -42,6 +42,33 @@ public class AudioPlayer: AVPlayerWrapperDelegate {
         }
     }
 
+    /**
+     Handles the `playWhenReady` setting while executing a given action.
+
+     This method takes an optional `Bool` value and a closure representing an action to execute.
+     If the `Bool` value is not `nil`, `self.playWhenReady` is set accordingly either before or
+     after executing the action.
+
+     - Parameters:
+       - playWhenReady: Optional `Bool` to set `self.playWhenReady`.
+                        - If `true`, `self.playWhenReady` will be set after executing the action.
+                        - If `false`, `self.playWhenReady` will be set before executing the action.
+                        - If `nil`, `self.playWhenReady` will not be changed.
+       - action: A closure representing the action to execute. This closure can throw an error.
+
+     - Throws: This function will propagate any errors thrown by the `action` closure.
+    */
+    internal func handlePlayWhenReady(_ playWhenReady: Bool?, action: () throws -> Void) rethrows {
+        if playWhenReady == false {
+            self.playWhenReady = false
+        }
+        
+        try action()
+        
+        if playWhenReady == true {
+            self.playWhenReady = true
+        }
+    }
 
     // MARK: - Getters from AVPlayerWrapper
 
@@ -170,32 +197,30 @@ public class AudioPlayer: AVPlayerWrapperDelegate {
      - parameter playWhenReady: Optional, whether to start playback when the item is ready.
      */
     public func load(item: AudioItem, playWhenReady: Bool? = nil) {
-        currentItem = item
+        handlePlayWhenReady(playWhenReady) {
+            currentItem = item
 
-        if let playWhenReady = playWhenReady {
-            self.playWhenReady = playWhenReady
+            if (automaticallyUpdateNowPlayingInfo) {
+                // Reset playback values without updating, because that will happen in
+                // the loadNowPlayingMetaValues call straight after:
+                nowPlayingInfoController.setWithoutUpdate(keyValues: [
+                    MediaItemProperty.duration(nil),
+                    NowPlayingInfoProperty.playbackRate(nil),
+                    NowPlayingInfoProperty.elapsedPlaybackTime(nil)
+                ])
+                loadNowPlayingMetaValues()
+            }
+            
+            enableRemoteCommands(forItem: item)
+            
+            wrapper.load(
+                from: item.getSourceUrl(),
+                type: item.getSourceType(),
+                playWhenReady: self.playWhenReady,
+                initialTime: (item as? InitialTiming)?.getInitialTime(),
+                options:(item as? AssetOptionsProviding)?.getAssetOptions()
+            )
         }
-
-        if (automaticallyUpdateNowPlayingInfo) {
-            // Reset playback values without updating, because that will happen in
-            // the loadNowPlayingMetaValues call straight after:
-            nowPlayingInfoController.setWithoutUpdate(keyValues: [
-                MediaItemProperty.duration(nil),
-                NowPlayingInfoProperty.playbackRate(nil),
-                NowPlayingInfoProperty.elapsedPlaybackTime(nil)
-            ])
-            loadNowPlayingMetaValues()
-        }
-        
-        enableRemoteCommands(forItem: item)
-        
-        wrapper.load(
-            from: item.getSourceUrl(),
-            type: item.getSourceType(),
-            playWhenReady: self.playWhenReady,
-            initialTime: (item as? InitialTiming)?.getInitialTime(),
-            options:(item as? AssetOptionsProviding)?.getAssetOptions()
-        )
     }
 
     /**
