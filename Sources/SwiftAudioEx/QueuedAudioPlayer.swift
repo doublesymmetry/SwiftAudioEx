@@ -193,6 +193,8 @@ public class QueuedAudioPlayer: AudioPlayer, QueueManagerDelegate {
     override func AVWrapperItemDidPlayToEndTime() {
         event.playbackEnd.emit(data: .playedUntilEnd)
         if (repeatMode == .track) {
+            self.pause()
+
             // quick workaround for race condition - schedule a call after 2 frames
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.016 * 2) { [weak self] in self?.replay() }
         } else if (repeatMode == .queue) {
