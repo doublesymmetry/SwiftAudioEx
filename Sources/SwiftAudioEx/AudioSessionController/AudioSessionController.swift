@@ -13,6 +13,8 @@ public enum InterruptionType: Equatable {
     case ended(shouldResume: Bool)
 }
 
+#if os(iOS)
+
 public protocol AudioSessionControllerDelegate: AnyObject {
     func handleInterruption(type: InterruptionType)
 }
@@ -129,3 +131,5 @@ public class AudioSessionController {
     }
     
 }
+
+#endif
