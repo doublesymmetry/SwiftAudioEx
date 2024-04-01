@@ -63,6 +63,7 @@ class AVPlayerItemObserver: NSObject {
         
         self.isObserving = true
         self.observingItem = item
+        
         item.addObserver(self, forKeyPath: AVPlayerItemKeyPath.duration, options: [.new], context: &AVPlayerItemObserver.context)
         item.addObserver(self, forKeyPath: AVPlayerItemKeyPath.loadedTimeRanges, options: [.new], context: &AVPlayerItemObserver.context)
         item.addObserver(self, forKeyPath: AVPlayerItemKeyPath.playbackLikelyToKeepUp, options: [.new], context: &AVPlayerItemObserver.context)
@@ -78,6 +79,9 @@ class AVPlayerItemObserver: NSObject {
         guard let observingItem = observingItem, isObserving else {
             return
         }
+        
+        // BKS: remove a tap if we had one.
+        observingItem.audioMix = nil
         
         observingItem.removeObserver(self, forKeyPath: AVPlayerItemKeyPath.duration, context: &AVPlayerItemObserver.context)
         observingItem.removeObserver(self, forKeyPath: AVPlayerItemKeyPath.loadedTimeRanges, context: &AVPlayerItemObserver.context)

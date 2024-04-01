@@ -24,6 +24,7 @@ class AVPlayerWrapper: AVPlayerWrapperProtocol {
     // MARK: - Properties
     
     fileprivate var avPlayer = AVPlayer()
+    internal var audioTap: AudioTap? = nil
     private let playerObserver = AVPlayerObserver()
     internal let playerTimeObserver: AVPlayerTimeObserver
     private let playerItemNotificationObserver = AVPlayerItemNotificationObserver()
@@ -385,6 +386,7 @@ class AVPlayerWrapper: AVPlayerWrapperProtocol {
     private func startObservingAVPlayer(item: AVPlayerItem) {
         playerItemObserver.startObserving(item: item)
         playerItemNotificationObserver.startObserving(item: item)
+        attachTap(audioTap, to: item)
     }
 
     private func stopObservingAVPlayerItem() {
