@@ -1,13 +1,12 @@
 import Foundation
 import SwiftAudioEx
-import UIKit
 
 struct Source {
     static let path: String = Bundle.module.path(forResource: "TestSound", ofType: "m4a")!
     static let url: URL = URL(fileURLWithPath: Source.path)
     
     static func getAudioItem() -> AudioItem {
-        return DefaultAudioItem(audioUrl: self.path, artist: "Artist", title: "Title", albumTitle: "AlbumTitle", sourceType: .file, artwork: UIImage())
+        return DefaultAudioItem(audioUrl: self.path, artist: "Artist", title: "Title", albumTitle: "AlbumTitle", sourceType: .file, artwork: AudioItemImage())
     }
 }
 
