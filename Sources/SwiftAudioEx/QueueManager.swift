@@ -13,7 +13,7 @@ protocol QueueManagerDelegate: AnyObject {
     func onSkippedToSameCurrentItem()
 }
 
-class QueueManager<T> {
+class QueueManager<Element> {
 
     fileprivate let recursiveLock = NSRecursiveLock()
 
@@ -54,7 +54,7 @@ class QueueManager<T> {
     /**
      All items held by the queue.
      */
-    private(set) var items: [T] = [] {
+    private(set) var items: [Element] = [] {
         didSet {
             return synchronize {
                 if oldValue.count == 0 && items.count > 0 {
@@ -64,7 +64,7 @@ class QueueManager<T> {
         }
     }
 
-    public var nextItems: [T] {
+    public var nextItems: [Element] {
         return synchronize {
             return currentIndex == -1 || currentIndex == items.count - 1
                 ? []
@@ -72,7 +72,7 @@ class QueueManager<T> {
         }
     }
 
-    public var previousItems: [T] {
+    public var previousItems: [Element] {
         return synchronize {
             return currentIndex <= 0
             ? []
@@ -83,7 +83,7 @@ class QueueManager<T> {
     /**
      The current item for the queue.
      */
-    public var current: T? {
+    public var current: Element? {
         return synchronize {
             return 0 <= _currentIndex && _currentIndex < items.count ? items[_currentIndex] : nil
         }
@@ -114,7 +114,7 @@ class QueueManager<T> {
 
      - parameter item: The `AudioItem` to be added.
      */
-    public func add(_ item: T) {
+    public func add(_ item: Element) {
         synchronize {
             items.append(item)
         }
@@ -125,7 +125,7 @@ class QueueManager<T> {
 
      - parameter items: The `AudioItem`s to be added.
      */
-    public func add(_ items: [T]) {
+    public func add(_ items: [Element]) {
         synchronize {
             if (items.count == 0) { return }
             self.items.append(contentsOf: items)
@@ -138,7 +138,7 @@ class QueueManager<T> {
      - parameter items: The `AudioItem`s to be added.
      - parameter at: The index to insert the items at.
      */
-    public func add(_ items: [T], at index: Int) throws {
+    public func add(_ items: [Element], at index: Int) throws {
         try synchronizeThrows {
             if (items.count == 0) { return }
             guard index >= 0 && self.items.count >= index else {
@@ -157,7 +157,7 @@ class QueueManager<T> {
         case previous = -1
     }
 
-    private func skip(direction: SkipDirection, wrap: Bool) -> T? {
+    private func skip(direction: SkipDirection, wrap: Bool) -> Element? {
         let count = items.count
         if (current == nil || count == 0) {
             return nil
@@ -174,9 +174,7 @@ class QueueManager<T> {
             let oldIndex = currentIndex
             currentIndex = max(0, min(items.count - 1, index))
             if (oldIndex != currentIndex) {
-                defer {
-                    delegate?.onCurrentItemChanged()
-                }
+                delegate?.onCurrentItemChanged()
             }
         }
         return current
@@ -188,7 +186,7 @@ class QueueManager<T> {
      - returns: The next (or current) item.
      */
     @discardableResult
-    public func next(wrap: Bool = false) -> T? {
+    public func next(wrap: Bool = false) -> Element? {
         synchronize {
             return skip(direction: SkipDirection.next, wrap: wrap);
         }
@@ -201,7 +199,7 @@ class QueueManager<T> {
      - returns: The previous item.
      */
     @discardableResult
-    public func previous(wrap: Bool = false) -> T? {
+    public func previous(wrap: Bool = false) -> Element? {
         return synchronize {
             return skip(direction: SkipDirection.previous, wrap: wrap);
         }
@@ -216,7 +214,7 @@ class QueueManager<T> {
      - returns: The item at the index.
      */
     @discardableResult
-    public func jump(to index: Int) throws -> T {
+    public func jump(to index: Int) throws -> Element {
         var skippedToSameCurrentItem = false
         var currentItemChanged = false
         let result = try synchronizeThrows {
@@ -268,7 +266,8 @@ class QueueManager<T> {
      - throws: AudioPlayerError.QueueError
      - returns: The removed item.
      */
-    public func removeItem(at index: Int) throws -> T {
+    @discardableResult
+    public func removeItem(at index: Int) throws -> Element {
         var currentItemChanged = false
         let result = try synchronizeThrows {
             try throwIfQueueEmpty()
@@ -294,7 +293,7 @@ class QueueManager<T> {
 
      - parameter item: The item to set as the new current item.
      */
-    public func replaceCurrentItem(with item: T) {
+    public func replaceCurrentItem(with item: Element) {
         var currentItemChanged = false
         synchronize {
             if currentIndex == -1  {
