@@ -8,12 +8,34 @@
 import Foundation
 import AVFoundation
 
-public protocol AudioTap {
-    func initialize()
-    func finalize()
-    func prepare(description: AudioStreamBasicDescription)
-    func unprepare()
-    func process(numberOfFrames: Int, buffer: UnsafeMutableAudioBufferListPointer)
+/**
+ Subclass this and set the AudioPlayer's `audioTap` property to start receiving the
+ audio stream.
+ */
+open class AudioTap {
+    // Called at tap initialization for a given player item. Use this to setup anything you might need.
+    open func initialize() { print("audioTap: initialize") }
+    // Called at teardown of the internal tap.  Use this to reset any memory buffers you have created, etc.
+    open func finalize() { print("audioTap: finalize") }
+    // Called just before playback so you can perform setup based on the stream description.
+    open func prepare(description: AudioStreamBasicDescription) { print("audioTap: prepare") }
+    // Called just before finalize.
+    open func unprepare() { print("audioTap: unprepare") }
+    /**
+     Called periodically during audio stream playback.
+     
+     Example:
+     
+     ```
+     func process(numberOfFrames: Int, buffer: UnsafeMutableAudioBufferListPointer) {
+         for channel in buffer {
+             // process audio samples here
+             //memset(channel.mData, 0, Int(channel.mDataByteSize))
+         }
+     }
+     ```
+    */
+    open func process(numberOfFrames: Int, buffer: UnsafeMutableAudioBufferListPointer) { print("audioTap: process") }
 }
 
 extension AVPlayerWrapper {
@@ -25,28 +47,41 @@ extension AVPlayerWrapper {
         
         let audioMix = AVMutableAudioMix()
         let params = AVMutableAudioMixInputParameters(track: track)
-        var callbacks = MTAudioProcessingTapCallbacks(version: kMTAudioProcessingTapCallbacksVersion_0, clientInfo: nil)
-        { tapRef, _, tapStorageOut in
-            // initialize
-            print("tap initialized")
+        
+        // we need to retain this pointer so it doesn't disappear out from under us.
+        // we'll then let it go after we finalize.  If the tap changed upstream, we
+        // aren't going to pick up the new one until after this player item goes away.
+        let client = UnsafeMutableRawPointer(Unmanaged.passRetained(tap).toOpaque())
+        
+        var callbacks = MTAudioProcessingTapCallbacks(version: kMTAudioProcessingTapCallbacksVersion_0, clientInfo: client)
+        { tapRef, clientInfo, tapStorageOut in
+            // initial tap setup
+            guard let clientInfo else { return }
+            tapStorageOut.pointee = clientInfo
+            let audioTap = Unmanaged<AudioTap>.fromOpaque(clientInfo).takeUnretainedValue()
+            audioTap.initialize()
         } finalize: { tapRef in
             // clean up
-            print("tap finalized")
+            let audioTap = Unmanaged<AudioTap>.fromOpaque(MTAudioProcessingTapGetStorage(tapRef)).takeUnretainedValue()
+            audioTap.finalize()
+            // we're done, we can let go of the pointer we retained.
+            Unmanaged.passUnretained(audioTap).release()
         } prepare: { tapRef, maxFrames, processingFormat in
             // allocate memory for sound processing
+            let audioTap = Unmanaged<AudioTap>.fromOpaque(MTAudioProcessingTapGetStorage(tapRef)).takeUnretainedValue()
+            audioTap.prepare(description: processingFormat.pointee)
         } unprepare: { tapRef in
             // deallocate memory for sound processing
+            let audioTap = Unmanaged<AudioTap>.fromOpaque(MTAudioProcessingTapGetStorage(tapRef)).takeUnretainedValue()
+            audioTap.unprepare()
         } process: { tapRef, numberFrames, flags, bufferListInOut, numberFramesOut, flagsOut in
             guard noErr == MTAudioProcessingTapGetSourceAudio(tapRef, numberFrames, bufferListInOut, flagsOut, nil, numberFramesOut) else {
                 return
             }
             
-            // retrieve AudioBuffer using UnsafeMutableAudioBufferListPointer
-            for buffer in UnsafeMutableAudioBufferListPointer(bufferListInOut) {
-                // process audio samples here
-                //memset(buffer.mData, 0, Int(buffer.mDataByteSize))
-            }
-            print("tap processed")
+            // process sound data
+            let audioTap = Unmanaged<AudioTap>.fromOpaque(MTAudioProcessingTapGetStorage(tapRef)).takeUnretainedValue()
+            audioTap.process(numberOfFrames: numberFrames, buffer: UnsafeMutableAudioBufferListPointer(bufferListInOut))
         }
         
         var tapRef: Unmanaged<MTAudioProcessingTap>?
