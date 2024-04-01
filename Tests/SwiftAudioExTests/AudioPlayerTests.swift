@@ -138,6 +138,7 @@ class AudioPlayerTests: XCTestCase {
         let tap2Active = DummyAudioTap.outputs.contains { output in
             return output.contains("audioTap 2: process")
         }
+        XCTAssertTrue(tap1Active)
         XCTAssertTrue(tap2Active)
     }
     
