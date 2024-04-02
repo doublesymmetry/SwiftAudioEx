@@ -142,6 +142,13 @@ class AudioPlayerTests: XCTestCase {
         XCTAssertTrue(tap2Active)
     }
     
+    // MARK: - Device Tests
+    
+    func testAudioDeviceListing() {
+        let list = audioPlayer.localDevices
+        print(list)
+    }
+    
     // MARK: - Failure
     
     func testFailEventOnLoadWithNonMalformedURL() {
