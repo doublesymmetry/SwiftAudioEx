@@ -145,7 +145,7 @@ class QueueManager<T> {
                 throw AudioPlayerError.QueueError.invalidIndex(index: index, message: "Index to insert at has to be non-negative and equal to or smaller than the number of items: (\(items.count))")
             }
             // Correct index when items were inserted in front of it:
-            if (self.items.count > 1 && currentIndex >= index) {
+            if (self.items.count > 0 && currentIndex >= index) {
                 currentIndex += items.count
             }
             self.items.insert(contentsOf: items, at: index)
