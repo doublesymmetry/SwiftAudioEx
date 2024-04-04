@@ -7,8 +7,17 @@
 
 import Foundation
 import AVFoundation
+import CoreAudio
 
-public class AudioDevice {
+public class AudioDevice: CustomStringConvertible, CustomDebugStringConvertible {
+    public var description: String {
+        return name ?? "Unknown"
+    }
+    
+    public var debugDescription: String {
+        return name ?? "Unknown"
+    }
+    
     static var system: AudioDevice = {
         return AudioDevice()
     }()
@@ -108,6 +117,23 @@ extension AudioPlayer {
     /**
      Get the current output device
      */
+    public var outputDevice: AudioDevice {
+        get {
+            guard let wrapper = wrapper as? AVPlayerWrapper else { return AudioDevice.system }
+            guard let uniqueID = wrapper.avPlayer.audioOutputDeviceUniqueID else { return AudioDevice.system }
+            let devices = localDevices.filter { device in
+                return device.uniqueID == uniqueID
+            }
+            if let match = devices.first {
+                return match
+            }
+            return AudioDevice.system
+        }
+        set(value) {
+            guard let wrapper = wrapper as? AVPlayerWrapper else { return }
+            wrapper.avPlayer.audioOutputDeviceUniqueID = value.uniqueID
+        }
+    }
     
     /**
      Get a list of local audio devices capable of output.
