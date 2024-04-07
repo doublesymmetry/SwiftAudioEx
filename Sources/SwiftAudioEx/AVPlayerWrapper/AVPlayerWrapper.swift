@@ -70,7 +70,10 @@ class AVPlayerWrapper: AVPlayerWrapperProtocol {
                 let currentState = self._state
                 if (currentState != newValue) {
                     self._state = newValue
-                    self.delegate?.AVWrapper(didChangeState: newValue)
+                    // the delegate can initiate a state change, resulting in a dealock in the getter.
+                    DispatchQueue.main.async {
+                        self.delegate?.AVWrapper(didChangeState: newValue)
+                    }
                 }
             }
         }
@@ -332,6 +335,7 @@ class AVPlayerWrapper: AVPlayerWrapperProtocol {
 
     func load(
         from url: String,
+        next: String? = nil,
         type: SourceType = .stream,
         playWhenReady: Bool = false,
         initialTime: TimeInterval? = nil,
