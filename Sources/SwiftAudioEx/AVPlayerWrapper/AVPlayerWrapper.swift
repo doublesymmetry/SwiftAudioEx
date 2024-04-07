@@ -335,7 +335,6 @@ class AVPlayerWrapper: AVPlayerWrapperProtocol {
 
     func load(
         from url: String,
-        next: String? = nil,
         type: SourceType = .stream,
         playWhenReady: Bool = false,
         initialTime: TimeInterval? = nil,
