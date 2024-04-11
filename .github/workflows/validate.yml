@@ -26,3 +26,5 @@ jobs:
       - name: Upload coverage to Codecov
         if: matrix.target == 'macos'
         uses: codecov/codecov-action@v1.2.1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
