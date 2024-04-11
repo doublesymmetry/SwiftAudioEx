@@ -33,7 +33,12 @@ class NowPlayingInfoTests: XCTestCase {
 
     func testNowPlayingInfoControllerPlaybackValuesUpdate() {
         let item = LongSource.getAudioItem()
+        
+        // State has become somewhat async to prevent a deadlock,
+        // so this isn't instantaneous anymore and needs a teensy bit of time.
         audioPlayer.load(item: item, playWhenReady: true)
+        
+        RunLoop.current.run(until: Date(timeIntervalSinceNow: 1))
 
         XCTAssertNotNil(nowPlayingController.getRate())
         XCTAssertNotNil(nowPlayingController.getDuration())
