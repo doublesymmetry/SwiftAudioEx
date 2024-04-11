@@ -191,8 +191,7 @@ class QueuedAudioPlayerTests: XCTestCase {
         
         // Test previous
         audioPlayer.previous()
-        waitEqual(self.audioPlayer.playerState, .loading, timeout: 5)
-        // should not have emitted playbackEnd .skippedToPrevious because playback was already stopped previously
+        XCTAssertEqual(self.audioPlayer.playerState, .loading)
         waitEqual(self.playbackEndEventListener.reasons, [.skippedToNext, .playerStopped], timeout: 5)
         
     }
