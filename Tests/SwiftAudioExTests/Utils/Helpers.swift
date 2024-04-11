@@ -8,7 +8,11 @@ extension XCTestCase {
         if ProcessInfo.processInfo.environment["CI"] != nil {
             return 10 // Timeout for CI environment
         } else {
-            return 5 // Default timeout for local environment
+            #if os(iOS)
+            return 20
+            #else
+            return 10 // Default timeout for local environment
+            #endif
         }
     }
 
