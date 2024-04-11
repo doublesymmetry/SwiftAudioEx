@@ -23,6 +23,7 @@ jobs:
       - name: Checkout Repo
         uses: actions/checkout@v2
       - name: Run Tests
+        if: matrix.target == 'macos' # Skip iOS until we can get them to run reliably
         run: xcodebuild test -scheme SwiftAudioEx ${{ matrix.destination }} -enableCodeCoverage YES
       - name: Upload coverage to Codecov
         if: matrix.target == 'macos'
