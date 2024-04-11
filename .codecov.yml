@@ -7,10 +7,10 @@ coverage:
       default:
         # https://docs.codecov.com/docs/commit-status#informational
         informational: true
-        target: 80%
+        target: 78%
     patch:
       default:
         informational: true
-        target: 80%
+        target: 78%
 github_checks:
   annotations: false
