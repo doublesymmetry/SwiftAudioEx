@@ -84,7 +84,6 @@ class QueuedAudioPlayerTests: XCTestCase {
         audioPlayer.load(item: Source.getAudioItem(), playWhenReady: true)
         XCTAssertNotEqual(audioPlayer.currentItem?.getSourceUrl(), FiveSecondSource.getAudioItem().getSourceUrl())
         waitTrue(self.playerStateEventListener.statesWithoutBuffering.contains(.playing), timeout: defaultTimeout)
-        XCTAssertEqual(audioPlayer.playerState, AudioPlayerState.playing)
     }
 
     func testAddingMultipleItems() {

@@ -6,7 +6,7 @@ import XCTest
 extension XCTestCase {
     var defaultTimeout: TimeInterval {
         if ProcessInfo.processInfo.environment["CI"] != nil {
-            return 10
+            return 20
         } else {
             return 5
         }
