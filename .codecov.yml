@@ -1,2 +1,16 @@
 ignore:
   - "Example/.*"
+  - "Tests/.*"
+coverage:
+  status:
+    project:
+      default:
+        # https://docs.codecov.com/docs/commit-status#informational
+        informational: true
+        target: 78%
+    patch:
+      default:
+        informational: true
+        target: 78%
+github_checks:
+  annotations: false
