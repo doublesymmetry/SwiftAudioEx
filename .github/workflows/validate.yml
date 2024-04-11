@@ -21,12 +21,12 @@ jobs:
             destination: '-destination "platform=macOS,name=Any Mac"'
     steps:
       - name: Checkout Repo
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
       - name: Run Tests
         if: matrix.target == 'macos' # Skip iOS until we can get them to run reliably
         run: xcodebuild test -scheme SwiftAudioEx ${{ matrix.destination }} -enableCodeCoverage YES
       - name: Upload coverage to Codecov
         if: matrix.target == 'macos'
-        uses: codecov/codecov-action@v1.2.1
+        uses: codecov/codecov-action@v4
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
