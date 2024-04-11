@@ -224,7 +224,7 @@ class AudioPlayerTests: XCTestCase {
         
         self.audioPlayer.load(item: Source.getAudioItem(), playWhenReady: true)
         waitTrue(self.audioPlayer.playbackError == nil, timeout: 5)
-        waitEqual(self.playerStateEventListener.statesWithoutBuffering, [.loading, .failed, .loading, .playing], timeout: 5)
+        waitEqual(self.playerStateEventListener.statesWithoutBuffering, [.loading, .failed, .idle, .loading, .playing], timeout: 5)
     }
 
     func testLoadResourceSucceedsAfterPreviousFailureWithPlayWhenReady() {
@@ -411,7 +411,7 @@ class AudioPlayerTests: XCTestCase {
     
     func testSeekingBeforeLoadingComplete() {
         audioPlayer.load(item: FiveSecondSource.getAudioItem(), playWhenReady: true)
-        XCTAssertTrue(audioPlayer.playerState == .loading)
+        XCTAssertTrue(audioPlayer.playerState == .buffering)
         audioPlayer.seek(to: 4.75)
         waitTrue(self.audioPlayer.currentTime > 4.75, timeout: 5)
     }

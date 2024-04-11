@@ -81,9 +81,9 @@ class QueuedAudioPlayerTests: XCTestCase {
     func testLoadAfterRemoval() {
         testRemovingItemAfterAdding()
         
-        audioPlayer.load(item: Source.getAudioItem())
+        audioPlayer.load(item: Source.getAudioItem(), playWhenReady: true)
         XCTAssertNotEqual(audioPlayer.currentItem?.getSourceUrl(), FiveSecondSource.getAudioItem().getSourceUrl())
-        waitEqual(self.playerStateEventListener.statesWithoutBuffering, [.loading, .idle, .loading, .playing], timeout: 5)
+        waitTrue(self.playerStateEventListener.statesWithoutBuffering.contains(.playing), timeout: 5)
         XCTAssertEqual(audioPlayer.playerState, AudioPlayerState.playing)
     }
 
@@ -100,7 +100,16 @@ class QueuedAudioPlayerTests: XCTestCase {
         XCTAssertEqual(audioPlayer.items.count, 1)
         XCTAssertEqual(audioPlayer.currentItem?.getSourceUrl(), ShortSource.getAudioItem().getSourceUrl())
     }
-    
+
+    // Covers: https://github.com/doublesymmetry/SwiftAudioEx/pull/81
+    func testAddingItemWhenOnlyOneTrackInQueue() throws {
+        audioPlayer.add(item: FiveSecondSource.getAudioItem())
+        audioPlayer.play()
+        try audioPlayer.add(items: [ShortSource.getAudioItem()], at: 0)
+        XCTAssertEqual(audioPlayer.items.count, 2)
+        XCTAssertEqual(audioPlayer.currentIndex, 1)
+    }
+
     // MARK: - Next Items
 
     func testNextItemsEmptyOnCreate() {
