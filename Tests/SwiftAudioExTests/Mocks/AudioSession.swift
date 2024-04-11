@@ -9,6 +9,8 @@
 import Foundation
 import AVFoundation
 
+#if os(iOS)
+
 @testable import SwiftAudioEx
 
 
@@ -64,3 +66,5 @@ class FailingAudioSession: AudioSession {
     
     
 }
+
+#endif

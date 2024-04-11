@@ -1,5 +1,8 @@
 import XCTest
 import AVFoundation
+
+#if os(iOS)
+
 @testable import SwiftAudioEx
 
 class AudioSessionControllerTests: XCTestCase {
@@ -89,3 +92,5 @@ class AudioSessionControllerDelegateImplementation: AudioSessionControllerDelega
         self.interruptionType = type
     }
 }
+
+#endif
