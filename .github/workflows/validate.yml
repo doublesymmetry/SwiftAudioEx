@@ -24,4 +24,5 @@ jobs:
       - name: Run Tests
         run: xcodebuild test -scheme SwiftAudioEx ${{ matrix.destination }} -enableCodeCoverage YES
       - name: Upload coverage to Codecov
+        if: matrix.target == 'macos'
         uses: codecov/codecov-action@v1.2.1
