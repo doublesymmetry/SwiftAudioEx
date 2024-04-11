@@ -41,7 +41,7 @@ class AVPlayerWrapperTests: XCTestCase {
             }
         }
         wrapper.load(from: Source.url, playWhenReady: false)
-        wait(for: [expectation], timeout: 20.0)
+        wait(for: [expectation], timeout: defaultTimeout)
     }
 
     func testAVPlayerWrapperStateWhenPlayingSourceShouldBePlaying() {
@@ -52,7 +52,7 @@ class AVPlayerWrapperTests: XCTestCase {
             }
         }
         wrapper.load(from: Source.url, playWhenReady: true)
-        wait(for: [expectation], timeout: 20.0)
+        wait(for: [expectation], timeout: defaultTimeout)
     }
 
     func testAVPlayerWrapperStateWhenPausingSourceShouldBePaused() {
@@ -68,7 +68,7 @@ class AVPlayerWrapperTests: XCTestCase {
             }
         }
         wrapper.load(from: Source.url, playWhenReady: true)
-        wait(for: [expectation], timeout: 20.0)
+        wait(for: [expectation], timeout: defaultTimeout)
     }
 
     func testAVPlayerWrapperStateWhenTogglingFromPlayShouldBePaused() {
@@ -84,7 +84,7 @@ class AVPlayerWrapperTests: XCTestCase {
             }
         }
         wrapper.load(from: Source.url, playWhenReady: true)
-        wait(for: [expectation], timeout: 20.0)
+        wait(for: [expectation], timeout: defaultTimeout)
     }
 
     func testAVPlayerWrapperStateWhenStoppingShouldBeStopped() {
@@ -100,7 +100,7 @@ class AVPlayerWrapperTests: XCTestCase {
             }
         }
         wrapper.load(from: Source.url, playWhenReady: true)
-        wait(for: [expectation], timeout: 20.0)
+        wait(for: [expectation], timeout: defaultTimeout)
     }
 
     func testAVPlayerWrapperStateLoadingWithInitialTimeShouldBePlaying() {
@@ -114,7 +114,7 @@ class AVPlayerWrapperTests: XCTestCase {
             }
         }
         wrapper.load(from: LongSource.url, playWhenReady: true, initialTime: 4.0)
-        wait(for: [expectation], timeout: 20.0)
+        wait(for: [expectation], timeout: defaultTimeout)
     }
 
     // MARK: - Duration tests
@@ -131,7 +131,7 @@ class AVPlayerWrapperTests: XCTestCase {
             }
         }
         wrapper.load(from: Source.url, playWhenReady: false)
-        wait(for: [expectation], timeout: 20.0)
+        wait(for: [expectation], timeout: defaultTimeout)
     }
 
     // MARK: - Current time tests
@@ -152,7 +152,7 @@ class AVPlayerWrapperTests: XCTestCase {
             expectation.fulfill()
         }
         wrapper.load(from: Source.url, playWhenReady: false)
-        wait(for: [expectation], timeout: 20.0)
+        wait(for: [expectation], timeout: defaultTimeout)
     }
 
     func testAVPlayerWrapperSeekingShouldSeekWhileNotYetLoaded() {
@@ -163,7 +163,7 @@ class AVPlayerWrapperTests: XCTestCase {
         }
         wrapper.load(from: Source.url, playWhenReady: false)
         wrapper.seek(to: seekTime)
-        wait(for: [expectation], timeout: 20.0)
+        wait(for: [expectation], timeout: defaultTimeout)
     }
 
     func testAVPlayerWrapperSeekByShouldSeek() {
@@ -176,7 +176,7 @@ class AVPlayerWrapperTests: XCTestCase {
             expectation.fulfill()
         }
         wrapper.load(from: Source.url, playWhenReady: false)
-        wait(for: [expectation], timeout: 20.0)
+        wait(for: [expectation], timeout: defaultTimeout)
     }
 
     func testAVPlayerWrapperLoadingSourceWithInitialTimeShouldSeek() {
@@ -185,7 +185,7 @@ class AVPlayerWrapperTests: XCTestCase {
             expectation.fulfill()
         }
         wrapper.load(from: LongSource.url, playWhenReady: false, initialTime: 4.0)
-        wait(for: [expectation], timeout: 20.0)
+        wait(for: [expectation], timeout: defaultTimeout)
     }
 
     // MARK: - Rate tests
@@ -202,7 +202,7 @@ class AVPlayerWrapperTests: XCTestCase {
             }
         }
         wrapper.load(from: Source.url, playWhenReady: true)
-        wait(for: [expectation], timeout: 20.0)
+        wait(for: [expectation], timeout: defaultTimeout)
     }
 
     func testAVPlayerWrapperTimeObserverWhenUpdatedShouldUpdateTheObserversPeriodicObserverTimeInterval() {

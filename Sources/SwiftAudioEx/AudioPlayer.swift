@@ -65,7 +65,7 @@ public class AudioPlayer: AVPlayerWrapperDelegate {
         
         try action()
         
-        if playWhenReady == true {
+        if playWhenReady == true, playbackError == nil {
             self.playWhenReady = true
         }
     }
