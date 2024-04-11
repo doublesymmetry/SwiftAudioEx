@@ -13,17 +13,14 @@ jobs:
     runs-on: blaze/macos-14
     strategy:
       matrix:
-        target: [macos, iOS]
+        target: [macos]
         include:
-          - target: iOS
-            destination: '-destination "platform=iOS Simulator,name=iPhone 15 Pro"'
           - target: macos
             destination: '-destination "platform=macOS,name=Any Mac"'
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v4
       - name: Run Tests
-        if: matrix.target == 'macos' # Skip iOS until we can get them to run reliably
         run: xcodebuild test -scheme SwiftAudioEx ${{ matrix.destination }} -enableCodeCoverage YES
       - name: Upload coverage to Codecov
         if: matrix.target == 'macos'
