@@ -21,6 +21,7 @@ jobs:
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v2
-
       - name: Run Tests
-        run: xcodebuild test -scheme SwiftAudioEx ${{ matrix.destination }} -enableCodeCoverage YES -test-iterations 5 -retry-tests-on-failure CI=true
+        run: xcodebuild test -scheme SwiftAudioEx ${{ matrix.destination }} -enableCodeCoverage YES
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v1.2.1

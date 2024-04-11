@@ -6,13 +6,9 @@ import XCTest
 extension XCTestCase {
     var defaultTimeout: TimeInterval {
         if ProcessInfo.processInfo.environment["CI"] != nil {
-            return 10 // Timeout for CI environment
+            return 10
         } else {
-            #if os(iOS)
-            return 20
-            #else
-            return 10 // Default timeout for local environment
-            #endif
+            return 5
         }
     }
 
