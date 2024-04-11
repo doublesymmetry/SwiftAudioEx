@@ -23,7 +23,7 @@ class AudioPlayerEventTests: XCTestCase {
     func testEventAddListener() {
         let listener = EventListener()
         event.addListener(listener, listener.handleEvent)
-        waitTrue(self.event.invokers.count > 0, timeout: 5)
+        waitTrue(self.event.invokers.count > 0, timeout: defaultTimeout)
     }
 
     func testEventRemoveListener() {
@@ -32,7 +32,7 @@ class AudioPlayerEventTests: XCTestCase {
         listener = nil
         event.emit(data: ())
         
-        waitEqual(self.event.invokers.count, 0, timeout: 5)
+        waitEqual(self.event.invokers.count, 0, timeout: defaultTimeout)
     }
 
     func testEventAddMultipleListeners() {
@@ -44,7 +44,7 @@ class AudioPlayerEventTests: XCTestCase {
             return listener
         }
         
-        waitEqual(self.event.invokers.count, listeners.count, timeout: 5)
+        waitEqual(self.event.invokers.count, listeners.count, timeout: defaultTimeout)
     }
     
     func testEventRemoveOneListener() {
@@ -59,6 +59,6 @@ class AudioPlayerEventTests: XCTestCase {
         let listenerToRemove = listeners[listeners.count / 2]
         event.removeListener(listenerToRemove)
         
-        waitEqual(self.event.invokers.count, listeners.count - 1, timeout: 5)
+        waitEqual(self.event.invokers.count, listeners.count - 1, timeout: defaultTimeout)
     }
 }

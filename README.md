@@ -2,6 +2,7 @@
 
 # SwiftAudioEx
 
+[![codecov](https://codecov.io/gh/doublesymmetry/SwiftAudioEx/graph/badge.svg?token=FD5THGSHM5)](https://codecov.io/gh/doublesymmetry/SwiftAudioEx)
 [![License](https://img.shields.io/cocoapods/l/SwiftAudioEx.svg?style=flat)](http://cocoapods.org/pods/SwiftAudioEx)
 [![Platform](https://img.shields.io/cocoapods/p/SwiftAudioEx.svg?style=flat)](http://cocoapods.org/pods/SwiftAudioEx)
 

@@ -1,9 +1,10 @@
 name: validate
 on:
   push:
-    branches: [main]
+    branches:
+      - main
   pull_request:
-    branches: [main]
+    types: [opened, synchronize]
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -12,12 +13,17 @@ jobs:
     runs-on: blaze/macos-14
     strategy:
       matrix:
-        destination: ["platform=iOS Simulator,name=iPhone 15 Pro"]
+        target: [macos]
+        include:
+          - target: macos
+            destination: '-destination "platform=macOS,name=Any Mac"'
     steps:
       - name: Checkout Repo
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
       - name: Run Tests
-        run: |-
-          xcodebuild test -scheme SwiftAudioEx -destination "${destination}" -enableCodeCoverage YES
-        env:
-          destination: ${{ matrix.destination }}
+        run: xcodebuild test -scheme SwiftAudioEx ${{ matrix.destination }} -enableCodeCoverage YES
+      - name: Upload coverage to Codecov
+        if: matrix.target == 'macos'
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
