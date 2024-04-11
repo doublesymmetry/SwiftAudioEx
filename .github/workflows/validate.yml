@@ -12,16 +12,13 @@ jobs:
     runs-on: blaze/macos-14
     strategy:
       matrix:
-        target: ["macos", "iOS"]
+        target: [macos, iOS]
         include:
-          - target: "iOS"
-            destination:
-              ["-destination platform=iOS Simulator,name=iPhone 15 Pro"]
+          - target: iOS
+            destination: '-destination "platform=iOS Simulator,name=iPhone 15 Pro"'
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v2
+
       - name: Run Tests
-        run: |-
-          xcodebuild test -scheme SwiftAudioEx "${destination}" -enableCodeCoverage YES -test-iterations 10 -retry-tests-on-failure
-        env:
-          destination: ${{ matrix.destination }}
+        run: xcodebuild test -scheme SwiftAudioEx ${{ matrix.destination }} -enableCodeCoverage YES -test-iterations 10 -retry-tests-on-failure
