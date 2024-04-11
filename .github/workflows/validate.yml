@@ -8,25 +8,20 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 jobs:
-  unit-tests-ios:
+  unit-tests:
     runs-on: blaze/macos-14
     strategy:
       matrix:
-        # also run for macos
-        destination: ["platform=iOS Simulator,name=iPhone 15 Pro"]
+        target: ["macos", "iOS"]
+        include:
+          - target: "iOS"
+            destination:
+              ["-destination platform=iOS Simulator,name=iPhone 15 Pro"]
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v2
       - name: Run Tests
         run: |-
-          xcodebuild test -scheme SwiftAudioEx -destination "${destination}" -enableCodeCoverage YES -test-iterations 10 -retry-tests-on-failure
+          xcodebuild test -scheme SwiftAudioEx "${destination}" -enableCodeCoverage YES -test-iterations 10 -retry-tests-on-failure
         env:
           destination: ${{ matrix.destination }}
-  unit-tests-macos:
-    runs-on: blaze/macos-14
-    steps:
-      - name: Checkout Repo
-        uses: actions/checkout@v2
-      - name: Run Tests
-        run: |-
-          swift test
