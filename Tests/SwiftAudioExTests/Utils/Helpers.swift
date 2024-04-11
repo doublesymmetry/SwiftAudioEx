@@ -4,13 +4,21 @@ import XCTest
 @testable import SwiftAudioEx
 
 extension XCTestCase {
+    var defaultTimeout: TimeInterval {
+        if ProcessInfo.processInfo.environment["CI"] != nil {
+            return 10 // Timeout for CI environment
+        } else {
+            return 5 // Default timeout for local environment
+        }
+    }
+
     func waitForSeek(_ audioPlayer: AudioPlayer, to time: Double) {
         let seekEventListener = QueuedAudioPlayer.SeekEventListener()
         audioPlayer.event.seek.addListener(seekEventListener, seekEventListener.handleEvent)
         audioPlayer.seek(to: time)
         
-        waitEqual(seekEventListener.eventResult.0, time, accuracy: 0.1, timeout: 5)
-        waitEqual(seekEventListener.eventResult.1, true, timeout: 5)
+        waitEqual(seekEventListener.eventResult.0, time, accuracy: 0.1, timeout: defaultTimeout)
+        waitEqual(seekEventListener.eventResult.1, true, timeout: defaultTimeout)
     }
     
     func waitEqual<T: Equatable>(_ expression1: @autoclosure @escaping () -> T, _ expression2: @autoclosure @escaping () -> T, timeout: TimeInterval) {
