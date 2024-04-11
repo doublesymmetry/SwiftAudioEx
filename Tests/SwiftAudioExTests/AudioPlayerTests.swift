@@ -145,6 +145,8 @@ class AudioPlayerTests: XCTestCase {
     // MARK: - Device Tests
     
     func testAudioDeviceListing() {
+        // I know this test kind of stinks.  Devices will vary on every system,
+        // and i can't really test device output in CI. :/
         let list = audioPlayer.localDevices
         print(list)
     }
