@@ -13,6 +13,14 @@ public typealias AudioPlayerState = AVPlayerWrapperState
 public class AudioPlayer: AVPlayerWrapperDelegate {
     /// The wrapper around the underlying AVPlayer
     let wrapper: AVPlayerWrapperProtocol = AVPlayerWrapper()
+    
+    /**
+     Set an instance of AudioTap, to receive frame information and audio buffer access during playback.
+     */
+    public var audioTap: AudioTap? {
+        get { return wrapper.audioTap }
+        set(value) { wrapper.audioTap = value }
+    }
 
     public let nowPlayingInfoController: NowPlayingInfoControllerProtocol
     public let remoteCommandController: RemoteCommandController

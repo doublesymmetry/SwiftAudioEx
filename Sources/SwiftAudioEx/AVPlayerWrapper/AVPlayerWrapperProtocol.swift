@@ -13,6 +13,8 @@ protocol AVPlayerWrapperProtocol: AnyObject {
     
     var state: AVPlayerWrapperState { get set }
     
+    var audioTap: AudioTap? { get set }
+    
     var playWhenReady: Bool { get set }
     
     var currentItem: AVPlayerItem? { get }

@@ -110,6 +110,47 @@ class AudioPlayerTests: XCTestCase {
         XCTAssertEqual(audioPlayer.duration, 0)
     }
     
+    // MARK: - Audio Tap testing
+    
+    func testAudioTapSwitching() {
+        listener.onSecondsElapse = { position in
+            if position > 4 {
+                // swap it out part-way through the first track.
+                self.audioPlayer.audioTap = DummyAudioTap(tapIndex: 2)
+            }
+        }
+        
+        audioPlayer.audioTap = DummyAudioTap(tapIndex: 1)
+        audioPlayer.load(item: FiveSecondSource.getAudioItem())
+        audioPlayer.play()
+        
+        RunLoop.current.run(until: Date(timeIntervalSinceNow: 6))
+        
+        audioPlayer.load(item: FiveSecondSource.getAudioItem())
+        audioPlayer.play()
+        
+        RunLoop.current.run(until: Date(timeIntervalSinceNow: 6))
+        
+        let tap1Active = DummyAudioTap.outputs.contains { output in
+            return output.contains("audioTap 1: process")
+        }
+        
+        let tap2Active = DummyAudioTap.outputs.contains { output in
+            return output.contains("audioTap 2: process")
+        }
+        XCTAssertTrue(tap1Active)
+        XCTAssertTrue(tap2Active)
+    }
+    
+    // MARK: - Device Tests
+    
+    func testAudioDeviceListing() {
+        // I know this test kind of stinks.  Devices will vary on every system,
+        // and i can't really test device output in CI. :/
+        let list = audioPlayer.localDevices
+        print(list)
+    }
+    
     // MARK: - Failure
     
     func testFailEventOnLoadWithNonMalformedURL() {

@@ -23,7 +23,8 @@ public enum PlaybackEndedReason: String {
 class AVPlayerWrapper: AVPlayerWrapperProtocol {
     // MARK: - Properties
     
-    fileprivate var avPlayer = AVPlayer()
+    internal var avPlayer = AVPlayer()
+    internal var audioTap: AudioTap? = nil
     private let playerObserver = AVPlayerObserver()
     internal let playerTimeObserver: AVPlayerTimeObserver
     private let playerItemNotificationObserver = AVPlayerItemNotificationObserver()
@@ -69,7 +70,10 @@ class AVPlayerWrapper: AVPlayerWrapperProtocol {
                 let currentState = self._state
                 if (currentState != newValue) {
                     self._state = newValue
-                    self.delegate?.AVWrapper(didChangeState: newValue)
+                    // the delegate can initiate a state change, resulting in a dealock in the getter.
+                    DispatchQueue.main.async {
+                        self.delegate?.AVWrapper(didChangeState: newValue)
+                    }
                 }
             }
         }
@@ -385,6 +389,7 @@ class AVPlayerWrapper: AVPlayerWrapperProtocol {
     private func startObservingAVPlayer(item: AVPlayerItem) {
         playerItemObserver.startObserving(item: item)
         playerItemNotificationObserver.startObserving(item: item)
+        attachTap(audioTap, to: item)
     }
 
     private func stopObservingAVPlayerItem() {
