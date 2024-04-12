@@ -27,3 +27,22 @@ jobs:
         uses: codecov/codecov-action@v4
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
+  build-example:
+    runs-on: blaze/macos-14
+    strategy:
+      matrix:
+        target: [iOS]
+        include:
+          - target: iOS
+            destination: '-destination "platform=iOS Simulator,name=Any iOS Simulator Device"'
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v4
+      - name: Setup Environment
+        uses: pkgxdev/setup@v2
+        with:
+          +: tuist.io/xcbeautify
+      - name: Build App
+        run: |-
+          cd Example
+          set -o pipefail && xcodebuild build -project SwiftAudio.xcodeproj -scheme SwiftAudio ${{ matrix.destination }} | xcbeautify --renderer github-actions

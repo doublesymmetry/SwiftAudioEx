@@ -24,7 +24,7 @@
 		9B8819602BC8657B00E20DCE /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		9B8819622BC8657B00E20DCE /* SwiftAudio.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = SwiftAudio.entitlements; sourceTree = "<group>"; };
 		9B8819642BC8657B00E20DCE /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
-		9B88196B2BC865E100E20DCE /* SwiftAudioEx */ = {isa = PBXFileReference; lastKnownFileType = wrapper; name = SwiftAudioEx; path = ../..; sourceTree = "<group>"; };
+		9B88196B2BC865E100E20DCE /* SwiftAudioEx */ = {isa = PBXFileReference; lastKnownFileType = wrapper; name = SwiftAudioEx; path = ..; sourceTree = "<group>"; };
 		9B88196C2BC866A300E20DCE /* AudioController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AudioController.swift; sourceTree = "<group>"; };
 		9B88196F2BC866A300E20DCE /* Extensions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Extensions.swift; sourceTree = "<group>"; };
 		9B8819702BC866A300E20DCE /* PlayerView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PlayerView.swift; sourceTree = "<group>"; };
