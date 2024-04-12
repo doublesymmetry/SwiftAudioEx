@@ -22,7 +22,6 @@ public enum SourceType {
 }
 
 public protocol AudioItem {
-    
     func getSourceUrl() -> String
     func getArtist() -> String?
     func getTitle() -> String?
@@ -34,7 +33,6 @@ public protocol AudioItem {
 
 /// Make your `AudioItem`-subclass conform to this protocol to control which AVAudioTimePitchAlgorithm is used for each item.
 public protocol TimePitching {
-    
     func getPitchAlgorithmType() -> AVAudioTimePitchAlgorithm
     
 }
@@ -49,8 +47,8 @@ public protocol AssetOptionsProviding {
     func getAssetOptions() -> [String: Any]
 }
 
-public class DefaultAudioItem: AudioItem {
-    
+public class DefaultAudioItem: AudioItem, Identifiable {
+
     public var audioUrl: String
     
     public var artist: String?

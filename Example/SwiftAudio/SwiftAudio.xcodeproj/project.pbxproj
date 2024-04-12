@@ -15,6 +15,7 @@
 		9B8819752BC866A300E20DCE /* PlayerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B8819702BC866A300E20DCE /* PlayerView.swift */; };
 		9B8819782BC866E800E20DCE /* SwiftAudioEx in Frameworks */ = {isa = PBXBuildFile; productRef = 9B8819772BC866E800E20DCE /* SwiftAudioEx */; };
 		9B88197A2BC9883200E20DCE /* PlayerViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B8819792BC9883200E20DCE /* PlayerViewModel.swift */; };
+		9B88197C2BC98F5000E20DCE /* QueueView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B88197B2BC98F5000E20DCE /* QueueView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -28,6 +29,7 @@
 		9B88196F2BC866A300E20DCE /* Extensions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Extensions.swift; sourceTree = "<group>"; };
 		9B8819702BC866A300E20DCE /* PlayerView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PlayerView.swift; sourceTree = "<group>"; };
 		9B8819792BC9883200E20DCE /* PlayerViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerViewModel.swift; sourceTree = "<group>"; };
+		9B88197B2BC98F5000E20DCE /* QueueView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QueueView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -68,6 +70,7 @@
 				9B8819792BC9883200E20DCE /* PlayerViewModel.swift */,
 				9B8819702BC866A300E20DCE /* PlayerView.swift */,
 				9B88195C2BC8657A00E20DCE /* SwiftAudioApp.swift */,
+				9B88197B2BC98F5000E20DCE /* QueueView.swift */,
 				9B8819602BC8657B00E20DCE /* Assets.xcassets */,
 				9B8819622BC8657B00E20DCE /* SwiftAudio.entitlements */,
 				9B8819632BC8657B00E20DCE /* Preview Content */,
@@ -167,6 +170,7 @@
 				9B8819752BC866A300E20DCE /* PlayerView.swift in Sources */,
 				9B8819712BC866A300E20DCE /* AudioController.swift in Sources */,
 				9B88197A2BC9883200E20DCE /* PlayerViewModel.swift in Sources */,
+				9B88197C2BC98F5000E20DCE /* QueueView.swift in Sources */,
 				9B88195D2BC8657A00E20DCE /* SwiftAudioApp.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

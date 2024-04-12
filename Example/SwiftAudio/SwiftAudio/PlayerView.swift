@@ -10,6 +10,7 @@ import SwiftAudioEx
 
 struct PlayerView: View {
     @ObservedObject var viewModel: ViewModel
+    @State private var showingQueue = false
 
     let controller = AudioController.shared
 
@@ -21,7 +22,7 @@ struct PlayerView: View {
         VStack(spacing: 0) {
             HStack(alignment: .center) {
                 Spacer()
-                Button(action: {}, label: {
+                Button(action: { showingQueue.toggle() }, label: {
                     Text("Queue")
                         .fontWeight(.bold)
                 })
@@ -122,6 +123,12 @@ struct PlayerView: View {
             }
 
             Spacer()
+        }
+        .sheet(isPresented: $showingQueue) {
+            QueueView()
+#if os(macOS)
+                .frame(width: 300, height: 400)
+#endif
         }
         .padding(.horizontal, 16)
         .padding(.top)
