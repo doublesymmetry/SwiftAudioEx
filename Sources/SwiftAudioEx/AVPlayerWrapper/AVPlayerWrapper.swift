@@ -299,12 +299,13 @@ class AVPlayerWrapper: AVPlayerWrapperProtocol {
                     item.preferredForwardBufferDuration = self.bufferDuration
                     self.avPlayer.replaceCurrentItem(with: item)
                     self.startObservingAVPlayer(item: item)
-                    self.applyAVPlayerRate()
                     
                     if let initialTime = self.timeToSeekToAfterLoading {
                         self.timeToSeekToAfterLoading = nil
                         self.seek(to: initialTime)
                     }
+
+                    self.applyAVPlayerRate()
                 }
             })
         }
