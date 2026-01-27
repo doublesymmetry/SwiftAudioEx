@@ -9,21 +9,28 @@ import Foundation
 import AVFoundation
 
 protocol AVPlayerItemObserverDelegate: AnyObject {
-    
+
     /**
      Called when the duration of the observed item is updated.
      */
     func item(didUpdateDuration duration: Double)
-    
+
     /**
      Called when the playback of the observed item is or is no longer likely to keep up.
      */
     func item(didUpdatePlaybackLikelyToKeepUp playbackLikelyToKeepUp: Bool)
+
+    /**
+     Called when the status of the observed item changes.
+     This is important for streaming content (HLS) where the item may not be ready immediately.
+     */
+    func item(didUpdateStatus status: AVPlayerItem.Status)
+
     /**
      Called when the observed item receives metadata
      */
     func item(didReceiveTimedMetadata metadata: [AVTimedMetadataGroup])
-    
+
 }
 
 /**
@@ -38,6 +45,7 @@ class AVPlayerItemObserver: NSObject {
         static let duration = #keyPath(AVPlayerItem.duration)
         static let loadedTimeRanges = #keyPath(AVPlayerItem.loadedTimeRanges)
         static let playbackLikelyToKeepUp = #keyPath(AVPlayerItem.isPlaybackLikelyToKeepUp)
+        static let status = #keyPath(AVPlayerItem.status)
     }
     
     private(set) var isObserving: Bool = false
@@ -66,6 +74,7 @@ class AVPlayerItemObserver: NSObject {
         item.addObserver(self, forKeyPath: AVPlayerItemKeyPath.duration, options: [.new], context: &AVPlayerItemObserver.context)
         item.addObserver(self, forKeyPath: AVPlayerItemKeyPath.loadedTimeRanges, options: [.new], context: &AVPlayerItemObserver.context)
         item.addObserver(self, forKeyPath: AVPlayerItemKeyPath.playbackLikelyToKeepUp, options: [.new], context: &AVPlayerItemObserver.context)
+        item.addObserver(self, forKeyPath: AVPlayerItemKeyPath.status, options: [.new], context: &AVPlayerItemObserver.context)
         
         // Create and add a new metadata output to the item.
         let metadataOutput = AVPlayerItemMetadataOutput()
@@ -82,6 +91,7 @@ class AVPlayerItemObserver: NSObject {
         observingItem.removeObserver(self, forKeyPath: AVPlayerItemKeyPath.duration, context: &AVPlayerItemObserver.context)
         observingItem.removeObserver(self, forKeyPath: AVPlayerItemKeyPath.loadedTimeRanges, context: &AVPlayerItemObserver.context)
         observingItem.removeObserver(self, forKeyPath: AVPlayerItemKeyPath.playbackLikelyToKeepUp, context: &AVPlayerItemObserver.context)
+        observingItem.removeObserver(self, forKeyPath: AVPlayerItemKeyPath.status, context: &AVPlayerItemObserver.context)
         
         // Remove all metadata outputs from the item.
         observingItem.removeAllMetadataOutputs()
@@ -112,7 +122,13 @@ class AVPlayerItemObserver: NSObject {
             if let playbackLikelyToKeepUp = change?[.newKey] as? Bool {
                 delegate?.item(didUpdatePlaybackLikelyToKeepUp: playbackLikelyToKeepUp)
             }
-            
+
+        case AVPlayerItemKeyPath.status:
+            if let statusValue = change?[.newKey] as? Int,
+               let status = AVPlayerItem.Status(rawValue: statusValue) {
+                delegate?.item(didUpdateStatus: status)
+            }
+
         default: break
             
         }
