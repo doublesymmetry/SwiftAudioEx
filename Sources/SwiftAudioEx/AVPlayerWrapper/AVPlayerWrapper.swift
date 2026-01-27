@@ -508,11 +508,21 @@ extension AVPlayerWrapper: AVPlayerItemObserverDelegate {
             state = .ready
         }
     }
-        
+
+    func item(didUpdateStatus status: AVPlayerItem.Status) {
+        // When the item becomes ready to play and playWhenReady is true,
+        // we need to apply the rate again to start playback.
+        // This is crucial for streaming content (HLS) where the item
+        // may not be ready immediately when play() is called.
+        if status == .readyToPlay && playWhenReady {
+            applyAVPlayerRate()
+        }
+    }
+
     func item(didUpdateDuration duration: Double) {
         delegate?.AVWrapper(didUpdateDuration: duration)
     }
-    
+
     func item(didReceiveTimedMetadata metadata: [AVTimedMetadataGroup]) {
         delegate?.AVWrapper(didReceiveTimedMetadata: metadata)
     }
