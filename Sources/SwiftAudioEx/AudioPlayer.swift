@@ -440,9 +440,21 @@ public class AudioPlayer: AVPlayerWrapperDelegate {
     }
 
     func AVWrapperItemPlaybackStalled() {
-
+        event.playbackStalled.emit(data: ())
     }
     
+    func AVWrapperItemNewErrorLogEntry(entries: [[String: Any]]) {
+        event.newErrorLogEntry.emit(data: entries)
+    }
+
+    func AVWrapper(didChangeBufferEmpty isEmpty: Bool) {
+        event.bufferEmpty.emit(data: isEmpty)
+    }
+
+    func AVWrapper(didChangeBufferFull isFull: Bool) {
+        event.bufferFull.emit(data: isFull)
+    }
+
     func AVWrapperDidRecreateAVPlayer() {
         event.didRecreateAVPlayer.emit(data: ())
     }
