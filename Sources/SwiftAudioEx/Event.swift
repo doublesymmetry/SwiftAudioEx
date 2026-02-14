@@ -19,6 +19,10 @@ extension AudioPlayer {
     public typealias UpdateDurationEventData = Double
     public typealias MetadataCommonEventData = [AVMetadataItem]
     public typealias MetadataTimedEventData = [AVTimedMetadataGroup]
+    public typealias PlaybackStalledEventData = ()
+    public typealias NewErrorLogEntryEventData = [[String: Any]]
+    public typealias BufferEmptyEventData = Bool
+    public typealias BufferFullEventData = Bool
     public typealias DidRecreateAVPlayerEventData = ()
     public typealias CurrentItemEventData = (
         item: AudioItem?,
@@ -91,6 +95,35 @@ extension AudioPlayer {
          */
         public let receiveChapterMetadata: AudioPlayer.Event<MetadataTimedEventData> = AudioPlayer.Event()
         
+        /**
+         Emitted when playback has stalled due to buffer underrun.
+         - Important: Remember to dispatch to the main queue if any UI is updated in the event handler.
+         - Note: This indicates the player's buffer ran empty during playback and audio output has temporarily stopped.
+         */
+        public let playbackStalled: AudioPlayer.Event<PlaybackStalledEventData> = AudioPlayer.Event()
+
+        /**
+         Emitted when a new error log entry is added by AVPlayer (iOS only).
+         Contains an array of dictionaries with error log entry details such as errorStatusCode, errorDomain, errorComment, and URI.
+         - Important: Remember to dispatch to the main queue if any UI is updated in the event handler.
+         - Note: These are transient streaming errors (e.g. segment download failures) that may not stop playback.
+         */
+        public let newErrorLogEntry: AudioPlayer.Event<NewErrorLogEntryEventData> = AudioPlayer.Event()
+
+        /**
+         Emitted when the playback buffer becomes empty.
+         - Important: Remember to dispatch to the main queue if any UI is updated in the event handler.
+         - Note: When true, playback will stall or has stalled because the buffer has no more data to play.
+         */
+        public let bufferEmpty: AudioPlayer.Event<BufferEmptyEventData> = AudioPlayer.Event()
+
+        /**
+         Emitted when the playback buffer becomes full.
+         - Important: Remember to dispatch to the main queue if any UI is updated in the event handler.
+         - Note: When true, the internal buffer is full and no more data will be downloaded until some is consumed.
+         */
+        public let bufferFull: AudioPlayer.Event<BufferFullEventData> = AudioPlayer.Event()
+
         /**
          Emitted when the underlying AVPlayer instance is recreated. Recreation happens if the current player fails.
          - Important: Remember to dispatch to the main queue if any UI is updated in the event handler.

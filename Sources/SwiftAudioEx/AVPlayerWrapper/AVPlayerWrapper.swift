@@ -493,6 +493,28 @@ extension AVPlayerWrapper: AVPlayerItemNotificationObserverDelegate {
     func itemPlaybackStalled() {
         delegate?.AVWrapperItemPlaybackStalled()
     }
+
+    func itemNewErrorLogEntry() {
+        guard let playerItem = avPlayer.currentItem,
+              let errorLog = playerItem.errorLog(),
+              let lastEvent = errorLog.events.last else { return }
+
+        var entry: [String: Any] = [:]
+        entry["errorStatusCode"] = lastEvent.errorStatusCode
+        entry["errorDomain"] = lastEvent.errorDomain
+        if let errorComment = lastEvent.errorComment {
+            entry["errorComment"] = errorComment
+        }
+        if let uri = lastEvent.uri {
+            entry["uri"] = uri
+        }
+        if let serverAddress = lastEvent.serverAddress {
+            entry["serverAddress"] = serverAddress
+        }
+        entry["date"] = lastEvent.date?.timeIntervalSince1970 ?? 0
+
+        delegate?.AVWrapperItemNewErrorLogEntry(entries: [entry])
+    }
     
     func itemDidPlayToEndTime() {
         delegate?.AVWrapperItemDidPlayToEndTime()
@@ -515,5 +537,13 @@ extension AVPlayerWrapper: AVPlayerItemObserverDelegate {
     
     func item(didReceiveTimedMetadata metadata: [AVTimedMetadataGroup]) {
         delegate?.AVWrapper(didReceiveTimedMetadata: metadata)
+    }
+
+    func item(didChangeBufferEmpty isEmpty: Bool) {
+        delegate?.AVWrapper(didChangeBufferEmpty: isEmpty)
+    }
+
+    func item(didChangeBufferFull isFull: Bool) {
+        delegate?.AVWrapper(didChangeBufferFull: isFull)
     }
 }
