@@ -117,7 +117,10 @@ public class AudioPlayer: AVPlayerWrapperDelegate {
     }
     
     /**
-     The amount of seconds to be buffered by the player. Default value is 0 seconds, this means the AVPlayer will choose an appropriate level of buffering. Setting `bufferDuration` to larger than zero automatically disables `automaticallyWaitsToMinimizeStalling`. Setting it back to zero automatically enables `automaticallyWaitsToMinimizeStalling`.
+     The amount of seconds to be buffered by the player. Default value is 0 seconds, this means the AVPlayer will choose an appropriate level of buffering.
+
+     Setting `bufferDuration` controls `AVPlayerItem.preferredForwardBufferDuration`
+     and is independent of `automaticallyWaitsToMinimizeStalling`.
 
      [Read more from Apple Documentation](https://developer.apple.com/documentation/avfoundation/avplayeritem/1643630-preferredforwardbufferduration)
      */
@@ -125,21 +128,21 @@ public class AudioPlayer: AVPlayerWrapperDelegate {
         get { wrapper.bufferDuration }
         set {
             wrapper.bufferDuration = newValue
-            wrapper.automaticallyWaitsToMinimizeStalling = wrapper.bufferDuration == 0
         }
     }
 
     /**
-     Indicates whether the player should automatically delay playback in order to minimize stalling. Setting this to true will also set `bufferDuration` back to `0`.
+     Indicates whether the player should automatically delay playback in order to minimize stalling.
+
+     Defaults to `true` (the AVPlayer default).  When `true`, the player
+     waits until it has buffered enough data to play through without
+     stalling before it begins playback.
 
      [Read more from Apple Documentation](https://developer.apple.com/documentation/avfoundation/avplayer/1643482-automaticallywaitstominimizestal)
      */
     public var automaticallyWaitsToMinimizeStalling: Bool {
         get { wrapper.automaticallyWaitsToMinimizeStalling }
         set {
-            if (newValue) {
-                wrapper.bufferDuration = 0
-            }
             wrapper.automaticallyWaitsToMinimizeStalling = newValue
         }
     }
