@@ -29,6 +29,12 @@ class AVPlayerWrapper: AVPlayerWrapperProtocol {
     private let playerItemNotificationObserver = AVPlayerItemNotificationObserver()
     private let playerItemObserver = AVPlayerItemObserver()
     fileprivate var timeToSeekToAfterLoading: TimeInterval?
+
+    /// Last known-good playback position, updated every time the
+    /// periodic time observer fires or a seek completes.  Used to
+    /// preserve position across reload/recreate cycles.
+    fileprivate(set) var lastPosition: TimeInterval = 0
+
     fileprivate var asset: AVAsset? = nil
     fileprivate var item: AVPlayerItem? = nil
     fileprivate var url: URL? = nil
@@ -83,7 +89,7 @@ class AVPlayerWrapper: AVPlayerWrapperProtocol {
     public var playWhenReady: Bool = false {
         didSet {
             if (playWhenReady == true && (state == .failed || state == .stopped)) {
-                reload(startFromCurrentTime: state == .failed)
+                reload(startFromCurrentTime: true)
             }
 
             applyAVPlayerRate()
@@ -108,7 +114,7 @@ class AVPlayerWrapper: AVPlayerWrapperProtocol {
     
     var currentTime: TimeInterval {
         let seconds = avPlayer.currentTime().seconds
-        return seconds.isNaN ? 0 : seconds
+        return seconds.isNaN ? lastPosition : seconds
     }
     
     var duration: TimeInterval {
@@ -196,9 +202,11 @@ class AVPlayerWrapper: AVPlayerWrapperProtocol {
        // if the player is loading then we need to defer seeking until it's ready.
         if (avPlayer.currentItem == nil) {
          timeToSeekToAfterLoading = seconds
+         lastPosition = seconds
        } else {
            let time = CMTimeMakeWithSeconds(seconds, preferredTimescale: 1000)
            avPlayer.seek(to: time, toleranceBefore: CMTime.zero, toleranceAfter: CMTime.zero) { (finished) in
+             self.lastPosition = seconds
              self.delegate?.AVWrapper(seekTo: Double(seconds), didFinish: finished)
          }
        }
@@ -312,6 +320,10 @@ class AVPlayerWrapper: AVPlayerWrapperProtocol {
     
     func load(from url: URL, playWhenReady: Bool, options: [String: Any]? = nil) {
         self.playWhenReady = playWhenReady
+        // Reset lastPosition when loading a genuinely new URL
+        if self.url != url {
+            self.lastPosition = 0
+        }
         self.url = url
         self.urlOptions = options
         self.load()
@@ -352,20 +364,14 @@ class AVPlayerWrapper: AVPlayerWrapperProtocol {
 
     func unload() {
         clearCurrentItem()
+        lastPosition = 0
         state = .idle
     }
 
     func reload(startFromCurrentTime: Bool) {
-        var time : Double? = nil
-        if (startFromCurrentTime) {
-            if let currentItem = currentItem {
-                if (!currentItem.duration.isIndefinite) {
-                    time = currentItem.currentTime().seconds
-                }
-            }
-        }
+        let time = startFromCurrentTime ? lastPosition : nil
         load()
-        if let time = time {
+        if let time = time, time > 0 {
             seek(to: time)
         }
     }
@@ -477,7 +483,11 @@ extension AVPlayerWrapper: AVPlayerTimeObserverDelegate {
     }
     
     func timeEvent(time: CMTime) {
-        delegate?.AVWrapper(secondsElapsed: time.seconds)
+        let seconds = time.seconds
+        if !seconds.isNaN {
+            lastPosition = seconds
+        }
+        delegate?.AVWrapper(secondsElapsed: seconds)
     }
     
 }
@@ -492,6 +502,28 @@ extension AVPlayerWrapper: AVPlayerItemNotificationObserverDelegate {
     
     func itemPlaybackStalled() {
         delegate?.AVWrapperItemPlaybackStalled()
+    }
+
+    func itemNewErrorLogEntry() {
+        guard let playerItem = avPlayer.currentItem,
+              let errorLog = playerItem.errorLog(),
+              let lastEvent = errorLog.events.last else { return }
+
+        var entry: [String: Any] = [:]
+        entry["errorStatusCode"] = lastEvent.errorStatusCode
+        entry["errorDomain"] = lastEvent.errorDomain
+        if let errorComment = lastEvent.errorComment {
+            entry["errorComment"] = errorComment
+        }
+        if let uri = lastEvent.uri {
+            entry["uri"] = uri
+        }
+        if let serverAddress = lastEvent.serverAddress {
+            entry["serverAddress"] = serverAddress
+        }
+        entry["date"] = lastEvent.date?.timeIntervalSince1970 ?? 0
+
+        delegate?.AVWrapperItemNewErrorLogEntry(entries: [entry])
     }
     
     func itemDidPlayToEndTime() {
@@ -515,5 +547,13 @@ extension AVPlayerWrapper: AVPlayerItemObserverDelegate {
     
     func item(didReceiveTimedMetadata metadata: [AVTimedMetadataGroup]) {
         delegate?.AVWrapper(didReceiveTimedMetadata: metadata)
+    }
+
+    func item(didChangeBufferEmpty isEmpty: Bool) {
+        delegate?.AVWrapper(didChangeBufferEmpty: isEmpty)
+    }
+
+    func item(didChangeBufferFull isFull: Bool) {
+        delegate?.AVWrapper(didChangeBufferFull: isFull)
     }
 }

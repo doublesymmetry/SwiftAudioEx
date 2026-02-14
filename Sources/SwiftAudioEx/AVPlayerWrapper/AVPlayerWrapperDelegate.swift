@@ -23,5 +23,8 @@ protocol AVPlayerWrapperDelegate: AnyObject {
     func AVWrapperItemDidPlayToEndTime()
     func AVWrapperItemFailedToPlayToEndTime()
     func AVWrapperItemPlaybackStalled()
+    func AVWrapperItemNewErrorLogEntry(entries: [[String: Any]])
+    func AVWrapper(didChangeBufferEmpty isEmpty: Bool)
+    func AVWrapper(didChangeBufferFull isFull: Bool)
     func AVWrapperDidRecreateAVPlayer()
 }

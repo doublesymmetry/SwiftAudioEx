@@ -12,6 +12,7 @@ protocol AVPlayerItemNotificationObserverDelegate: AnyObject {
     func itemDidPlayToEndTime()
     func itemFailedToPlayToEndTime()
     func itemPlaybackStalled()
+    func itemNewErrorLogEntry()
 }
 
 /**
@@ -60,6 +61,12 @@ class AVPlayerItemNotificationObserver {
             name: NSNotification.Name.AVPlayerItemPlaybackStalled,
             object: item
         )
+        notificationCenter.addObserver(
+            self,
+            selector: #selector(itemNewErrorLogEntry),
+            name: NSNotification.Name.AVPlayerItemNewErrorLogEntry,
+            object: item
+        )
     }
     
     /**
@@ -84,6 +91,11 @@ class AVPlayerItemNotificationObserver {
             name: NSNotification.Name.AVPlayerItemPlaybackStalled,
             object: observingItem
         )
+        notificationCenter.removeObserver(
+            self,
+            name: NSNotification.Name.AVPlayerItemNewErrorLogEntry,
+            object: observingItem
+        )
         self.observingItem = nil
         isObserving = false
     }
@@ -98,5 +110,9 @@ class AVPlayerItemNotificationObserver {
 
     @objc private func itemPlaybackStalled() {
         delegate?.itemPlaybackStalled()
+    }
+
+    @objc private func itemNewErrorLogEntry() {
+        delegate?.itemNewErrorLogEntry()
     }
 }
