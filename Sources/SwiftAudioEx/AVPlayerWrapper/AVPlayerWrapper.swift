@@ -30,6 +30,7 @@ class AVPlayerWrapper: AVPlayerWrapperProtocol {
     private let playerItemObserver = AVPlayerItemObserver()
     fileprivate var timeToSeekToAfterLoading: TimeInterval?
     fileprivate var asset: AVAsset? = nil
+    fileprivate var didInspectAssetMetadata = false
     fileprivate var item: AVPlayerItem? = nil
     fileprivate var url: URL? = nil
     fileprivate var urlOptions: [String: Any]? = nil
@@ -236,32 +237,8 @@ class AVPlayerWrapper: AVPlayerWrapperProtocol {
         if let url = url {
             let pendingAsset = AVURLAsset(url: url, options: urlOptions)
             asset = pendingAsset
+            didInspectAssetMetadata = false
             state = .loading
-            
-            // Load metadata keys asynchronously and separate from playable, to allow that to execute as quickly as it can
-            let metdataKeys = ["commonMetadata", "availableChapterLocales", "availableMetadataFormats"]
-            pendingAsset.loadValuesAsynchronously(forKeys: metdataKeys, completionHandler: { [weak self] in
-                guard let self = self else { return }
-                if (pendingAsset != self.asset) { return; }
-                
-                let commonData = pendingAsset.commonMetadata
-                if (!commonData.isEmpty) {
-                    self.delegate?.AVWrapper(didReceiveCommonMetadata: commonData)
-                }
-                
-                if pendingAsset.availableChapterLocales.count > 0 {
-                    for locale in pendingAsset.availableChapterLocales {
-                        let chapters = pendingAsset.chapterMetadataGroups(withTitleLocale: locale, containingItemsWithCommonKeys: nil)
-                        self.delegate?.AVWrapper(didReceiveChapterMetadata: chapters)
-                    }
-                } else {
-                    for format in pendingAsset.availableMetadataFormats {
-                        let timeRange = CMTimeRange(start: CMTime(seconds: 0, preferredTimescale: 1000), end: pendingAsset.duration)
-                        let group = AVTimedMetadataGroup(items: pendingAsset.metadata(forFormat: format), timeRange: timeRange)
-                        self.delegate?.AVWrapper(didReceiveTimedMetadata: [group])
-                    }
-                }
-            })
             
             // Load playable portion of the track and commence when ready
             let playableKeys = ["playable"]
@@ -500,6 +477,43 @@ extension AVPlayerWrapper: AVPlayerItemNotificationObserverDelegate {
     
 }
 
+extension AVPlayerWrapper {
+    /// Chapter/common-metadata inspection, deferred until the playing item
+    /// reports its duration. Probing an in-use asset's duration/chapter
+    /// properties makes iOS 26 stall the asset's serialized inspector for
+    /// ~20s on live streams — which either blocks item preparation (delayed
+    /// audio start) or, done synchronously, hangs the calling thread. The
+    /// item's observed duration tells live from file without touching the
+    /// asset: only finite-duration (file) assets are inspected.
+    fileprivate func inspectAssetMetadataIfNeeded(itemDuration: Double) {
+        guard !didInspectAssetMetadata, let asset = asset else { return }
+        didInspectAssetMetadata = true
+        guard itemDuration.isFinite && itemDuration > 0 else { return }
+        let metadataKeys = ["commonMetadata", "availableChapterLocales", "availableMetadataFormats"]
+        asset.loadValuesAsynchronously(forKeys: metadataKeys, completionHandler: { [weak self] in
+            guard let self = self, asset == self.asset else { return }
+            
+            let commonData = asset.commonMetadata
+            if (!commonData.isEmpty) {
+                self.delegate?.AVWrapper(didReceiveCommonMetadata: commonData)
+            }
+            
+            if asset.availableChapterLocales.count > 0 {
+                for locale in asset.availableChapterLocales {
+                    let chapters = asset.chapterMetadataGroups(withTitleLocale: locale, containingItemsWithCommonKeys: nil)
+                    self.delegate?.AVWrapper(didReceiveChapterMetadata: chapters)
+                }
+            } else {
+                for format in asset.availableMetadataFormats {
+                    let timeRange = CMTimeRange(start: CMTime(seconds: 0, preferredTimescale: 1000), end: CMTime(seconds: itemDuration, preferredTimescale: 1000))
+                    let group = AVTimedMetadataGroup(items: asset.metadata(forFormat: format), timeRange: timeRange)
+                    self.delegate?.AVWrapper(didReceiveTimedMetadata: [group])
+                }
+            }
+        })
+    }
+}
+
 extension AVPlayerWrapper: AVPlayerItemObserverDelegate {
     // MARK: - AVPlayerItemObserverDelegate
 
@@ -511,6 +525,7 @@ extension AVPlayerWrapper: AVPlayerItemObserverDelegate {
         
     func item(didUpdateDuration duration: Double) {
         delegate?.AVWrapper(didUpdateDuration: duration)
+        inspectAssetMetadataIfNeeded(itemDuration: duration)
     }
     
     func item(didReceiveTimedMetadata metadata: [AVTimedMetadataGroup]) {
